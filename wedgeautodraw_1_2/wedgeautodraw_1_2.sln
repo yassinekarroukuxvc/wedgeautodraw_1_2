@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35825.156
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "wedgeautodraw_1_2", "wedgeautodraw_1_2\wedgeautodraw_1_2.csproj", "{31AA0975-79FA-4224-80B4-980B1B73263C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{31AA0975-79FA-4224-80B4-980B1B73263C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31AA0975-79FA-4224-80B4-980B1B73263C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31AA0975-79FA-4224-80B4-980B1B73263C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31AA0975-79FA-4224-80B4-980B1B73263C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7EA7E433-67B8-43F0-8FF4-7933544626C9}
+	EndGlobalSection
+EndGlobal

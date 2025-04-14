@@ -1,0 +1,51 @@
+# === View Scaling ===
+scaling_fsv=3
+scaling_dsv=70
+
+# === View Positions ===
+front_view_posX=30
+front_view_posY=100
+side_view_dX=35
+top_view_dY=87
+detail_view_posX=170
+detail_view_posY=180
+section_view_posX=90
+
+# === Table Positions ===
+dim_table_posX=130
+dim_table_posY=51
+dim_table_width=45
+
+how_to_order_posX=130
+how_to_order_posY=51
+how_to_order_width=60
+
+label_as_posX=130
+label_as_posY=120
+label_as_width=40
+
+polish_posX=130
+polish_posY=86
+polish_width=20
+
+# === Breakline ===
+length_lower_section_fsv=135
+length_upper_section_fsv=2
+breakline_gap_fsv=2
+
+length_lower_section_dsv=45
+breakline_gap_dsv=50
+
+# === Title Info ===
+how_to_order_info=SAMPLE TOOL
+how_to_order_number=WDG-1234
+
+# === Title Block Info ===
+material=CARBIDE
+author=Engineer A
+packaging=Plastic Box
+
+# === Extra Info ===
+engrave=Sample Tool¶Front View
+polish_text=Polished Area A¶Polished Area B
+dimension_keys_in_table=FL,F,W,FR,BR,GD,GR,B,E
