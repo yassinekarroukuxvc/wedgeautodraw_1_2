@@ -6,11 +6,11 @@
 
 "TDF"=2.794mm
 
-"BA"=8deg
+"BA"=10deg
 
-"ISA"=8deg
+"ISA"=10deg
 
-"FA"=8deg
+"FA"=10deg
 
 "GR"=0.06096mm
 

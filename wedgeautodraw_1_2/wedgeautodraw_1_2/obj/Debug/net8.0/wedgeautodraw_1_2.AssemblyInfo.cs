@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("wedgeautodraw_1_2")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2eef392e9d4abe7a664d52188c2cbb70af8a2edd")]
 [assembly: System.Reflection.AssemblyProductAttribute("wedgeautodraw_1_2")]
 [assembly: System.Reflection.AssemblyTitleAttribute("wedgeautodraw_1_2")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

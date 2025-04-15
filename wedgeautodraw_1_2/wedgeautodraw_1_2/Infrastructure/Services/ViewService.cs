@@ -316,7 +316,7 @@ public class ViewService : IViewService
                     {
                         if (wedgeDimensions.GetAll().TryGetValue(dimKey, out var modelValue))
                         {
-                            double modelVal = modelValue.GetValue(Unit.Inch);
+                            double modelVal = modelValue.GetValue(Unit.Millimeter);
                             double dimVal = (double)swDim.GetSystemValue3((int)swSetValueInConfiguration_e.swSetValue_InThisConfiguration, "");
 
                             if (Math.Abs(modelVal - dimVal) < 1e-4)

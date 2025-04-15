@@ -12,6 +12,7 @@ public static class AutomationExecutor
     {
         IPartService partService = new PartService(swApp);
         partService.OpenPart(modPartPath);
+        partService.ApplyTolerances(wedgeData.Dimensions);
         partService.UpdateEquations(modEquationPath);
         partService.SetEngravedText(wedgeData.EngravedText);
         partService.Rebuild();
@@ -115,8 +116,8 @@ public static class AutomationExecutor
         view.SetPositionAndNameDimensioning(wed.Dimensions, draw.DimensionStyles, new Dictionary<string, string>
         {
             {"ISA", "SelectByName"},
-            {"GA",  "SelectByName"},
-            /*{"B",   "SelectByName"},
+            /*{"GA",  "SelectByName"},
+            {"B",   "SelectByName"},
             {"W",   "SelectByName"},
             {"GD",  "SelectByName"},
             {"GR",  "SelectByName"}*/
@@ -170,12 +171,12 @@ public static class AutomationExecutor
             }
 
             bool positioned = sectionView.SetPositionAndNameDimensioning(wed.Dimensions, draw.DimensionStyles, new Dictionary<string, string>
-    {
-        {"F",  "SelectByName"},
-        {"FL", "SelectByName"},
-        {"FR", "SelectByName"},
-        {"BR", "SelectByName"}
-    });
+                {
+                    {"F",  "SelectByName"},
+                    {"FL", "SelectByName"},
+                    {"FR", "SelectByName"},
+                    {"BR", "SelectByName"}
+                });
 
             if (!positioned)
             {

@@ -68,37 +68,42 @@ public class PartService : IPartService
 
     public void ApplyTolerances(DynamicDataContainer dimensions)
     {
-        foreach (var kvp in dimensions.GetAll())
+        try
         {
-            string name = kvp.Key;
-            var storage = kvp.Value;
+            _swModelExt = _swModel.Extension;
 
-            _swModel.ClearSelection2(true);
-            bool selected = _swModelExt.SelectByID2($"{name}@Sketch", "DIMENSION", 0, 0, 0, false, 0, null, 0);
-
-            if (!selected) continue;
-
-            var selectionMgr = (ISelectionMgr)_swModel.SelectionManager;
-            var dispDim = selectionMgr.GetSelectedObject6(1, 0) as DisplayDimension;
-            if (dispDim == null) continue;
-
-            dispDim.MarkedForDrawing = false;
-            var tol = dispDim.GetDimension2(0).Tolerance;
-
-            double upper = storage.GetTolerance(Unit.Meter, "+");
-            double lower = storage.GetTolerance(Unit.Meter, "-");
-
-            if (upper != lower)
+            var targets = new[]
             {
-                tol.Type = (int)swTolType_e.swTolBILAT;
-            }
-            else
-            {
-                tol.Type = (int)swTolType_e.swTolSYMMETRIC;
-            }
+            new { Name = "TL", Sketch = "TL_cutting" },
+            new { Name = "TD", Sketch = "sketch_TL_cutting" },
+            new { Name = "TDF", Sketch = "sketch_TDF_grinding" }
+        };
 
-            tol.SetValues(-lower, upper);
+            foreach (var target in targets)
+            {
+                _swModel.ClearSelection2(true);
+                bool selected = _swModelExt.SelectByID2($"{target.Name}@{target.Sketch}", "DIMENSION", 0, 0, 0, false, 0, null, 0);
+                if (!selected) continue;
+
+                var selectionMgr = (ISelectionMgr)_swModel.SelectionManager;
+                var dispDim = selectionMgr.GetSelectedObject6(1, 0) as DisplayDimension;
+                if (dispDim == null) continue;
+
+                dispDim.MarkedForDrawing = false;
+                var tol = dispDim.GetDimension2(0).Tolerance;
+
+                double upper = dimensions[target.Name].GetTolerance(Unit.Meter, "+");
+                double lower = dimensions[target.Name].GetTolerance(Unit.Meter, "-");
+
+                tol.Type = (upper != lower) ? (int)swTolType_e.swTolBILAT : (int)swTolType_e.swTolSYMMETRIC;
+                tol.SetValues(-lower, upper);
+            }
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error applying tolerances: {ex.Message}");
+        }
+
     }
 
     public void ToggleSketchVisibility(string sketchName, bool visible)
