@@ -363,3 +363,58 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+
+
+
+
+
+
+
+
+# Ignore build results
+**/bin/
+**/obj/
+
+# Ignore compiled binaries and related artifacts
+*.exe
+*.dll
+*.pdb
+*.cache
+*.json
+*.xml
+
+# Ignore user-specific files
+*.user
+*.vs/
+*.suo
+*.userprefs
+
+# Ignore Visual Studio build folders
+.vscode/
+.vs/
+
+# Ignore auto-generated files by SDK
+*.GeneratedMSBuildEditorConfig.editorconfig
+*.AssemblyInfo.cs
+*.g.cs
+
+# Ignore logs and debugging
+*.log
+
+# Ignore temporary files
+*.tmp
+*.bak
+*.old
+~$*
+
+# Ignore ReSharper files (if used)
+_ReSharper*/
+*.DotSettings.user
+
+# Ignore SolidWorks interop binaries (copied into Resources)
+**/Resources/*.dll
+
+# Optional: Ignore modified templates and outputs
+**/Resources/Templates/mod_*
+
