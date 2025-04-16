@@ -11,24 +11,28 @@
       "RelativeMoniker": "D:0:0:{31AA0975-79FA-4224-80B4-980B1B73263C}|wedgeautodraw_1_2\\wedgeautodraw_1_2.csproj|solutionrelative:wedgeautodraw_1_2\\infrastructure\\services\\viewservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{31AA0975-79FA-4224-80B4-980B1B73263C}|wedgeautodraw_1_2\\wedgeautodraw_1_2.csproj|c:\\users\\mounir\\desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\resources\\templates\\equations.txt||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{31AA0975-79FA-4224-80B4-980B1B73263C}|wedgeautodraw_1_2\\wedgeautodraw_1_2.csproj|solutionrelative:wedgeautodraw_1_2\\resources\\templates\\equations.txt||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{31AA0975-79FA-4224-80B4-980B1B73263C}|wedgeautodraw_1_2\\wedgeautodraw_1_2.csproj|c:\\users\\mounir\\desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\infrastructure\\services\\partservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{31AA0975-79FA-4224-80B4-980B1B73263C}|wedgeautodraw_1_2\\wedgeautodraw_1_2.csproj|solutionrelative:wedgeautodraw_1_2\\infrastructure\\services\\partservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{31AA0975-79FA-4224-80B4-980B1B73263C}|wedgeautodraw_1_2\\wedgeautodraw_1_2.csproj|c:\\users\\mounir\\desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{31AA0975-79FA-4224-80B4-980B1B73263C}|wedgeautodraw_1_2\\wedgeautodraw_1_2.csproj|solutionrelative:wedgeautodraw_1_2\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{31AA0975-79FA-4224-80B4-980B1B73263C}|wedgeautodraw_1_2\\wedgeautodraw_1_2.csproj|c:\\users\\mounir\\desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\resources\\templates\\equations.txt||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{31AA0975-79FA-4224-80B4-980B1B73263C}|wedgeautodraw_1_2\\wedgeautodraw_1_2.csproj|solutionrelative:wedgeautodraw_1_2\\resources\\templates\\equations.txt||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{31AA0975-79FA-4224-80B4-980B1B73263C}|wedgeautodraw_1_2\\wedgeautodraw_1_2.csproj|c:\\users\\mounir\\desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\infrastructure\\services\\datacontainerloader.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{31AA0975-79FA-4224-80B4-980B1B73263C}|wedgeautodraw_1_2\\wedgeautodraw_1_2.csproj|solutionrelative:wedgeautodraw_1_2\\infrastructure\\services\\datacontainerloader.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{31AA0975-79FA-4224-80B4-980B1B73263C}|wedgeautodraw_1_2\\wedgeautodraw_1_2.csproj|c:\\users\\mounir\\desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\resources\\templates\\configurations.txt||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{31AA0975-79FA-4224-80B4-980B1B73263C}|wedgeautodraw_1_2\\wedgeautodraw_1_2.csproj|solutionrelative:wedgeautodraw_1_2\\resources\\templates\\configurations.txt||{8B382828-6202-11D1-8870-0000F87579D2}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{31AA0975-79FA-4224-80B4-980B1B73263C}|wedgeautodraw_1_2\\wedgeautodraw_1_2.csproj|c:\\users\\mounir\\desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\resources\\templates\\tolerances.txt||{8B382828-6202-11D1-8870-0000F87579D2}",
       "RelativeMoniker": "D:0:0:{31AA0975-79FA-4224-80B4-980B1B73263C}|wedgeautodraw_1_2\\wedgeautodraw_1_2.csproj|solutionrelative:wedgeautodraw_1_2\\resources\\templates\\tolerances.txt||{8B382828-6202-11D1-8870-0000F87579D2}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{31AA0975-79FA-4224-80B4-980B1B73263C}|wedgeautodraw_1_2\\wedgeautodraw_1_2.csproj|c:\\users\\mounir\\desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\infrastructure\\services\\datacontainerloader.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{31AA0975-79FA-4224-80B4-980B1B73263C}|wedgeautodraw_1_2\\wedgeautodraw_1_2.csproj|solutionrelative:wedgeautodraw_1_2\\infrastructure\\services\\datacontainerloader.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{31AA0975-79FA-4224-80B4-980B1B73263C}|wedgeautodraw_1_2\\wedgeautodraw_1_2.csproj|c:\\users\\mounir\\desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{31AA0975-79FA-4224-80B4-980B1B73263C}|wedgeautodraw_1_2\\wedgeautodraw_1_2.csproj|solutionrelative:wedgeautodraw_1_2\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{31AA0975-79FA-4224-80B4-980B1B73263C}|wedgeautodraw_1_2\\wedgeautodraw_1_2.csproj|c:\\users\\mounir\\desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\infrastructure\\utilities\\filehelper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -110,11 +114,11 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": 5,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 20,
+              "DocumentIndex": 21,
               "Title": "IPartService.cs",
               "DocumentMoniker": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Core\\Interfaces\\IPartService.cs",
               "RelativeDocumentMoniker": "wedgeautodraw_1_2\\Core\\Interfaces\\IPartService.cs",
@@ -127,33 +131,46 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 5,
+              "Title": "configurations.txt",
+              "DocumentMoniker": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Resources\\Templates\\configurations.txt",
+              "RelativeDocumentMoniker": "wedgeautodraw_1_2\\Resources\\Templates\\configurations.txt",
+              "ToolTip": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Resources\\Templates\\configurations.txt",
+              "RelativeToolTip": "wedgeautodraw_1_2\\Resources\\Templates\\configurations.txt",
+              "ViewState": "AgIAABYAAAAAAAAAAAAhwCMAAAAbAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003109|",
+              "WhenOpened": "2025-04-15T11:18:58.757Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
               "Title": "equations.txt",
               "DocumentMoniker": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Resources\\Templates\\equations.txt",
               "RelativeDocumentMoniker": "wedgeautodraw_1_2\\Resources\\Templates\\equations.txt",
               "ToolTip": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Resources\\Templates\\equations.txt",
               "RelativeToolTip": "wedgeautodraw_1_2\\Resources\\Templates\\equations.txt",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAHAAAAAAAAAA==",
+              "ViewState": "AgIAAD4AAAAAAAAAAAAQwE0AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003109|",
               "WhenOpened": "2025-04-15T09:34:48.458Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 6,
               "Title": "tolerances.txt",
               "DocumentMoniker": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Resources\\Templates\\tolerances.txt",
               "RelativeDocumentMoniker": "wedgeautodraw_1_2\\Resources\\Templates\\tolerances.txt",
               "ToolTip": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Resources\\Templates\\tolerances.txt",
               "RelativeToolTip": "wedgeautodraw_1_2\\Resources\\Templates\\tolerances.txt",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABgAAAAkAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAaAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003109|",
               "WhenOpened": "2025-04-15T08:40:19.704Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 8,
               "Title": "FileHelper.cs",
               "DocumentMoniker": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Infrastructure\\Utilities\\FileHelper.cs",
               "RelativeDocumentMoniker": "wedgeautodraw_1_2\\Infrastructure\\Utilities\\FileHelper.cs",
@@ -171,7 +188,7 @@
               "RelativeDocumentMoniker": "wedgeautodraw_1_2\\Infrastructure\\Utilities\\AutomationExecutor.cs",
               "ToolTip": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Infrastructure\\Utilities\\AutomationExecutor.cs",
               "RelativeToolTip": "wedgeautodraw_1_2\\Infrastructure\\Utilities\\AutomationExecutor.cs",
-              "ViewState": "AgIAAGsAAAAAAAAAAAAEwHgAAAAkAAAAAAAAAA==",
+              "ViewState": "AgIAALgAAAAAAAAAAAAAwMMAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-04-14T09:47:57.37Z",
               "EditorCaption": ""
@@ -184,14 +201,14 @@
               "RelativeDocumentMoniker": "wedgeautodraw_1_2\\Infrastructure\\Services\\ViewService.cs",
               "ToolTip": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Infrastructure\\Services\\ViewService.cs",
               "RelativeToolTip": "wedgeautodraw_1_2\\Infrastructure\\Services\\ViewService.cs",
-              "ViewState": "AgIAACoBAAAAAAAAAAAlwEQBAAAdAAAAAAAAAA==",
+              "ViewState": "AgIAAHMAAAAAAAAAAAAAAEIAAAAmAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-04-14T09:46:42.976Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 9,
               "Title": "TableService.cs",
               "DocumentMoniker": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Infrastructure\\Services\\TableService.cs",
               "RelativeDocumentMoniker": "wedgeautodraw_1_2\\Infrastructure\\Services\\TableService.cs",
@@ -203,7 +220,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 10,
               "Title": "SolidWorksService.cs",
               "DocumentMoniker": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Infrastructure\\Services\\SolidWorksService.cs",
               "RelativeDocumentMoniker": "wedgeautodraw_1_2\\Infrastructure\\Services\\SolidWorksService.cs",
@@ -215,20 +232,20 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 2,
               "Title": "PartService.cs",
               "DocumentMoniker": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Infrastructure\\Services\\PartService.cs",
               "RelativeDocumentMoniker": "wedgeautodraw_1_2\\Infrastructure\\Services\\PartService.cs",
               "ToolTip": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Infrastructure\\Services\\PartService.cs",
               "RelativeToolTip": "wedgeautodraw_1_2\\Infrastructure\\Services\\PartService.cs",
-              "ViewState": "AgIAAE8AAAAAAAAAAAAAwFkAAAAuAAAAAAAAAA==",
+              "ViewState": "AgIAAEYAAAAAAAAAAAAcwFMAAAAvAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-04-14T09:44:04.526Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
+              "DocumentIndex": 11,
               "Title": "DrawingService.cs",
               "DocumentMoniker": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Infrastructure\\Services\\DrawingService.cs",
               "RelativeDocumentMoniker": "wedgeautodraw_1_2\\Infrastructure\\Services\\DrawingService.cs",
@@ -240,20 +257,20 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 4,
               "Title": "DataContainerLoader.cs",
               "DocumentMoniker": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Infrastructure\\Services\\DataContainerLoader.cs",
               "RelativeDocumentMoniker": "wedgeautodraw_1_2\\Infrastructure\\Services\\DataContainerLoader.cs",
               "ToolTip": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Infrastructure\\Services\\DataContainerLoader.cs",
               "RelativeToolTip": "wedgeautodraw_1_2\\Infrastructure\\Services\\DataContainerLoader.cs",
-              "ViewState": "AgIAADgAAAAAAAAAAAAMwEkAAAAyAAAAAAAAAA==",
+              "ViewState": "AgIAAJEAAAAAAAAAAAAewG8AAAArAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-04-14T09:40:38.663Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 11,
+              "DocumentIndex": 12,
               "Title": "WedgeData.cs",
               "DocumentMoniker": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Core\\Models\\WedgeData.cs",
               "RelativeDocumentMoniker": "wedgeautodraw_1_2\\Core\\Models\\WedgeData.cs",
@@ -265,7 +282,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 12,
+              "DocumentIndex": 13,
               "Title": "DynamicDimensioningContainer.cs",
               "DocumentMoniker": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Core\\Models\\DynamicDimensioningContainer.cs",
               "RelativeDocumentMoniker": "wedgeautodraw_1_2\\Core\\Models\\DynamicDimensioningContainer.cs",
@@ -277,7 +294,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 13,
+              "DocumentIndex": 14,
               "Title": "DynamicDataContainer.cs",
               "DocumentMoniker": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Core\\Models\\DynamicDataContainer.cs",
               "RelativeDocumentMoniker": "wedgeautodraw_1_2\\Core\\Models\\DynamicDataContainer.cs",
@@ -289,7 +306,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 14,
+              "DocumentIndex": 15,
               "Title": "DrawingData.cs",
               "DocumentMoniker": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Core\\Models\\DrawingData.cs",
               "RelativeDocumentMoniker": "wedgeautodraw_1_2\\Core\\Models\\DrawingData.cs",
@@ -301,7 +318,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 15,
+              "DocumentIndex": 16,
               "Title": "DimensioningStorage.cs",
               "DocumentMoniker": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Core\\Models\\DimensioningStorage.cs",
               "RelativeDocumentMoniker": "wedgeautodraw_1_2\\Core\\Models\\DimensioningStorage.cs",
@@ -313,7 +330,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 16,
+              "DocumentIndex": 17,
               "Title": "DataStorage.cs",
               "DocumentMoniker": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Core\\Models\\DataStorage.cs",
               "RelativeDocumentMoniker": "wedgeautodraw_1_2\\Core\\Models\\DataStorage.cs",
@@ -325,7 +342,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 17,
+              "DocumentIndex": 18,
               "Title": "IViewService.cs",
               "DocumentMoniker": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Core\\Interfaces\\IViewService.cs",
               "RelativeDocumentMoniker": "wedgeautodraw_1_2\\Core\\Interfaces\\IViewService.cs",
@@ -337,7 +354,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 18,
+              "DocumentIndex": 19,
               "Title": "ITableService.cs",
               "DocumentMoniker": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Core\\Interfaces\\ITableService.cs",
               "RelativeDocumentMoniker": "wedgeautodraw_1_2\\Core\\Interfaces\\ITableService.cs",
@@ -349,7 +366,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 19,
+              "DocumentIndex": 20,
               "Title": "ISolidWorksService.cs",
               "DocumentMoniker": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Core\\Interfaces\\ISolidWorksService.cs",
               "RelativeDocumentMoniker": "wedgeautodraw_1_2\\Core\\Interfaces\\ISolidWorksService.cs",
@@ -361,7 +378,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 21,
+              "DocumentIndex": 22,
               "Title": "IDrawingService.cs",
               "DocumentMoniker": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Core\\Interfaces\\IDrawingService.cs",
               "RelativeDocumentMoniker": "wedgeautodraw_1_2\\Core\\Interfaces\\IDrawingService.cs",
@@ -373,7 +390,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 22,
+              "DocumentIndex": 23,
               "Title": "IDataContainerLoader.cs",
               "DocumentMoniker": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Core\\Interfaces\\IDataContainerLoader.cs",
               "RelativeDocumentMoniker": "wedgeautodraw_1_2\\Core\\Interfaces\\IDataContainerLoader.cs",
@@ -385,7 +402,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 23,
+              "DocumentIndex": 24,
               "Title": "Unit.cs",
               "DocumentMoniker": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Core\\Enums\\Unit.cs",
               "RelativeDocumentMoniker": "wedgeautodraw_1_2\\Core\\Enums\\Unit.cs",
@@ -397,7 +414,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 24,
+              "DocumentIndex": 25,
               "Title": "DrawingType.cs",
               "DocumentMoniker": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Core\\Enums\\DrawingType.cs",
               "RelativeDocumentMoniker": "wedgeautodraw_1_2\\Core\\Enums\\DrawingType.cs",
@@ -409,7 +426,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 7,
               "Title": "Program.cs",
               "DocumentMoniker": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Program.cs",
               "RelativeDocumentMoniker": "wedgeautodraw_1_2\\Program.cs",
@@ -417,8 +434,7 @@
               "RelativeToolTip": "wedgeautodraw_1_2\\Program.cs",
               "ViewState": "AgIAAA0AAAAAAAAAAAAgwCYAAAAEAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-14T09:08:22.917Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-04-14T09:08:22.917Z"
             }
           ]
         }

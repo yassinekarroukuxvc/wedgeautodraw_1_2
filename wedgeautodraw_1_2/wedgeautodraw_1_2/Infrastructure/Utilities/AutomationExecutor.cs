@@ -34,8 +34,10 @@ public static class AutomationExecutor
         CreateFrontView(drawingService, drawingData, wedgeData);
         CreateSideView(drawingService, drawingData, wedgeData);
         CreateTopView(drawingService, drawingData, wedgeData);
-        CreateDetailView(drawingService, drawingData, wedgeData);
-        CreateSectionView(drawingService, drawingData, wedgeData);
+
+        // Store created detail view to reuse for section view
+        var detailView = CreateDetailView(drawingService, drawingData, wedgeData);
+        CreateSectionView(drawingService, drawingData, wedgeData, detailView);
 
         ITableService tableService = new TableService(swApp, drawingService.GetModel());
         tableService.CreateDimensionTable(drawingData.TablePositions["dimension"], drawingData.DimensionKeysInTable, "DIMENSIONS:", drawingData, wedgeData.Dimensions);
@@ -102,7 +104,7 @@ public static class AutomationExecutor
         view.SetPositionAndLabelDatumFeature(wed.Dimensions, draw.DimensionStyles, "A");
     }
 
-    private static void CreateDetailView(IDrawingService drawingService, DrawingData draw, WedgeData wed)
+    private static IViewService CreateDetailView(IDrawingService drawingService, DrawingData draw, WedgeData wed)
     {
         ModelDoc2 model = drawingService.GetModel();
         IViewService view = new ViewService("Detail_view", ref model);
@@ -124,9 +126,11 @@ public static class AutomationExecutor
         });
 
         view.SetPositionAndValuesAndLabelGeometricTolerance(wed.Dimensions, draw.DimensionStyles, "A");
+
+        return view;
     }
 
-    private static void CreateSectionView(IDrawingService drawingService, DrawingData draw, WedgeData wed)
+    private static void CreateSectionView(IDrawingService drawingService, DrawingData draw, WedgeData wed, IViewService detailView)
     {
         ModelDoc2 model = drawingService.GetModel();
         model.ForceRebuild3(false);
@@ -138,7 +142,6 @@ public static class AutomationExecutor
             IViewService sectionView = new ViewService("Section_view", ref model);
             sectionView.SetViewScale(draw.ViewScales["Section_view"].GetValue(Unit.Millimeter));
 
-            
             model.ClearSelection2(true);
             var sketchSegment = model.SketchManager.CreateLine(
                 0.0,
@@ -154,7 +157,6 @@ public static class AutomationExecutor
                 return;
             }
 
-            var detailView = new ViewService("Detail_view", ref model);
             bool created = sectionView.CreateSectionView(detailView, draw.ViewPositions["Section_view"], sketchSegment, wed.Dimensions, draw);
 
             if (!created)
@@ -190,6 +192,4 @@ public static class AutomationExecutor
             Console.WriteLine("❌ Exception during section view creation: " + ex.Message);
         }
     }
-
-
 }
