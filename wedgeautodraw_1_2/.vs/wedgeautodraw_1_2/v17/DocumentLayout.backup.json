@@ -127,8 +127,7 @@
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-04-14T09:19:08.764Z",
-              "IsPinned": true,
-              "EditorCaption": ""
+              "IsPinned": true
             },
             {
               "$type": "Document",
@@ -140,8 +139,7 @@
               "RelativeToolTip": "wedgeautodraw_1_2\\Resources\\Templates\\configurations.txt",
               "ViewState": "AgIAABYAAAAAAAAAAAAhwCMAAAAbAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003109|",
-              "WhenOpened": "2025-04-15T11:18:58.757Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-04-15T11:18:58.757Z"
             },
             {
               "$type": "Document",
@@ -153,8 +151,7 @@
               "RelativeToolTip": "wedgeautodraw_1_2\\Resources\\Templates\\equations.txt",
               "ViewState": "AgIAAD4AAAAAAAAAAAAQwE0AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003109|",
-              "WhenOpened": "2025-04-15T09:34:48.458Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-04-15T09:34:48.458Z"
             },
             {
               "$type": "Document",
@@ -166,8 +163,7 @@
               "RelativeToolTip": "wedgeautodraw_1_2\\Resources\\Templates\\tolerances.txt",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAaAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003109|",
-              "WhenOpened": "2025-04-15T08:40:19.704Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-04-15T08:40:19.704Z"
             },
             {
               "$type": "Document",
@@ -179,8 +175,7 @@
               "RelativeToolTip": "wedgeautodraw_1_2\\Infrastructure\\Utilities\\FileHelper.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-14T09:48:41.079Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-04-14T09:48:41.079Z"
             },
             {
               "$type": "Document",
@@ -190,7 +185,7 @@
               "RelativeDocumentMoniker": "wedgeautodraw_1_2\\Infrastructure\\Utilities\\AutomationExecutor.cs",
               "ToolTip": "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Infrastructure\\Utilities\\AutomationExecutor.cs",
               "RelativeToolTip": "wedgeautodraw_1_2\\Infrastructure\\Utilities\\AutomationExecutor.cs",
-              "ViewState": "AgIAAKkAAAAAAAAAAAAAwLUAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAALAAAAAAAAAAAAAuwL0AAAAcAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-04-14T09:47:57.37Z",
               "EditorCaption": ""
@@ -205,8 +200,7 @@
               "RelativeToolTip": "wedgeautodraw_1_2\\Infrastructure\\Services\\ViewService.cs",
               "ViewState": "AgIAAHABAAAAAAAAAADwv64BAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-14T09:46:42.976Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-04-14T09:46:42.976Z"
             },
             {
               "$type": "Document",
@@ -218,8 +212,7 @@
               "RelativeToolTip": "wedgeautodraw_1_2\\Infrastructure\\Services\\TableService.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAHAAAAAWAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-14T09:45:38.492Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-04-14T09:45:38.492Z"
             },
             {
               "$type": "Document",
@@ -231,8 +224,7 @@
               "RelativeToolTip": "wedgeautodraw_1_2\\Infrastructure\\Services\\SolidWorksService.cs",
               "ViewState": "AgIAAAYAAAAAAAAAAAApwA4AAAAJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-14T09:44:51.862Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-04-14T09:44:51.862Z"
             },
             {
               "$type": "Document",
@@ -244,8 +236,7 @@
               "RelativeToolTip": "wedgeautodraw_1_2\\Infrastructure\\Services\\PartService.cs",
               "ViewState": "AgIAAEYAAAAAAAAAAAAcwFMAAAAvAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-14T09:44:04.526Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-04-14T09:44:04.526Z"
             },
             {
               "$type": "Document",
@@ -257,8 +248,7 @@
               "RelativeToolTip": "wedgeautodraw_1_2\\Infrastructure\\Services\\DrawingService.cs",
               "ViewState": "AgIAAGkAAAAAAAAAAAAlwHIAAAAUAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-14T09:41:45.899Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-04-14T09:41:45.899Z"
             },
             {
               "$type": "Document",
@@ -270,8 +260,7 @@
               "RelativeToolTip": "wedgeautodraw_1_2\\Infrastructure\\Services\\DataContainerLoader.cs",
               "ViewState": "AgIAAFQAAAAAAAAAAAAowG8AAAArAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-14T09:40:38.663Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-04-14T09:40:38.663Z"
             },
             {
               "$type": "Document",
@@ -355,8 +344,7 @@
               "RelativeToolTip": "wedgeautodraw_1_2\\Core\\Interfaces\\IViewService.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAlAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-14T09:22:26.3Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-04-14T09:22:26.3Z"
             },
             {
               "$type": "Document",
@@ -368,8 +356,7 @@
               "RelativeToolTip": "wedgeautodraw_1_2\\Core\\Interfaces\\ITableService.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-14T09:21:26.203Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-04-14T09:21:26.203Z"
             },
             {
               "$type": "Document",
@@ -381,8 +368,7 @@
               "RelativeToolTip": "wedgeautodraw_1_2\\Core\\Interfaces\\ISolidWorksService.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAiAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-14T09:19:55.914Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-04-14T09:19:55.914Z"
             },
             {
               "$type": "Document",
@@ -394,8 +380,7 @@
               "RelativeToolTip": "wedgeautodraw_1_2\\Core\\Interfaces\\IDrawingService.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAiAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-14T09:18:17.155Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-04-14T09:18:17.155Z"
             },
             {
               "$type": "Document",
@@ -407,8 +392,7 @@
               "RelativeToolTip": "wedgeautodraw_1_2\\Core\\Interfaces\\IDataContainerLoader.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-14T09:17:11.495Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-04-14T09:17:11.495Z"
             },
             {
               "$type": "Document",
