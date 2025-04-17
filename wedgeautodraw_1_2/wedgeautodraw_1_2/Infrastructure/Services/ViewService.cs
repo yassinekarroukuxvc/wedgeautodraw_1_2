@@ -393,7 +393,7 @@ public class ViewService : IViewService
                 var pos = drawDimensions["GeometricTolerance"].Position;
                 gtol.SetPosition(pos.GetValues(Unit.Meter)[0], pos.GetValues(Unit.Meter)[1], 0.0);
 
-                string tolInInch = Math.Round(wedgeDimensions["SymmetryTolerance"].GetValue(Unit.Inch), 4).ToString("0.0000");
+                string tolInInch = Math.Round(wedgeDimensions["SymmetryTolerance"].GetValue(Unit.Millimeter), 4).ToString("0.0000");
                 string tolInMm = "[" + wedgeDimensions["SymmetryTolerance"].GetValue(Unit.Millimeter).ToString("0.###") + "]";
 
                 bool result = gtol.SetFrameValues2(1, tolInInch, "", tolInMm, label, "");

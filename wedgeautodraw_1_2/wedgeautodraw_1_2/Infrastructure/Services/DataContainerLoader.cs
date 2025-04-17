@@ -9,15 +9,14 @@ namespace wedgeautodraw_1_2.Infrastructure.Services;
 public class DataContainerLoader : IDataContainerLoader
 {
     private readonly string _equationFilePath;
-    private readonly string _toleranceFilePath;
+    private string _toleranceFilePath;
 
-    public DataContainerLoader(string equationFilePath, string toleranceFilePath = null)
+    public DataContainerLoader(string equationFilePath)
     {
         _equationFilePath = equationFilePath;
-        _toleranceFilePath = toleranceFilePath;
     }
 
-    public WedgeData LoadWedgeData()
+    public WedgeData LoadWedgeData(string toleranceFilePath)
     {
         var wedgeData = new WedgeData();
 

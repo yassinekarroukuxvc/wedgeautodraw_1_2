@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="ClosedXML" Version="0.104.2" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="SolidWorks.Interop.sldworks">
       <HintPath>Resources\SolidWorks.Interop.sldworks.dll</HintPath>
     </Reference>

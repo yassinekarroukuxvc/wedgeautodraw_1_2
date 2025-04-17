@@ -117,7 +117,7 @@ public static class AutomationExecutor
 
         view.SetPositionAndNameDimensioning(wed.Dimensions, draw.DimensionStyles, new Dictionary<string, string>
         {
-            {"ISA", "SelectByName"},
+            /*{"ISA", "SelectByName"},*/
             /*{"GA",  "SelectByName"},
             {"B",   "SelectByName"},
             {"W",   "SelectByName"},
