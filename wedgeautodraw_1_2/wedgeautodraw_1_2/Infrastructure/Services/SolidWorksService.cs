@@ -24,6 +24,7 @@ public class SolidWorksService : ISolidWorksService
         _swApp.UserControl = userControl;
         _swApp.UserControlBackground = backgroundControl;
 
+
         return _swApp;
     }
 }

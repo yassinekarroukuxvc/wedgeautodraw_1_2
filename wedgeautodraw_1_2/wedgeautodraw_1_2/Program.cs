@@ -19,7 +19,7 @@ class Program
         string equationPath = Path.Combine(resourcePath, "equations.txt");
         string tolerancePath = Path.Combine(resourcePath, "tolerances.txt");
         string configurationPath = Path.Combine(resourcePath, "configurations.txt");
-        string excelPath = Path.Combine(resourcePath, "CKVD_DATA_10_Parts.xlsx");
+        string excelPath = Path.Combine(resourcePath, "Copy.xlsx");
 
         ISolidWorksService swService = new SolidWorksService();
         SldWorks swApp = swService.GetApplication();
@@ -40,14 +40,12 @@ class Program
 
             string modPartPath = Path.Combine(outputDir, $"{wedgeId}.SLDPRT");
             string modDrawingPath = Path.Combine(outputDir, $"{wedgeId}.SLDDRW");
-            string modEquationPath = Path.Combine(outputDir, $"{wedgeId}_equations.txt");
+            string modEquationPath = Path.Combine(outputDir, $"equations.txt");
             string outputPdfPath = Path.Combine(outputDir, $"{wedgeId}.pdf");
 
             FileHelper.CopyTemplateFile(partPath, modPartPath);
             FileHelper.CopyTemplateFile(drawingPath, modDrawingPath);
             FileHelper.CopyTemplateFile(equationPath, modEquationPath);
-
-            
 
             IDataContainerLoader dataLoader = new DataContainerLoader(modEquationPath);
             var fullDrawingData = dataLoader.LoadDrawingData(wedge, configurationPath);

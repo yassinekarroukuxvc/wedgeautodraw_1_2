@@ -105,11 +105,17 @@ public class DataContainerLoader : IDataContainerLoader
         string GetStr(string key) => config.TryGetValue(key, out var v) ? v : string.Empty;
 
         // View Scales
+        double defaultScale = Get("scaling_dsv");
+        double W_value = wedgeData.Dimensions.ContainsKey("W") ? wedgeData.Dimensions["W"].GetValue(Unit.Millimeter) : 10.0;
+
+        // Decrease scale only if W is above a threshold
+        double adjustedScale = W_value >= 0.9 ? Math.Max(defaultScale * (1.0 / W_value), 0.2) : defaultScale;
+        adjustedScale = Math.Round(adjustedScale, 3);
         drawingData.ViewScales["Front_view"] = new DataStorage(Get("scaling_fsv"));
         drawingData.ViewScales["Side_view"] = new DataStorage(Get("scaling_fsv"));
         drawingData.ViewScales["Top_view"] = new DataStorage(Get("scaling_fsv"));
-        drawingData.ViewScales["Detail_view"] = new DataStorage(Get("scaling_dsv"));
-        drawingData.ViewScales["Section_view"] = new DataStorage(Get("scaling_dsv"));
+        drawingData.ViewScales["Detail_view"] = new DataStorage(adjustedScale);
+        drawingData.ViewScales["Section_view"] = new DataStorage(adjustedScale);
 
         double fx = 0.0;
         double td = wedgeData.Dimensions["TD"].GetValue(Unit.Millimeter);

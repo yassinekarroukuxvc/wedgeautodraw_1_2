@@ -156,10 +156,13 @@ public class PartService : IPartService
 
     public void Save(bool close = false)
     {
-        _swModel.Save3((int)swSaveAsVersion_e.swSaveAsCurrentVersion, ref _error, ref _warning);
+        // Save silently without prompts
+        _swModel.Save3((int)swSaveAsOptions_e.swSaveAsOptions_Silent, ref _error, ref _warning);
+
         if (close)
             _swApp.CloseDoc(_partPath);
     }
+
 
     public void Reopen()
     {

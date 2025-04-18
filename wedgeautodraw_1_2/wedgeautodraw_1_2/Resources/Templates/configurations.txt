@@ -1,15 +1,15 @@
 # === View Scaling ===
 scaling_fsv=3
-scaling_dsv=70
+scaling_dsv=55
 
 # === View Positions ===
 front_view_posX=30
 front_view_posY=100
 side_view_dX=35
 top_view_dY=87
-detail_view_posX=170
+detail_view_posX=150
 detail_view_posY=180
-section_view_posX=90
+section_view_posX=83
 
 # === Table Positions ===
 dim_table_posX=130
@@ -17,14 +17,14 @@ dim_table_posY=51
 dim_table_width=45
 
 how_to_order_posX=130
-how_to_order_posY=51
+how_to_order_posY=67
 how_to_order_width=60
 
 label_as_posX=130
 label_as_posY=120
 label_as_width=40
 
-polish_posX=130
+polish_posX=200
 polish_posY=86
 polish_width=20
 
