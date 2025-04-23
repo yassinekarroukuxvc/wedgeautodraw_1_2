@@ -32,7 +32,7 @@ class Program
         {
             var wedge = wedgeDataList[i];
             var drawing = drawingDataList[i];
-            
+
 
             string wedgeId = wedge.Metadata.ContainsKey("drawing_number") ? wedge.Metadata["drawing_number"].ToString() : $"Wedge_{i + 1}";
             string outputDir = Path.Combine(resourcePath, "Generated", wedgeId);
@@ -51,9 +51,19 @@ class Program
             var fullDrawingData = dataLoader.LoadDrawingData(wedge, configurationPath);
 
             EquationFileUpdater.UpdateEquationFile(modEquationPath, wedge);
-            AutomationExecutor.RunPartAutomation(swApp, partPath, modEquationPath, modPartPath, modEquationPath, wedge);
-            AutomationExecutor.RunDrawingAutomation(swApp, drawingPath, modDrawingPath, partPath, modPartPath, fullDrawingData, wedge, outputPdfPath);
-
+            //AutomationExecutor.RunPartAutomation(swApp, partPath, modEquationPath, modPartPath, modEquationPath, wedge);
+            //AutomationExecutor.RunDrawingAutomation(swApp, drawingPath, modDrawingPath, partPath, modPartPath, fullDrawingData, wedge, outputPdfPath);
+            AutomationExecutor.RunPartAndDrawingAutomation(
+                swApp,
+                partPath,
+                drawingPath,
+                modPartPath,
+                modDrawingPath,
+                modEquationPath,
+                fullDrawingData,
+                wedge,
+                outputPdfPath
+            );
             Console.WriteLine($"✅ Processed wedge: {wedgeId}");
         }
 

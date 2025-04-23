@@ -11,7 +11,7 @@ public interface IViewService
     bool CreateFixedCentermark(DynamicDataContainer wedgeDimensions, DrawingData drawData);
     bool SetBreaklinePosition(DynamicDataContainer wedgeDimensions, DrawingData drawData);
     bool SetBreakLineGap(double gap);
-    public bool CreateSectionView(IViewService parentView, DataStorage position, SketchSegment sketchSegment, DynamicDataContainer wedgeDimensions, DrawingData drawData);
+    public string CreateSectionView(IViewService parentView, DataStorage position, SketchSegment sketchSegment, DynamicDataContainer wedgeDimensions, DrawingData drawData);
     bool InsertModelDimensioning();
     bool SetPositionAndNameDimensioning(DynamicDataContainer wedgeDimensions, DynamicDimensioningContainer drawDimensions, Dictionary<string, string> dimensionTypes);
     bool SetPositionAndLabelDatumFeature(DynamicDataContainer wedgeDimensions, DynamicDimensioningContainer drawDimensions, string label);

@@ -109,7 +109,7 @@ public class DataContainerLoader : IDataContainerLoader
         double W_value = wedgeData.Dimensions.ContainsKey("W") ? wedgeData.Dimensions["W"].GetValue(Unit.Millimeter) : 10.0;
 
         // Decrease scale only if W is above a threshold
-        double adjustedScale = W_value >= 0.9 ? Math.Max(defaultScale * (1.0 / W_value), 0.2) : defaultScale;
+        double adjustedScale = W_value >= 0.7 ? Math.Max(defaultScale * (1.0 / W_value), 0.2) : defaultScale;
         adjustedScale = Math.Round(adjustedScale, 3);
         drawingData.ViewScales["Front_view"] = new DataStorage(Get("scaling_fsv"));
         drawingData.ViewScales["Side_view"] = new DataStorage(Get("scaling_fsv"));

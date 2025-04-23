@@ -15,4 +15,6 @@ public interface IDrawingService
     void ZoomToFit();
     ModelDoc2 GetModel();
     void ReplaceReferencedModel(string drawingPath, string oldModelPath, string newModelPath);
+    void Reopen();
+    void Unlock();
 }

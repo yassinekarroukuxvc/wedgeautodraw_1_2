@@ -19,12 +19,33 @@ public class ViewService : IViewService
     {
         _viewName = viewName;
         _model = model;
+
         _status = _model.Extension.SelectByID2(viewName, "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
-        _drawingDoc = (DrawingDoc)_model;
+        if (!_status)
+        {
+            Console.WriteLine($"Failed to select drawing view: {viewName}");
+        }
+
+        _drawingDoc = _model as DrawingDoc;
+        if (_drawingDoc == null)
+        {
+            Console.WriteLine("Model is not a DrawingDoc.");
+            return;
+        }
+
         _status = _drawingDoc.ActivateView(viewName);
         _swView = (View)_drawingDoc.ActiveDrawingView;
-        _scaling = _swView.ScaleDecimal;
+
+        if (_swView == null)
+        {
+            Console.WriteLine($"Failed to get ActiveDrawingView after activating {viewName}");
+        }
+        else
+        {
+            _scaling = _swView.ScaleDecimal;
+        }
     }
+
     public bool SetViewScale(double scale)
     {
         try
@@ -224,77 +245,114 @@ public class ViewService : IViewService
             return false;
         }
     }
-    public bool CreateSectionView(IViewService parentView, DataStorage position, SketchSegment sketchSegment, DynamicDataContainer wedgeDimensions, DrawingData drawData)
+    public string CreateSectionView(
+        IViewService parentView,
+        DataStorage position,
+        SketchSegment sketchSegment,
+        DynamicDataContainer wedgeDimensions,
+        DrawingData drawData)
     {
         try
         {
-            Console.WriteLine("🔄 Starting section view creation...");
+            Console.WriteLine("Starting section view creation...");
 
-            // Access drawing and model from current context
             var drawingDoc = (DrawingDoc)_model;
-
-            // Clear any existing selections and select the sketch segment
             _model.ClearSelection2(true);
             bool selected = sketchSegment.Select4(false, null);
 
             if (!selected)
             {
-                Console.WriteLine("❌ Failed to select sketch segment.");
-                return false;
+                Console.WriteLine("Failed to select sketch segment.");
+                return null;
             }
 
-            // Create the section view
-            var sectionView = drawingDoc.CreateSectionViewAt5(
+            var view = drawingDoc.CreateSectionViewAt5(
                 position.GetValues(Unit.Meter)[0],
                 position.GetValues(Unit.Meter)[1],
                 0.0,
-                "", // label
+                "",
                 (int)swCreateSectionViewAtOptions_e.swCreateSectionView_ChangeDirection,
-                null, // use selection
-                0.01 // depth
+                null,
+                0.01
             );
 
-            if (sectionView == null)
+            if (view == null)
             {
-                Console.WriteLine("❌ Section view creation failed.");
-                return false;
+                Console.WriteLine("Section view creation failed.");
+                return null;
             }
 
-            var swSectionView = (DrSection)sectionView.GetSection();
-            swSectionView.SetAutoHatch(true);
-            swSectionView.SetLabel2("");
-            swSectionView.CutSurfaceBodies = false;
-            swSectionView.CuttingLineShoulders = false;
-            swSectionView.DisplaySurfaceBodies = false;
-            swSectionView.ExcludeSliceSectionBodies = false;
+            var swSection = view.GetSection() as DrSection;
+            swSection?.SetAutoHatch(true);
+            swSection?.SetLabel2("Section_view");
 
-            Console.WriteLine("✅ Section view created successfully.");
-            return true;
+            string newName = view.Name;
+            Console.WriteLine($"Section view created: {newName}");
+            return newName;
         }
         catch (Exception ex)
         {
             Console.WriteLine("❌ Exception during section view creation: " + ex.Message);
-            return false;
+            return null;
         }
     }
+
     public bool InsertModelDimensioning()
     {
         try
         {
-            var drawingDoc = (DrawingDoc)_swView.GetType().InvokeMember("Model", System.Reflection.BindingFlags.GetProperty, null, _swView, null);
-            object result = drawingDoc.InsertModelAnnotations3(
-                (int)swImportModelItemsSource_e.swImportModelItemsFromEntireModel,
-                (int)swInsertAnnotation_e.swInsertDimensionsMarkedForDrawing,
-                false, true, false, false
-            );
+            _model.ForceRebuild3(false);
 
-            return result is object[] inserted && inserted.Length > 0;
+            bool selected = _model.Extension.SelectByID2(_swView.Name, "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
+            if (!selected)
+            {
+                Console.WriteLine($"Failed to select drawing view: {_swView.Name}");
+                return false;
+            }
+
+            if (_model is DrawingDoc drawingDoc)
+            {
+                drawingDoc.ActivateView(_swView.Name);
+                _swView = (View)drawingDoc.ActiveDrawingView;
+
+                // Ensure model items are marked for drawing
+                IModelDoc2 refModel = _swView.ReferencedDocument;
+                if (refModel != null)
+                {
+                    refModel.ForceRebuild3(false);
+                    refModel.ShowNamedView2("*Front", -1);
+                    refModel.ViewZoomtofit2();
+                }
+
+                // Insert all model dimensions
+                object result = drawingDoc.InsertModelAnnotations3(
+                    (int)swImportModelItemsSource_e.swImportModelItemsFromEntireModel,
+                    (int)swInsertAnnotation_e.swInsertDimensionsMarkedForDrawing,
+                    false, true, false, false
+                );
+
+                if (result is object[] inserted && inserted.Length > 0)
+                {
+                    Console.WriteLine($"Inserted {inserted.Length} model dimensions.");
+                    return true;
+                }
+                else
+                {
+                    Console.WriteLine("No model dimensions inserted.");
+                    return false;
+                }
+            }
+
+            Console.WriteLine("_model is not a DrawingDoc.");
+            return false;
         }
-        catch
+        catch (Exception ex)
         {
+            Console.WriteLine("Exception in InsertModelDimensioning: " + ex.Message);
             return false;
         }
     }
+
     public bool SetPositionAndNameDimensioning(DynamicDataContainer wedgeDimensions, DynamicDimensioningContainer drawDimensions, Dictionary<string, string> dimensionTypes)
     {
         try
@@ -340,8 +398,27 @@ public class ViewService : IViewService
 
     private void SetAnnotationPositionAndName(Annotation swAnn, DataStorage pos, string name)
     {
+        if (swAnn == null || pos == null)
+        {
+            Console.WriteLine($"Cannot set position for {name}: Missing annotation or position data.");
+            return;
+        }
+
         double[] coords = pos.GetValues(Unit.Meter);
-        swAnn.SetPosition2(coords[0], coords[1], 0.0);
+        if (coords.Length < 2)
+        {
+            Console.WriteLine($"Invalid position array for dimension {name}");
+            return;
+        }
+
+        // Convert to drawing units — you can scale if necessary here
+        double x = coords[0];
+        double y = coords[1];
+
+        // Debug output
+        Console.WriteLine($"Moving annotation '{name}' to: ({x:F4}, {y:F4}) meters");
+
+        swAnn.SetPosition2(x, y, 0.0);
         swAnn.Layer = "FORMAT";
         swAnn.SetName(name);
     }
@@ -413,18 +490,27 @@ public class ViewService : IViewService
         {
             if (swModel == null) return;
 
-            string viewName = _swView.Name;
+            string viewName = _swView?.Name ?? _viewName;
             bool selected = swModel.Extension.SelectByID2(viewName, "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
 
             if (selected && swModel is DrawingDoc drawingDoc)
             {
                 drawingDoc.ActivateView(viewName);
                 _swView = (View)drawingDoc.ActiveDrawingView;
+
+                if (_swView != null)
+                    Console.WriteLine($"Reactivated view: {_swView.GetName2()}");
+                else
+                    Console.WriteLine("Failed to get ActiveDrawingView after activating " + viewName);
+            }
+            else
+            {
+                Console.WriteLine("Failed to select drawing view: " + viewName);
             }
         }
-        catch
+        catch (Exception ex)
         {
-            Console.WriteLine("Error while Reactivating the View");
+            Console.WriteLine("Error while Reactivating the View: " + ex.Message);
         }
     }
 

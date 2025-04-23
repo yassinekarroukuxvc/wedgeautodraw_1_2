@@ -1,8 +1,10 @@
-﻿using SolidWorks.Interop.sldworks;
+﻿using DocumentFormat.OpenXml.EMMA;
+using SolidWorks.Interop.sldworks;
 using SolidWorks.Interop.swconst;
 using System.Runtime.InteropServices;
 using wedgeautodraw_1_2.Core.Interfaces;
 using wedgeautodraw_1_2.Core.Models;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace wedgeautodraw_1_2.Infrastructure.Services;
 
@@ -117,5 +119,32 @@ public class DrawingService : IDrawingService
     public void ReplaceReferencedModel(string drawingPath, string oldModelPath, string newModelPath)
     {
         _swApp.ReplaceReferencedDocument(drawingPath, oldModelPath, newModelPath);
+    }
+    public void Reopen()
+    {
+        try
+        {
+            _swApp.OpenDoc6(_drawingPath, (int)swDocumentTypes_e.swDocDRAWING,
+                (int)swOpenDocOptions_e.swOpenDocOptions_LoadModel, string.Empty, ref _error, ref _warning);
+            _swModel = (ModelDoc2)_swApp.ActiveDoc;
+            _swDrawing = (DrawingDoc)_swModel;
+            _swModelExt = _swModel.Extension;
+            _swModel.Lock();
+        }
+        catch (Exception)
+        {
+            Console.WriteLine("Unable to Reopen the Drawing");
+        }
+    }
+    public void Unlock()
+    {
+        try
+        {
+            _swModel.UnLock();
+        }
+        catch (Exception)
+        {
+            Console.WriteLine("Unable to Unlock the Drawing");
+        }
     }
 }

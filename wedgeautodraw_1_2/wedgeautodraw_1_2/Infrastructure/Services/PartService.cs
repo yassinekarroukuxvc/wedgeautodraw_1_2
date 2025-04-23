@@ -83,27 +83,38 @@ public class PartService : IPartService
             {
                 _swModel.ClearSelection2(true);
                 bool selected = _swModelExt.SelectByID2($"{target.Name}@{target.Sketch}", "DIMENSION", 0, 0, 0, false, 0, null, 0);
-                if (!selected) continue;
+                if (!selected)
+                {
+                    Console.WriteLine($"⚠️ Failed to select dimension {target.Name}@{target.Sketch}");
+                    continue;
+                }
 
                 var selectionMgr = (ISelectionMgr)_swModel.SelectionManager;
                 var dispDim = selectionMgr.GetSelectedObject6(1, 0) as DisplayDimension;
-                if (dispDim == null) continue;
+                if (dispDim == null)
+                {
+                    Console.WriteLine($"⚠️ Failed to cast selected object to DisplayDimension for {target.Name}");
+                    continue;
+                }
 
-                dispDim.MarkedForDrawing = false;
+                dispDim.MarkedForDrawing = true; // ✅ Enable for drawing
+
                 var tol = dispDim.GetDimension2(0).Tolerance;
 
                 double upper = dimensions[target.Name].GetTolerance(Unit.Meter, "+");
                 double lower = dimensions[target.Name].GetTolerance(Unit.Meter, "-");
 
-                tol.Type = (upper != lower) ? (int)swTolType_e.swTolBILAT : (int)swTolType_e.swTolSYMMETRIC;
+                tol.Type = (upper != lower)
+                    ? (int)swTolType_e.swTolBILAT
+                    : (int)swTolType_e.swTolSYMMETRIC;
+
                 tol.SetValues(-lower, upper);
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error applying tolerances: {ex.Message}");
+            Console.WriteLine($"❌ Error applying tolerances: {ex.Message}");
         }
-
     }
 
     public void ToggleSketchVisibility(string sketchName, bool visible)
@@ -120,7 +131,7 @@ public class PartService : IPartService
 
             if (!selected)
             {
-                Console.WriteLine($"⚠️ Failed to select sketch '{sketchName}'.");
+                Console.WriteLine($"Failed to select sketch '{sketchName}'.");
                 return;
             }
 
@@ -130,11 +141,11 @@ public class PartService : IPartService
                 _swModel.BlankSketch();
 
             _swModel.ForceRebuild3(false);
-            Console.WriteLine($"✅ Sketch '{sketchName}' visibility set to {(visible ? "visible" : "hidden")}.");
+            Console.WriteLine($"Sketch '{sketchName}' visibility set to {(visible ? "visible" : "hidden")}.");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Error toggling sketch visibility: {ex.Message}");
+            Console.WriteLine($"Error toggling sketch visibility: {ex.Message}");
         }
     }
 
@@ -156,21 +167,34 @@ public class PartService : IPartService
 
     public void Save(bool close = false)
     {
-        // Save silently without prompts
         _swModel.Save3((int)swSaveAsOptions_e.swSaveAsOptions_Silent, ref _error, ref _warning);
 
         if (close)
             _swApp.CloseDoc(_partPath);
     }
 
-
-    public void Reopen()
+    public void Reopen(string partPath)
     {
-        _swApp.OpenDoc6(_partPath, (int)swDocumentTypes_e.swDocPART,
-            (int)swOpenDocOptions_e.swOpenDocOptions_LoadModel, "",
-            ref _error, ref _warning);
+        _partPath = partPath;
 
-        _swModel = (ModelDoc2)_swApp.ActiveDoc;
+        var model = _swApp.OpenDoc6(
+            partPath,
+            (int)swDocumentTypes_e.swDocPART,
+            (int)swOpenDocOptions_e.swOpenDocOptions_LoadModel,
+            "",
+            ref _error,
+            ref _warning
+        );
+
+        _swModel = (ModelDoc2)model;
+
+        if (_swModel == null)
+        {
+            Console.WriteLine("Failed to reopen the part. Model is null.");
+            return;
+        }
+
+        _swModelExt = _swModel.Extension;
         _swModel.Lock();
     }
 

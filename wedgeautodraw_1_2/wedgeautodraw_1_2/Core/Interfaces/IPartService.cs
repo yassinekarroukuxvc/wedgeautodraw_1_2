@@ -13,6 +13,6 @@ public interface IPartService
     void EnableAutoRebuild(bool enable);
     void Rebuild();
     void Save(bool close = false);
-    void Reopen();
+    void Reopen(string partPath);
     void Unlock();
 }

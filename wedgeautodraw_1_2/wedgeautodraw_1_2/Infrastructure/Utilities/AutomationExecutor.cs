@@ -8,38 +8,85 @@ namespace wedgeautodraw_1_2.Infrastructure.Utilities;
 
 public static class AutomationExecutor
 {
-    public static void RunPartAutomation(SldWorks swApp, string partPath, string equationPath, string modPartPath, string modEquationPath, WedgeData wedgeData)
+    public static void RunPartAndDrawingAutomation(
+        SldWorks swApp,
+        string partPath,
+        string drawingPath,
+        string modPartPath,
+        string modDrawingPath,
+        string modEquationPath,
+        DrawingData drawingData,
+        WedgeData wedgeData,
+        string outputPdfPath)
     {
-        IPartService partService = new PartService(swApp);
+        var partService = new PartService(swApp);
+        var drawingService = new DrawingService(swApp);
+
+        // PART
         partService.OpenPart(modPartPath);
         partService.ApplyTolerances(wedgeData.Dimensions);
         partService.UpdateEquations(modEquationPath);
         partService.SetEngravedText(wedgeData.EngravedText);
         partService.Rebuild();
-        partService.Save(close: true);
-    }
+        partService.Save();
 
-    public static void RunDrawingAutomation(SldWorks swApp, string drawingPath, string modDrawingPath, string partPath, string modPartPath, DrawingData drawingData, WedgeData wedgeData, string outputPdfPath)
-    {
-        if (File.Exists(modDrawingPath)) File.Delete(modDrawingPath);
-        File.Copy(drawingPath, modDrawingPath);
-
-        IDrawingService drawingService = new DrawingService(swApp);
+        // DRAWING
         drawingService.ReplaceReferencedModel(modDrawingPath, partPath, modPartPath);
         drawingService.OpenDrawing(modDrawingPath);
         drawingService.SetSummaryInformation(drawingData);
         drawingService.SetCustomProperties(drawingData);
         drawingService.Rebuild();
 
-        CreateFrontView(drawingService, drawingData, wedgeData);
-        CreateSideView(drawingService, drawingData, wedgeData);
-        CreateTopView(drawingService, drawingData, wedgeData);
+        ExecuteViewSteps(drawingService, drawingData, wedgeData);
 
-        // Store created detail view to reuse for section view
-        var detailView = CreateDetailView(drawingService, drawingData, wedgeData);
-        CreateSectionView(drawingService, drawingData, wedgeData, detailView);
+        // Create section cutting line sketch
+        var sketchSegment = CreateCuttingLineSketch(drawingService, wedgeData);
+        var model = drawingService.GetModel();
 
-        ITableService tableService = new TableService(swApp, drawingService.GetModel());
+        // Create section view and capture actual name
+        var tempDetailView = new ViewService("Detail_view", ref model);
+        string actualSectionViewName = tempDetailView.CreateSectionView(
+            new ViewService("Detail_view", ref model),
+            drawingData.ViewPositions["Section_view"],
+            sketchSegment,
+            wedgeData.Dimensions,
+            drawingData
+        );
+
+        drawingService.SaveDrawing();
+        drawingService.SaveAndCloseDrawing();
+
+        // Toggle sketches
+        partService.ToggleSketchVisibility("sketch_engraving", false);
+        partService.ToggleSketchVisibility("sketch_groove_dimensions", true);
+        partService.Save();
+
+        // Reopen drawing
+        drawingService.Reopen();
+        model = drawingService.GetModel();
+
+        // Reactivate section view with actual name
+        var sectionView = new ViewService(actualSectionViewName, ref model);
+        sectionView.ReactivateView(ref model);
+        sectionView.SetViewScale(drawingData.ViewScales["Section_view"].GetValue(Unit.Millimeter));
+
+        // Insert and position dimensions
+        sectionView.InsertModelDimensioning();
+       /* sectionView.SetPositionAndNameDimensioning(wedgeData.Dimensions, drawingData.DimensionStyles, new()
+        {
+            { "F", "SelectByName" },
+            { "FL", "SelectByName" },
+            { "FR", "SelectByName" },
+            { "BR", "SelectByName" }
+        })*/;
+
+        partService.ToggleSketchVisibility("sketch_groove_dimensions", false);
+        partService.Save(close: true);
+        partService.Unlock();
+
+
+        // TABLES
+        var tableService = new TableService(swApp, drawingService.GetModel());
         tableService.CreateDimensionTable(drawingData.TablePositions["dimension"], drawingData.DimensionKeysInTable, "DIMENSIONS:", drawingData, wedgeData.Dimensions);
         tableService.CreateLabelAsTable(drawingData.TablePositions["label_as"], drawingData);
         tableService.CreatePolishTable(drawingData.TablePositions["polish"], drawingData);
@@ -47,149 +94,67 @@ public static class AutomationExecutor
 
         drawingService.ZoomToFit();
         drawingService.SaveAsPdf(outputPdfPath);
+        drawingService.Unlock();
         drawingService.SaveAndCloseDrawing();
     }
 
-    private static void CreateFrontView(IDrawingService drawingService, DrawingData draw, WedgeData wed)
+    private static void ExecuteViewSteps(IDrawingService drawingService, DrawingData draw, WedgeData wed)
     {
-        ModelDoc2 model = drawingService.GetModel();
-        IViewService view = new ViewService("Front_view", ref model);
-
-        view.SetViewScale(draw.ViewScales["Front_view"].GetValue(Unit.Millimeter));
-        view.SetViewPosition(draw.ViewPositions["Front_view"]);
-        view.SetBreaklinePosition(wed.Dimensions, draw);
-        view.CreateFixedCenterline(wed.Dimensions, draw);
-        view.SetBreakLineGap(draw.BreaklineData["Front_viewBreaklineGap"].GetValue(Unit.Meter));
-
-        view.SetPositionAndNameDimensioning(wed.Dimensions, draw.DimensionStyles, new Dictionary<string, string>
-        {
-            {"TL", "SelectByName"},
-            {"EngravingStart", "SelectByName"}
-        });
+        var model = drawingService.GetModel();
+        CreateFrontView(model, draw , wed);
+        CreateSideView(model, draw, wed);
+        CreateTopView(model, draw, wed);
+        CreateDetailView(model, draw, wed);
+    }
+    private static void CreateFrontView(ModelDoc2 model, DrawingData draw, WedgeData wed)
+    {
+        var front = new ViewService("Front_view", ref model);
+        front.SetViewScale(draw.ViewScales["Front_view"].GetValue(Unit.Millimeter));
+        front.SetViewPosition(draw.ViewPositions["Front_view"]);
+        front.SetBreaklinePosition(wed.Dimensions, draw);
+        front.CreateFixedCenterline(wed.Dimensions, draw);
+        front.SetBreakLineGap(draw.BreaklineData["Front_viewBreaklineGap"].GetValue(Unit.Meter));
+        front.SetPositionAndNameDimensioning(wed.Dimensions, draw.DimensionStyles, new() { { "TL", "SelectByName" }, { "EngravingStart", "SelectByName" } });
+    }
+    private static void CreateSideView(ModelDoc2 model, DrawingData draw, WedgeData wed)
+    {
+        var side = new ViewService("Side_view", ref model);
+        side.SetViewPosition(draw.ViewPositions["Side_view"]);
+        side.SetBreaklinePosition(wed.Dimensions, draw);
+        side.SetBreakLineGap(draw.BreaklineData["Side_viewBreaklineGap"].GetValue(Unit.Meter));
+        side.CreateFixedCenterline(wed.Dimensions, draw);
+        side.SetPositionAndNameDimensioning(wed.Dimensions, draw.DimensionStyles, new() { { "FA", "SelectByName" }, { "BA", "SelectByName" }, { "E", "SelectByName" }, { "FX", "SelectByName" } });
+    }
+    private static void CreateTopView(ModelDoc2 model, DrawingData draw, WedgeData wed)
+    {
+        var top = new ViewService("Top_view", ref model);
+        top.SetViewPosition(draw.ViewPositions["Top_view"]);
+        top.CreateFixedCentermark(wed.Dimensions, draw);
+        top.SetPositionAndNameDimensioning(wed.Dimensions, draw.DimensionStyles, new() { { "TDF", "SelectByName" }, { "TD", "SelectByName" } });
+        top.SetPositionAndLabelDatumFeature(wed.Dimensions, draw.DimensionStyles, "A");
+    }
+    private static void CreateDetailView(ModelDoc2 model, DrawingData draw, WedgeData wed)
+    {
+        var detail = new ViewService("Detail_view", ref model);
+        detail.SetViewScale(draw.ViewScales["Detail_view"].GetValue(Unit.Millimeter));
+        detail.SetViewPosition(draw.ViewPositions["Detail_view"]);
+        detail.SetBreaklinePosition(wed.Dimensions, draw);
+        detail.SetBreakLineGap(draw.BreaklineData["Detail_viewBreaklineGap"].GetValue(Unit.Meter));
+        detail.CreateFixedCenterline(wed.Dimensions, draw);
+        detail.SetPositionAndValuesAndLabelGeometricTolerance(wed.Dimensions, draw.DimensionStyles, "A");
     }
 
-    private static void CreateSideView(IDrawingService drawingService, DrawingData draw, WedgeData wed)
+    private static SketchSegment CreateCuttingLineSketch(IDrawingService drawingService, WedgeData wedgeData)
     {
-        ModelDoc2 model = drawingService.GetModel();
-        IViewService view = new ViewService("Side_view", ref model);
-
-        view.SetViewPosition(draw.ViewPositions["Side_view"]);
-        view.SetBreaklinePosition(wed.Dimensions, draw);
-        view.SetBreakLineGap(draw.BreaklineData["Side_viewBreaklineGap"].GetValue(Unit.Meter));
-        view.CreateFixedCenterline(wed.Dimensions, draw);
-
-        view.SetPositionAndNameDimensioning(wed.Dimensions, draw.DimensionStyles, new Dictionary<string, string>
-        {
-            {"FA", "SelectByName"},
-            {"BA", "SelectByName"},
-            {"E",  "SelectByName"},
-            {"FX", "SelectByName"}
-        });
-    }
-
-    private static void CreateTopView(IDrawingService drawingService, DrawingData draw, WedgeData wed)
-    {
-        ModelDoc2 model = drawingService.GetModel();
-        IViewService view = new ViewService("Top_view", ref model);
-
-        view.SetViewPosition(draw.ViewPositions["Top_view"]);
-        view.CreateFixedCentermark(wed.Dimensions, draw);
-
-        view.SetPositionAndNameDimensioning(wed.Dimensions, draw.DimensionStyles, new Dictionary<string, string>
-        {
-            {"TDF", "SelectByName"},
-            {"TD",  "SelectByName"}
-        });
-
-        view.SetPositionAndLabelDatumFeature(wed.Dimensions, draw.DimensionStyles, "A");
-    }
-
-    private static IViewService CreateDetailView(IDrawingService drawingService, DrawingData draw, WedgeData wed)
-    {
-        ModelDoc2 model = drawingService.GetModel();
-        IViewService view = new ViewService("Detail_view", ref model);
-
-        view.SetViewScale(draw.ViewScales["Detail_view"].GetValue(Unit.Millimeter));
-        view.SetViewPosition(draw.ViewPositions["Detail_view"]);
-        view.SetBreaklinePosition(wed.Dimensions, draw);
-        view.SetBreakLineGap(draw.BreaklineData["Detail_viewBreaklineGap"].GetValue(Unit.Meter));
-        view.CreateFixedCenterline(wed.Dimensions, draw);
-
-        view.SetPositionAndNameDimensioning(wed.Dimensions, draw.DimensionStyles, new Dictionary<string, string>
-        {
-            /*{"ISA", "SelectByName"},*/
-            /*{"GA",  "SelectByName"},
-            {"B",   "SelectByName"},
-            {"W",   "SelectByName"},
-            {"GD",  "SelectByName"},
-            {"GR",  "SelectByName"}*/
-        });
-
-        view.SetPositionAndValuesAndLabelGeometricTolerance(wed.Dimensions, draw.DimensionStyles, "A");
-
-        return view;
-    }
-
-    private static void CreateSectionView(IDrawingService drawingService, DrawingData draw, WedgeData wed, IViewService detailView)
-    {
-        ModelDoc2 model = drawingService.GetModel();
-        model.ForceRebuild3(false);
-
-        try
-        {
-            Console.WriteLine("🧱 Starting section view creation...");
-
-            IViewService sectionView = new ViewService("Section_view", ref model);
-            sectionView.SetViewScale(draw.ViewScales["Section_view"].GetValue(Unit.Millimeter));
-
-            model.ClearSelection2(true);
-            var sketchSegment = model.SketchManager.CreateLine(
-                0.0,
-                -wed.Dimensions["TL"].GetValue(Unit.Inch) / 2,
-                0.0,
-                0.0,
-                wed.Dimensions["TL"].GetValue(Unit.Inch) / 2,
-                0.0);
-
-            if (sketchSegment == null)
-            {
-                Console.WriteLine("❌ Failed to create the sketch segment for the section line.");
-                return;
-            }
-
-            bool created = sectionView.CreateSectionView(detailView, draw.ViewPositions["Section_view"], sketchSegment, wed.Dimensions, draw);
-
-            if (!created)
-            {
-                Console.WriteLine("❌ Section view creation failed.");
-                return;
-            }
-
-            sectionView.ReactivateView(ref model);
-            bool dimInserted = sectionView.InsertModelDimensioning();
-            if (!dimInserted)
-            {
-                Console.WriteLine("⚠️ Section view created but no dimensions were inserted.");
-            }
-
-            bool positioned = sectionView.SetPositionAndNameDimensioning(wed.Dimensions, draw.DimensionStyles, new Dictionary<string, string>
-                {
-                    {"F",  "SelectByName"},
-                    {"FL", "SelectByName"},
-                    {"FR", "SelectByName"},
-                    {"BR", "SelectByName"}
-                });
-
-            if (!positioned)
-            {
-                Console.WriteLine("⚠️ Dimensions were not positioned properly in the section view.");
-            }
-
-            Console.WriteLine("✅ Section view created and configured.");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("❌ Exception during section view creation: " + ex.Message);
-        }
+        var model = drawingService.GetModel();
+        model.ClearSelection2(true);
+        return model.SketchManager.CreateLine(
+            0.0,
+            -wedgeData.Dimensions["TL"].GetValue(Unit.Inch) / 2,
+            0.0,
+            0.0,
+            wedgeData.Dimensions["TL"].GetValue(Unit.Inch) / 2,
+            0.0
+        );
     }
 }
