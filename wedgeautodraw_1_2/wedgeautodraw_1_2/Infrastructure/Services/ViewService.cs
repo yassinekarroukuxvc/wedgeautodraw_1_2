@@ -341,6 +341,7 @@ public class ViewService : IViewService
                     Console.WriteLine("No model dimensions inserted.");
                     return false;
                 }
+
             }
 
             Console.WriteLine("_model is not a DrawingDoc.");
@@ -400,7 +401,7 @@ public class ViewService : IViewService
     {
         if (swAnn == null || pos == null)
         {
-            Console.WriteLine($"Cannot set position for {name}: Missing annotation or position data.");
+            //Console.WriteLine($"Cannot set position for {name}: Missing annotation or position data.");
             return;
         }
 
@@ -513,6 +514,57 @@ public class ViewService : IViewService
             Console.WriteLine("Error while Reactivating the View: " + ex.Message);
         }
     }
+    public double[] GetPosition()
+    {
+        var position = _swView?.Position as double[];
+
+        if (position != null && position.Length >= 2)
+        {
+            Console.WriteLine($"📍 Section View Position: X = {position[0]:F4} m, Y = {position[1]:F4} m");
+            return position;
+        }
+
+        Console.WriteLine("⚠️ Section View Position is null or invalid. Returning default (0,0).");
+        return position ?? new double[] { 0.0, 0.0 };
+    }
+
+    public Dictionary<string, double[]> GetDefaultModelDimensionPositions()
+    {
+        var dimensionPositions = new Dictionary<string, double[]>();
+
+        try
+        {
+            DisplayDimension swDispDim = _swView.GetFirstDisplayDimension5();
+
+            while (swDispDim != null)
+            {
+                var swAnn = swDispDim.GetAnnotation() as Annotation;
+                var swDim = swDispDim.GetDimension2(0);
+
+                if (swAnn != null && swDim != null)
+                {
+                    double[] pos = (double[])swAnn.GetPosition();
+
+                    if (pos != null && pos.Length >= 2)
+                    {
+                        // Store position in millimeters, which is SolidWorks drawing units
+                        dimensionPositions[swDim.Name] = new double[] { pos[0], pos[1] };
+
+                        Console.WriteLine($"[Captured] Dimension '{swDim.Name}': X = {pos[0]:F4} m, Y = {pos[1]:F4} m");
+                    }
+                }
+
+                swDispDim = (DisplayDimension)swDispDim.GetNext3();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error capturing model dimension positions: {ex.Message}");
+        }
+
+        return dimensionPositions;
+    }
+
 
 
 }

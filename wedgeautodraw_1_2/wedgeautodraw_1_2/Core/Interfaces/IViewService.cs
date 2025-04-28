@@ -17,4 +17,7 @@ public interface IViewService
     bool SetPositionAndLabelDatumFeature(DynamicDataContainer wedgeDimensions, DynamicDimensioningContainer drawDimensions, string label);
     bool SetPositionAndValuesAndLabelGeometricTolerance(DynamicDataContainer wedgeDimensions, DynamicDimensioningContainer drawDimensions, string label);
     void ReactivateView(ref ModelDoc2 swModel);
+    public double[] GetPosition();
+    public Dictionary<string, double[]> GetDefaultModelDimensionPositions();
+
 }

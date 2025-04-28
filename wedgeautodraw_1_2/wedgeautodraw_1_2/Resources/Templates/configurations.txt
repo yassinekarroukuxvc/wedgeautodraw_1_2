@@ -1,6 +1,6 @@
 # === View Scaling ===
 scaling_fsv=3
-scaling_dsv=55
+scaling_dsv=45
 
 # === View Positions ===
 front_view_posX=30
@@ -13,11 +13,11 @@ section_view_posX=83
 
 # === Table Positions ===
 dim_table_posX=130
-dim_table_posY=51
+dim_table_posY=61
 dim_table_width=45
 
 how_to_order_posX=130
-how_to_order_posY=67
+how_to_order_posY=77
 how_to_order_width=60
 
 label_as_posX=130
@@ -48,4 +48,4 @@ packaging=Plastic Box
 # === Extra Info ===
 engrave=Sample Tool¶Front View
 polish_text=Polished Area A¶Polished Area B
-dimension_keys_in_table=FL,F,W,FR,BR,GD,GR,B,E
+dimension_keys_in_table=FL,F,W,FR,BR,GD,GR,B,E,X,VR,VW

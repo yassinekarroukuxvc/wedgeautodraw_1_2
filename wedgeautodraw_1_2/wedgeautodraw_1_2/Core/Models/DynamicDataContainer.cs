@@ -16,4 +16,9 @@ public class DynamicDataContainer : DynamicObject
 
     public bool ContainsKey(string key) => _data.ContainsKey(key);
 
+    public bool TryGet(string key, out DataStorage value)
+    {
+        return _data.TryGetValue(key, out value);
+    }
+
 }

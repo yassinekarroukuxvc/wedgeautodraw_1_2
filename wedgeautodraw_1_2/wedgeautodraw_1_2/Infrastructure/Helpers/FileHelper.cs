@@ -1,4 +1,4 @@
-﻿namespace wedgeautodraw_1_2.Infrastructure.Utilities;
+﻿namespace wedgeautodraw_1_2.Infrastructure.Helpers;
 
 public static class FileHelper
 {

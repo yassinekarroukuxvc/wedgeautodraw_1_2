@@ -3,13 +3,27 @@ using wedgeautodraw_1_2.Core.Enums;
 using wedgeautodraw_1_2.Core.Interfaces;
 using wedgeautodraw_1_2.Core.Models;
 using wedgeautodraw_1_2.Infrastructure.Services;
+using wedgeautodraw_1_2.Infrastructure.Helpers;
 
 namespace wedgeautodraw_1_2.Infrastructure.Utilities;
 
 public static class AutomationExecutor
 {
-    public static void RunPartAndDrawingAutomation(
+    public static IPartService RunPartAutomation(SldWorks swApp, string modEquationPath, string modPartPath, WedgeData wedgeData)
+    {
+        var partService = new PartService(swApp);
+        partService.OpenPart(modPartPath);
+        partService.ApplyTolerances(wedgeData.Dimensions);
+        partService.UpdateEquations(modEquationPath);
+        partService.SetEngravedText(wedgeData.EngravedText);
+        partService.Rebuild();
+        partService.Save();
+        return partService;
+    }
+
+    public static void RunDrawingAutomation(
         SldWorks swApp,
+        IPartService partService,
         string partPath,
         string drawingPath,
         string modPartPath,
@@ -19,31 +33,52 @@ public static class AutomationExecutor
         WedgeData wedgeData,
         string outputPdfPath)
     {
-        var partService = new PartService(swApp);
+        var drawingService = InitializeDrawing(swApp, partPath, drawingPath, modPartPath, modDrawingPath, drawingData);
+
+        CreateStandardViews(drawingService, drawingData, wedgeData);
+
+        var sectionViewName = CreateAndConfigureSectionView(drawingService, drawingData, wedgeData);
+
+        FinalizeDrawing(swApp,drawingService, sectionViewName, drawingData, wedgeData, partService, outputPdfPath);
+    }
+
+    private static DrawingService InitializeDrawing(
+        SldWorks swApp,
+        string partPath,
+        string drawingPath,
+        string modPartPath,
+        string modDrawingPath,
+        DrawingData drawingData)
+    {
         var drawingService = new DrawingService(swApp);
-
-        // PART
-        partService.OpenPart(modPartPath);
-        partService.ApplyTolerances(wedgeData.Dimensions);
-        partService.UpdateEquations(modEquationPath);
-        partService.SetEngravedText(wedgeData.EngravedText);
-        partService.Rebuild();
-        partService.Save();
-
-        // DRAWING
         drawingService.ReplaceReferencedModel(modDrawingPath, partPath, modPartPath);
         drawingService.OpenDrawing(modDrawingPath);
         drawingService.SetSummaryInformation(drawingData);
         drawingService.SetCustomProperties(drawingData);
         drawingService.Rebuild();
+        return drawingService;
+    }
 
-        ExecuteViewSteps(drawingService, drawingData, wedgeData);
+    private static void CreateStandardViews(IDrawingService drawingService, DrawingData draw, WedgeData wed)
+    {
+        var model = drawingService.GetModel();
+        CreateFrontView(model, draw, wed);
+        CreateSideView(model, draw, wed);
+        CreateTopView(model, draw, wed);
+        CreateDetailView(model, draw, wed);
+    }
 
-        // Create section cutting line sketch
-        var sketchSegment = CreateCuttingLineSketch(drawingService, wedgeData);
+    private static string CreateAndConfigureSectionView(
+        IDrawingService drawingService,
+        DrawingData drawingData,
+        WedgeData wedgeData)
+    {
         var model = drawingService.GetModel();
 
-        // Create section view and capture actual name
+        // Create cutting line sketch
+        var sketchSegment = CreateCuttingLineSketch(drawingService, wedgeData);
+
+        // Create section view
         var tempDetailView = new ViewService("Detail_view", ref model);
         string actualSectionViewName = tempDetailView.CreateSectionView(
             new ViewService("Detail_view", ref model),
@@ -55,41 +90,42 @@ public static class AutomationExecutor
 
         drawingService.SaveDrawing();
         drawingService.SaveAndCloseDrawing();
+        return actualSectionViewName;
+    }
 
-        // Toggle sketches
+    private static void FinalizeDrawing(
+        SldWorks swApp,
+        IDrawingService drawingService,
+        string sectionViewName,
+        DrawingData drawingData,
+        WedgeData wedgeData,
+        IPartService partService,
+        string outputPdfPath)
+    {
         partService.ToggleSketchVisibility("sketch_engraving", false);
         partService.ToggleSketchVisibility("sketch_groove_dimensions", true);
         partService.Save();
 
-        // Reopen drawing
         drawingService.Reopen();
-        model = drawingService.GetModel();
+        var model = drawingService.GetModel();
+        drawingService.Rebuild();
 
-        // Reactivate section view with actual name
-        var sectionView = new ViewService(actualSectionViewName, ref model);
+        var sectionView = new ViewService(sectionViewName, ref model);
         sectionView.ReactivateView(ref model);
         sectionView.SetViewScale(drawingData.ViewScales["Section_view"].GetValue(Unit.Millimeter));
-
-        // Insert and position dimensions
         sectionView.InsertModelDimensioning();
-       /* sectionView.SetPositionAndNameDimensioning(wedgeData.Dimensions, drawingData.DimensionStyles, new()
-        {
-            { "F", "SelectByName" },
-            { "FL", "SelectByName" },
-            { "FR", "SelectByName" },
-            { "BR", "SelectByName" }
-        })*/;
 
+        AdjustSectionViewDimensions(sectionView, drawingData, wedgeData);
+    
         partService.ToggleSketchVisibility("sketch_groove_dimensions", false);
         partService.Save(close: true);
         partService.Unlock();
 
-
-        // TABLES
+        // Create tables
         var tableService = new TableService(swApp, drawingService.GetModel());
         tableService.CreateDimensionTable(drawingData.TablePositions["dimension"], drawingData.DimensionKeysInTable, "DIMENSIONS:", drawingData, wedgeData.Dimensions);
-        tableService.CreateLabelAsTable(drawingData.TablePositions["label_as"], drawingData);
-        tableService.CreatePolishTable(drawingData.TablePositions["polish"], drawingData);
+        //tableService.CreateLabelAsTable(drawingData.TablePositions["label_as"], drawingData);
+        //tableService.CreatePolishTable(drawingData.TablePositions["polish"], drawingData);
         tableService.CreateHowToOrderTable(drawingData.TablePositions["how_to_order"], "HOW TO ORDER", drawingData);
 
         drawingService.ZoomToFit();
@@ -98,14 +134,54 @@ public static class AutomationExecutor
         drawingService.SaveAndCloseDrawing();
     }
 
-    private static void ExecuteViewSteps(IDrawingService drawingService, DrawingData draw, WedgeData wed)
+    private static void AdjustSectionViewDimensions(ViewService sectionView, DrawingData drawingData, WedgeData wedgeData)
+    {
+        var defaultPositions = sectionView.GetDefaultModelDimensionPositions();
+        var secv = drawingData.ViewScales["Section_view"].GetValue(Unit.Millimeter);
+        var FL = wedgeData.Dimensions["FL"].GetValue(Unit.Millimeter);
+        var GD = wedgeData.Dimensions["GD"].GetValue(Unit.Millimeter);
+
+        foreach (var kvp in defaultPositions)
+        {
+            string dimName = kvp.Key;
+            double[] pos = kvp.Value;
+
+            double[] adjustedPos = SectionViewAdjuster.ApplyOffset(dimName, pos, secv, FL, GD);
+
+            if (drawingData.DimensionStyles.ContainsKey(dimName))
+            {
+                drawingData.DimensionStyles[dimName].Position = new DataStorage(adjustedPos);
+            }
+            else
+            {
+                drawingData.DimensionStyles[dimName] = new DimensioningStorage(new DataStorage(adjustedPos));
+            }
+        }
+
+        sectionView.SetPositionAndNameDimensioning(wedgeData.Dimensions, drawingData.DimensionStyles, new()
+        {
+            { "F", "SelectByName" },
+            { "FL", "SelectByName" },
+            { "FR", "SelectByName" },
+            { "BR", "SelectByName" }
+        });
+    }
+
+    private static SketchSegment CreateCuttingLineSketch(IDrawingService drawingService, WedgeData wedgeData)
     {
         var model = drawingService.GetModel();
-        CreateFrontView(model, draw , wed);
-        CreateSideView(model, draw, wed);
-        CreateTopView(model, draw, wed);
-        CreateDetailView(model, draw, wed);
+        model.ClearSelection2(true);
+
+        return model.SketchManager.CreateLine(
+            0.0,
+            -wedgeData.Dimensions["TL"].GetValue(Unit.Millimeter) / 2,
+            0.0,
+            0.0,
+            wedgeData.Dimensions["TL"].GetValue(Unit.Millimeter) / 2,
+            0.0
+        );
     }
+
     private static void CreateFrontView(ModelDoc2 model, DrawingData draw, WedgeData wed)
     {
         var front = new ViewService("Front_view", ref model);
@@ -114,8 +190,13 @@ public static class AutomationExecutor
         front.SetBreaklinePosition(wed.Dimensions, draw);
         front.CreateFixedCenterline(wed.Dimensions, draw);
         front.SetBreakLineGap(draw.BreaklineData["Front_viewBreaklineGap"].GetValue(Unit.Meter));
-        front.SetPositionAndNameDimensioning(wed.Dimensions, draw.DimensionStyles, new() { { "TL", "SelectByName" }, { "EngravingStart", "SelectByName" } });
+        front.SetPositionAndNameDimensioning(wed.Dimensions, draw.DimensionStyles, new()
+        {
+            { "TL", "SelectByName" },
+            { "EngravingStart", "SelectByName" }
+        });
     }
+
     private static void CreateSideView(ModelDoc2 model, DrawingData draw, WedgeData wed)
     {
         var side = new ViewService("Side_view", ref model);
@@ -123,16 +204,28 @@ public static class AutomationExecutor
         side.SetBreaklinePosition(wed.Dimensions, draw);
         side.SetBreakLineGap(draw.BreaklineData["Side_viewBreaklineGap"].GetValue(Unit.Meter));
         side.CreateFixedCenterline(wed.Dimensions, draw);
-        side.SetPositionAndNameDimensioning(wed.Dimensions, draw.DimensionStyles, new() { { "FA", "SelectByName" }, { "BA", "SelectByName" }, { "E", "SelectByName" }, { "FX", "SelectByName" } });
+        side.SetPositionAndNameDimensioning(wed.Dimensions, draw.DimensionStyles, new()
+        {
+            { "FA", "SelectByName" },
+            { "BA", "SelectByName" },
+            { "E", "SelectByName" },
+            { "FX", "SelectByName" }
+        });
     }
+
     private static void CreateTopView(ModelDoc2 model, DrawingData draw, WedgeData wed)
     {
         var top = new ViewService("Top_view", ref model);
         top.SetViewPosition(draw.ViewPositions["Top_view"]);
         top.CreateFixedCentermark(wed.Dimensions, draw);
-        top.SetPositionAndNameDimensioning(wed.Dimensions, draw.DimensionStyles, new() { { "TDF", "SelectByName" }, { "TD", "SelectByName" } });
+        top.SetPositionAndNameDimensioning(wed.Dimensions, draw.DimensionStyles, new()
+        {
+            { "TDF", "SelectByName" },
+            { "TD", "SelectByName" }
+        });
         top.SetPositionAndLabelDatumFeature(wed.Dimensions, draw.DimensionStyles, "A");
     }
+
     private static void CreateDetailView(ModelDoc2 model, DrawingData draw, WedgeData wed)
     {
         var detail = new ViewService("Detail_view", ref model);
@@ -142,19 +235,14 @@ public static class AutomationExecutor
         detail.SetBreakLineGap(draw.BreaklineData["Detail_viewBreaklineGap"].GetValue(Unit.Meter));
         detail.CreateFixedCenterline(wed.Dimensions, draw);
         detail.SetPositionAndValuesAndLabelGeometricTolerance(wed.Dimensions, draw.DimensionStyles, "A");
-    }
-
-    private static SketchSegment CreateCuttingLineSketch(IDrawingService drawingService, WedgeData wedgeData)
-    {
-        var model = drawingService.GetModel();
-        model.ClearSelection2(true);
-        return model.SketchManager.CreateLine(
-            0.0,
-            -wedgeData.Dimensions["TL"].GetValue(Unit.Inch) / 2,
-            0.0,
-            0.0,
-            wedgeData.Dimensions["TL"].GetValue(Unit.Inch) / 2,
-            0.0
-        );
+        detail.SetPositionAndNameDimensioning(wed.Dimensions, draw.DimensionStyles, new()
+        {
+                     /*{"ISA", "SelectByName"},
+                     {"GA" , "SelectByName"},
+                     {"B"  , "SelectByName"},
+                     {"W"  , "SelectByName"},
+                     {"GD" , "SelectByName"},
+                     {"GR" , "SelectByName"}*/
+        });
     }
 }

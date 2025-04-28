@@ -13,4 +13,6 @@ public class DynamicDimensioningContainer : DynamicObject
     }
 
     public Dictionary<string, DimensioningStorage> GetAll() => _data;
+    public bool ContainsKey(string key) => _data.ContainsKey(key);
+
 }

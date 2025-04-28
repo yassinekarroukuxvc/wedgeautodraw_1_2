@@ -3,7 +3,7 @@ using SolidWorks.Interop.swconst;
 using wedgeautodraw_1_2.Core.Enums;
 using wedgeautodraw_1_2.Core.Interfaces;
 using wedgeautodraw_1_2.Core.Models;
-
+using wedgeautodraw_1_2.Infrastructure.Helpers;
 namespace wedgeautodraw_1_2.Infrastructure.Services;
 
 public class TableService : ITableService
@@ -23,8 +23,14 @@ public class TableService : ITableService
     {
         try
         {
-            var table = (TableAnnotation)_swDrawing.InsertTableAnnotation2(false, position.GetValues(Unit.Meter)[0], position.GetValues(Unit.Meter)[1], 1, "",
-                wedgeKeys.Length + 1, 1);
+            var table = (TableAnnotation)_swDrawing.InsertTableAnnotation2(
+                false,
+                position.GetValues(Unit.Meter)[0],
+                position.GetValues(Unit.Meter)[1],
+                1,
+                "",
+                wedgeKeys.Length + 1,
+                1);
 
             table.SetColumnWidth(0, drawingData.TablePositions["dimension"].GetValues(Unit.Meter)[2],
                 (int)swTableRowColSizeChangeBehavior_e.swTableRowColChange_TableSizeCanChange);
@@ -39,9 +45,17 @@ public class TableService : ITableService
             for (int i = 0; i < wedgeKeys.Length; i++)
             {
                 string key = wedgeKeys[i];
-                string valMM = wedgeDimensions[key].GetValue(Unit.Millimeter).ToString("F2") + " mm";
-                string tolMM = $"+{wedgeDimensions[key].GetTolerance(Unit.Millimeter, "+").ToString("F2")}/-{wedgeDimensions[key].GetTolerance(Unit.Millimeter, "-").ToString("F2")}";
-                table.set_Text(i + 1, 0, $"{key}: {valMM} ({tolMM})");
+
+                if (wedgeDimensions.TryGet(key, out var dataStorage) && dataStorage != null)
+                {
+                    string valMM = dataStorage.GetValue(Unit.Inch).ToString("F4") + " Inch";
+                    string tolMM = $"+{dataStorage.GetTolerance(Unit.Inch, "+").ToString("F4")}/-{dataStorage.GetTolerance(Unit.Inch, "-").ToString("F4")}";
+                    table.set_Text(i + 1, 0, $"{key}: {valMM} ({tolMM})");
+                }
+                else
+                {
+                    table.set_Text(i + 1, 0, $"{key}: N/A");
+                }
             }
 
             return true;
@@ -51,6 +65,7 @@ public class TableService : ITableService
             return false;
         }
     }
+
 
     public bool CreateLabelAsTable(DataStorage position, DrawingData drawingData)
     {

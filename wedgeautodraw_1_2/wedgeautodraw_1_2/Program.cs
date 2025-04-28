@@ -3,6 +3,7 @@ using wedgeautodraw_1_2.Core.Interfaces;
 using wedgeautodraw_1_2.Core.Models;
 using wedgeautodraw_1_2.Infrastructure.Services;
 using wedgeautodraw_1_2.Infrastructure.Utilities;
+using wedgeautodraw_1_2.Infrastructure.Helpers;
 
 namespace wedgeautodraw_1_2;
 class Program
@@ -10,6 +11,7 @@ class Program
     static void Main(string[] args)
     {
         Console.WriteLine("=== SolidWorks Drawing Automation ===");
+        ProcessHelper.KillAllSolidWorksProcesses();
 
         string projectRoot = Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).Parent.Parent.Parent.FullName;
         string resourcePath = Path.Combine(projectRoot, "Resources", "Templates");
@@ -51,10 +53,22 @@ class Program
             var fullDrawingData = dataLoader.LoadDrawingData(wedge, configurationPath);
 
             EquationFileUpdater.UpdateEquationFile(modEquationPath, wedge);
-            //AutomationExecutor.RunPartAutomation(swApp, partPath, modEquationPath, modPartPath, modEquationPath, wedge);
+            var partService = AutomationExecutor.RunPartAutomation(swApp, modEquationPath, modPartPath, wedge);
             //AutomationExecutor.RunDrawingAutomation(swApp, drawingPath, modDrawingPath, partPath, modPartPath, fullDrawingData, wedge, outputPdfPath);
-            AutomationExecutor.RunPartAndDrawingAutomation(
+            /*AutomationExecutor.RunPartAndDrawingAutomation(
                 swApp,
+                partPath,
+                drawingPath,
+                modPartPath,
+                modDrawingPath,
+                modEquationPath,
+                fullDrawingData,
+                wedge,
+                outputPdfPath
+            );*/
+            AutomationExecutor.RunDrawingAutomation(
+                swApp,
+                partService,
                 partPath,
                 drawingPath,
                 modPartPath,
