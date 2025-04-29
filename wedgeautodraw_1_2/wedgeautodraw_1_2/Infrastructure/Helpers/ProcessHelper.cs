@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 
 namespace wedgeautodraw_1_2.Infrastructure.Helpers;
 
@@ -17,11 +12,11 @@ public static class ProcessHelper
             {
                 process.Kill();
                 process.WaitForExit();
-                Console.WriteLine($"Killed SolidWorks process (PID: {process.Id})");
+                Logger.Success($"Killed SolidWorks process (PID: {process.Id})");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Could not kill SolidWorks process (PID: {process.Id}): {ex.Message}");
+                Logger.Warn($"Could not kill SolidWorks process (PID: {process.Id}): {ex.Message}");
             }
         }
     }

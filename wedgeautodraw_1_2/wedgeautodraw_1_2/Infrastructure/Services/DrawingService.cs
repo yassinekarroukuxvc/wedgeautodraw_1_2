@@ -4,6 +4,7 @@ using SolidWorks.Interop.swconst;
 using System.Runtime.InteropServices;
 using wedgeautodraw_1_2.Core.Interfaces;
 using wedgeautodraw_1_2.Core.Models;
+using wedgeautodraw_1_2.Infrastructure.Helpers;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace wedgeautodraw_1_2.Infrastructure.Services;
@@ -53,7 +54,7 @@ public class DrawingService : IDrawingService
         var sheetNames = (string[])_swDrawing.GetSheetNames();
         if (sheetNames == null || sheetNames.Length == 0)
         {
-            Console.WriteLine("No sheets found to export.");
+            Logger.Warn("No sheets found to export.");
             return;
         }
 
@@ -133,7 +134,7 @@ public class DrawingService : IDrawingService
         }
         catch (Exception)
         {
-            Console.WriteLine("Unable to Reopen the Drawing");
+            Logger.Warn("Unable to Reopen the Drawing");
         }
     }
     public void Unlock()
@@ -144,7 +145,7 @@ public class DrawingService : IDrawingService
         }
         catch (Exception)
         {
-            Console.WriteLine("Unable to Unlock the Drawing");
+            Logger.Warn("Unable to Unlock the Drawing");
         }
     }
 }

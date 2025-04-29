@@ -3,16 +3,16 @@ using SolidWorks.Interop.swconst;
 using wedgeautodraw_1_2.Core.Enums;
 using wedgeautodraw_1_2.Core.Interfaces;
 using wedgeautodraw_1_2.Core.Models;
+using wedgeautodraw_1_2.Infrastructure.Helpers;
 
 namespace wedgeautodraw_1_2.Infrastructure.Services;
 
 public class PartService : IPartService
 {
-    private SldWorks _swApp;
+    private readonly SldWorks _swApp;
     private ModelDoc2 _swModel;
     private ModelDocExtension _swModelExt;
     private CustomPropertyManager _custPropMgr;
-
     private string _partPath;
     private int _error = 0;
     private int _warning = 0;
@@ -26,7 +26,7 @@ public class PartService : IPartService
     {
         _partPath = partPath;
         _swApp.OpenDoc6(partPath, (int)swDocumentTypes_e.swDocPART,
-            (int)swOpenDocOptions_e.swOpenDocOptions_LoadModel, "",
+            (int)swOpenDocOptions_e.swOpenDocOptions_Silent, "",
             ref _error, ref _warning);
 
         _swModel = (ModelDoc2)_swApp.ActiveDoc;
@@ -39,81 +39,73 @@ public class PartService : IPartService
         try
         {
             var eqMgr = _swModel.GetEquationMgr();
-
             eqMgr.FilePath = equationFilePath;
 
+            if (!eqMgr.UpdateValuesFromExternalEquationFile())
+                Logger.Warn("Failed to update values from the external equation file.");
 
-            bool updated = eqMgr.UpdateValuesFromExternalEquationFile();
-            if (!updated)
-                Console.WriteLine("⚠️ Failed to update values from the external equation file.");
             eqMgr.AutomaticRebuild = true;
             eqMgr.AutomaticSolveOrder = true;
-            Thread.Sleep(2000);
-            _swModel.ForceRebuild3(false);
         }
         catch (Exception ex)
         {
-            Console.WriteLine("❌ Error updating equations: " + ex.Message);
+            Logger.Error("Error updating equations: " + ex.Message);
         }
     }
 
-
     public void SetEngravedText(string text)
     {
-        _swModelExt = _swModel.Extension;
-        _custPropMgr = _swModelExt.get_CustomPropertyManager("");
-        _custPropMgr.Set2("Engraved Text", text);
-        _swModel.ForceRebuild3(false);
+        try
+        {
+            _custPropMgr = _swModel.Extension.get_CustomPropertyManager("");
+            _custPropMgr.Set2("Engraved Text", text);
+        }
+        catch (Exception ex)
+        {
+            Logger.Error("Error setting engraved text: " + ex.Message);
+        }
     }
 
     public void ApplyTolerances(DynamicDataContainer dimensions)
     {
         try
         {
-            _swModelExt = _swModel.Extension;
-
             var targets = new[]
             {
-            new { Name = "TL", Sketch = "TL_cutting" },
-            new { Name = "TD", Sketch = "sketch_TL_cutting" },
-            new { Name = "TDF", Sketch = "sketch_TDF_grinding" }
-        };
+                new { Name = "TL", Sketch = "TL_cutting" },
+                new { Name = "TD", Sketch = "sketch_TL_cutting" },
+                new { Name = "TDF", Sketch = "sketch_TDF_grinding" }
+            };
 
             foreach (var target in targets)
             {
                 _swModel.ClearSelection2(true);
-                bool selected = _swModelExt.SelectByID2($"{target.Name}@{target.Sketch}", "DIMENSION", 0, 0, 0, false, 0, null, 0);
-                if (!selected)
+                if (!_swModelExt.SelectByID2($"{target.Name}@{target.Sketch}", "DIMENSION", 0, 0, 0, false, 0, null, 0))
                 {
-                    Console.WriteLine($"⚠️ Failed to select dimension {target.Name}@{target.Sketch}");
+                    Logger.Warn($"Failed to select dimension {target.Name}@{target.Sketch}");
                     continue;
                 }
 
                 var selectionMgr = (ISelectionMgr)_swModel.SelectionManager;
-                var dispDim = selectionMgr.GetSelectedObject6(1, 0) as DisplayDimension;
-                if (dispDim == null)
+                if (selectionMgr.GetSelectedObject6(1, 0) is not DisplayDimension dispDim)
                 {
-                    Console.WriteLine($"⚠️ Failed to cast selected object to DisplayDimension for {target.Name}");
+                    Logger.Warn($"Failed to cast selected object to DisplayDimension for {target.Name}");
                     continue;
                 }
 
-                dispDim.MarkedForDrawing = true; // ✅ Enable for drawing
-
+                dispDim.MarkedForDrawing = true;
                 var tol = dispDim.GetDimension2(0).Tolerance;
 
                 double upper = dimensions[target.Name].GetTolerance(Unit.Meter, "+");
                 double lower = dimensions[target.Name].GetTolerance(Unit.Meter, "-");
 
-                tol.Type = (upper != lower)
-                    ? (int)swTolType_e.swTolBILAT
-                    : (int)swTolType_e.swTolSYMMETRIC;
-
+                tol.Type = (upper != lower) ? (int)swTolType_e.swTolBILAT : (int)swTolType_e.swTolSYMMETRIC;
                 tol.SetValues(-lower, upper);
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Error applying tolerances: {ex.Message}");
+            Logger.Error($"Error applying tolerances: {ex.Message}");
         }
     }
 
@@ -121,17 +113,10 @@ public class PartService : IPartService
     {
         try
         {
-            if (_swModel == null || _swModelExt == null)
+            _swModel.ClearSelection2(true);
+            if (!_swModelExt.SelectByID2(sketchName, "SKETCH", 0, 0, 0, false, 0, null, 0))
             {
-                Console.WriteLine("❌ SolidWorks model or extension is null. Cannot toggle sketch visibility.");
-                return;
-            }
-
-            bool selected = _swModelExt.SelectByID2(sketchName, "SKETCH", 0, 0, 0, false, 0, null, 0);
-
-            if (!selected)
-            {
-                Console.WriteLine($"Failed to select sketch '{sketchName}'.");
+                Logger.Warn($"Failed to select sketch '{sketchName}'.");
                 return;
             }
 
@@ -139,58 +124,59 @@ public class PartService : IPartService
                 _swModel.UnblankSketch();
             else
                 _swModel.BlankSketch();
-
-            _swModel.ForceRebuild3(false);
-            Console.WriteLine($"Sketch '{sketchName}' visibility set to {(visible ? "visible" : "hidden")}.");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error toggling sketch visibility: {ex.Message}");
+            Logger.Error($"Error toggling sketch visibility: {ex.Message}");
         }
     }
 
+    public void EnableSolveOrder(bool enable) => _swModel.GetEquationMgr().AutomaticSolveOrder = enable;
 
-    public void EnableSolveOrder(bool enable)
-    {
-        _swModel.GetEquationMgr().AutomaticSolveOrder = enable;
-    }
-
-    public void EnableAutoRebuild(bool enable)
-    {
-        _swModel.GetEquationMgr().AutomaticRebuild = enable;
-    }
+    public void EnableAutoRebuild(bool enable) => _swModel.GetEquationMgr().AutomaticRebuild = enable;
 
     public void Rebuild()
     {
-        _swModel.ForceRebuild3(false);
+        try
+        {
+            _swModel.ForceRebuild3(false);
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Error during rebuild: {ex.Message}");
+        }
     }
 
     public void Save(bool close = false)
     {
-        _swModel.Save3((int)swSaveAsOptions_e.swSaveAsOptions_Silent, ref _error, ref _warning);
-
-        if (close)
-            _swApp.CloseDoc(_partPath);
+        try
+        {
+            _swModel.Save3((int)swSaveAsOptions_e.swSaveAsOptions_Silent, ref _error, ref _warning);
+            if (close)
+                _swApp.CloseDoc(_partPath);
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Error during save: {ex.Message}");
+        }
     }
 
     public void Reopen(string partPath)
     {
         _partPath = partPath;
-
-        var model = _swApp.OpenDoc6(
+        _swApp.OpenDoc6(
             partPath,
             (int)swDocumentTypes_e.swDocPART,
             (int)swOpenDocOptions_e.swOpenDocOptions_LoadModel,
             "",
             ref _error,
-            ref _warning
-        );
+            ref _warning);
 
-        _swModel = (ModelDoc2)model;
+        _swModel = (ModelDoc2)_swApp.ActiveDoc;
 
         if (_swModel == null)
         {
-            Console.WriteLine("Failed to reopen the part. Model is null.");
+            Logger.Warn("Failed to reopen the part. Model is null.");
             return;
         }
 
@@ -200,6 +186,13 @@ public class PartService : IPartService
 
     public void Unlock()
     {
-        _swModel.UnLock();
+        try
+        {
+            _swModel.UnLock();
+        }
+        catch (Exception ex)
+        {
+            Logger.Error("Error unlocking part: " + ex.Message);
+        }
     }
 }

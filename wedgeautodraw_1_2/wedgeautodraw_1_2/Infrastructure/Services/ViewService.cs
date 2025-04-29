@@ -3,6 +3,7 @@ using SolidWorks.Interop.swconst;
 using wedgeautodraw_1_2.Core.Enums;
 using wedgeautodraw_1_2.Core.Interfaces;
 using wedgeautodraw_1_2.Core.Models;
+using wedgeautodraw_1_2.Infrastructure.Helpers;
 
 namespace wedgeautodraw_1_2.Infrastructure.Services;
 
@@ -23,13 +24,13 @@ public class ViewService : IViewService
         _status = _model.Extension.SelectByID2(viewName, "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
         if (!_status)
         {
-            Console.WriteLine($"Failed to select drawing view: {viewName}");
+            Logger.Warn($"Equation file not found: {viewName}");
         }
 
         _drawingDoc = _model as DrawingDoc;
         if (_drawingDoc == null)
         {
-            Console.WriteLine("Model is not a DrawingDoc.");
+            Logger.Error("Model is not a DrawingDoc.");
             return;
         }
 
@@ -38,7 +39,7 @@ public class ViewService : IViewService
 
         if (_swView == null)
         {
-            Console.WriteLine($"Failed to get ActiveDrawingView after activating {viewName}");
+            Logger.Warn($"Failed to get ActiveDrawingView after activating {viewName}");
         }
         else
         {
@@ -48,30 +49,46 @@ public class ViewService : IViewService
 
     public bool SetViewScale(double scale)
     {
+        if (_swView == null)
+        {
+            Logger.Warn("Cannot set scale. View is null.");
+            return false;
+        }
+
         try
         {
             _scaling = scale;
             _swView.ScaleDecimal = scale;
+            Logger.Info($"Set view scale to {scale:F3}.");
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            Logger.Error($"Failed to set view scale: {ex.Message}");
             return false;
         }
     }
+
     public bool SetViewPosition(DataStorage position)
     {
+        if (_swView == null || position == null)
+        {
+            Logger.Warn("Cannot set position. View or Position is null.");
+            return false;
+        }
+
         try
         {
-            var pos = position.GetValues(Unit.Meter);
-            _swView.Position = pos;
+            _swView.Position = position.GetValues(Unit.Meter);
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            Logger.Error($"Failed to set view position: {ex.Message}");
             return false;
         }
     }
+
     public bool CreateFixedCenterline(DynamicDataContainer wedgeDimensions, DrawingData drawData)
     {
         try
@@ -140,6 +157,12 @@ public class ViewService : IViewService
 
     public bool CreateFixedCentermark(DynamicDataContainer wedgeDimensions, DrawingData drawData)
     {
+        if (_swView == null || _model == null)
+        {
+            Logger.Warn("Cannot create centermark. Model or View is null.");
+            return false;
+        }
+
         try
         {
             double scale = _swView.ScaleDecimal;
@@ -149,123 +172,133 @@ public class ViewService : IViewService
             double tdf = wedgeDimensions["TDF"].GetValue(Unit.Meter);
             double offset = (tdf - td) / 2;
 
-            double[][] centerlinePoints =
+            var centerlines = new[]
             {
-            new[] { offset, td / 2 + ScaleOffset(2), offset, -td / 2 - ScaleOffset(2) },
-            new[] { offset + td / 2 + ScaleOffset(2), 0.0, offset - td / 2 - ScaleOffset(2), 0.0 }
+            new { Start = new[] { offset, td/2 + ScaleOffset(2) }, End = new[] { offset, -td/2 - ScaleOffset(2) } },
+            new { Start = new[] { offset + td/2 + ScaleOffset(2), 0.0 }, End = new[] { offset - td/2 - ScaleOffset(2), 0.0 } }
         };
 
-            foreach (var pos in centerlinePoints)
+            foreach (var linePoints in centerlines)
             {
-                SketchSegment line = _model.SketchManager.CreateCenterLine(pos[0], pos[1], 0.0, pos[2], pos[3], 0.0);
+                SketchSegment line = _model.SketchManager.CreateCenterLine(
+                    linePoints.Start[0], linePoints.Start[1], 0,
+                    linePoints.End[0], linePoints.End[1], 0);
                 line.Layer = "FORMAT";
                 line.GetSketch().RelationManager.AddRelation(new[] { line }, (int)swConstraintType_e.swConstraintType_FIXED);
             }
 
+            Logger.Success("Created centermark cross-lines.");
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            Logger.Error($"Error creating centermark: {ex.Message}");
             return false;
         }
     }
 
+
     public bool SetBreaklinePosition(DynamicDataContainer wedgeDimensions, DrawingData drawData)
     {
+        if (_swView == null)
+        {
+            Logger.Warn("Cannot set breakline position. View is null.");
+            return false;
+        }
+
         try
         {
-            string viewName = _swView.Name.ToLower();
             double scale = _swView.ScaleDecimal;
             double tl = wedgeDimensions["TL"].GetValue(Unit.Meter);
             BreakLine breakLine = _swView.IGetBreakLines(_swView.GetBreakLineCount2(out _));
 
-            double lower = 0, upper = 0;
-            bool isDetailView = false;
-
-            switch (viewName)
+            if (breakLine == null)
             {
-                case "front_view":
-                    lower = drawData.BreaklineData["Front_viewLowerPartLength"].GetValue(Unit.Meter);
-                    upper = drawData.BreaklineData["Front_viewLowerPartLength"].GetValue(Unit.Meter);
-                    break;
-
-                case "side_view":
-                    lower = drawData.BreaklineData["Side_viewLowerPartLength"].GetValue(Unit.Meter);
-                    upper = drawData.BreaklineData["Side_viewLowerPartLength"].GetValue(Unit.Meter);
-                    break;
-
-                case "detail_view":
-                    lower = drawData.BreaklineData["Detail_viewLowerPartLength"].GetValue(Unit.Meter);
-                    upper = tl / 2;
-                    isDetailView = true;
-                    break;
-
-                default:
-                    return false;
+                Logger.Warn("No breakline object found.");
+                return false;
             }
 
-            double[] breaklinePos = isDetailView
-                ? new[]
-                {
-                lower - scale * tl / 2,
-                scale * upper
-                }
-                : new[]
-                {
-                -tl * scale / 2 + lower,
-                tl * scale / 2 - upper
-                };
+            string viewName = _swView.Name.ToLower();
+            (double lower, double upper, bool isDetail) = viewName switch
+            {
+                "front_view" => (drawData.BreaklineData["Front_viewLowerPartLength"].GetValue(Unit.Meter), drawData.BreaklineData["Front_viewLowerPartLength"].GetValue(Unit.Meter), false),
+                "side_view" => (drawData.BreaklineData["Side_viewLowerPartLength"].GetValue(Unit.Meter), drawData.BreaklineData["Side_viewLowerPartLength"].GetValue(Unit.Meter), false),
+                "detail_view" => (drawData.BreaklineData["Detail_viewLowerPartLength"].GetValue(Unit.Meter), tl / 2, true),
+                _ => (0, 0, false)
+            };
+
+            double[] breaklinePos = isDetail
+                ? new[] { lower - scale * tl / 2, scale * upper }
+                : new[] { -tl * scale / 2 + lower, tl * scale / 2 - upper };
 
             bool result = breakLine.SetPosition(breaklinePos[0], breaklinePos[1]);
 
-            if (isDetailView)
+            if (isDetail)
             {
                 _model.Extension.SelectByID2("TL@Detail_View", "DIMENSION", 0, 0, 0, false, 0, null, 0);
                 bool deletion = _model.Extension.DeleteSelection2((int)swDeleteSelectionOptions_e.swDelete_Advanced);
                 result &= deletion;
             }
 
+            Logger.Info($"Breakline position set successfully in {viewName} view.");
             return result;
         }
-        catch
+        catch (Exception ex)
         {
+            Logger.Error($"Error setting breakline position: {ex.Message}");
             return false;
         }
     }
+
 
     public bool SetBreakLineGap(double gap)
     {
+        if (_swView == null)
+        {
+            Logger.Warn("Cannot set breakline gap. View is null.");
+            return false;
+        }
+
         try
         {
             _swView.BreakLineGap = gap;
+            Logger.Info($"Set breakline gap to {gap:F3} meters.");
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            Logger.Error($"Failed to set breakline gap: {ex.Message}");
             return false;
         }
     }
+
     public string CreateSectionView(
-        IViewService parentView,
-        DataStorage position,
-        SketchSegment sketchSegment,
-        DynamicDataContainer wedgeDimensions,
-        DrawingData drawData)
+    IViewService parentView,
+    DataStorage position,
+    SketchSegment sketchSegment,
+    DynamicDataContainer wedgeDimensions,
+    DrawingData drawData)
     {
+        if (_model == null || sketchSegment == null)
+        {
+            Logger.Warn("Cannot create section view. Model or SketchSegment is null.");
+            return null;
+        }
+
         try
         {
-            Console.WriteLine("Starting section view creation...");
+            Logger.Info("Starting section view creation...");
 
-            var drawingDoc = (DrawingDoc)_model;
             _model.ClearSelection2(true);
             bool selected = sketchSegment.Select4(false, null);
 
             if (!selected)
             {
-                Console.WriteLine("Failed to select sketch segment.");
+                Logger.Warn("Failed to select cutting sketch segment.");
                 return null;
             }
 
+            var drawingDoc = (DrawingDoc)_model;
             var view = drawingDoc.CreateSectionViewAt5(
                 position.GetValues(Unit.Meter)[0],
                 position.GetValues(Unit.Meter)[1],
@@ -276,37 +309,45 @@ public class ViewService : IViewService
                 0.01
             );
 
-            if (view == null)
+            if (view is null)
             {
-                Console.WriteLine("Section view creation failed.");
+                Logger.Warn("Section view creation returned null.");
                 return null;
             }
 
-            var swSection = view.GetSection() as DrSection;
-            swSection?.SetAutoHatch(true);
-            swSection?.SetLabel2("Section_view");
+            if (view.GetSection() is DrSection swSection)
+            {
+                swSection.SetAutoHatch(true);
+                swSection.SetLabel2("Section_view");
+            }
 
             string newName = view.Name;
-            Console.WriteLine($"Section view created: {newName}");
+            Logger.Success($"Section view created successfully: {newName}");
             return newName;
         }
         catch (Exception ex)
         {
-            Console.WriteLine("❌ Exception during section view creation: " + ex.Message);
+            Logger.Error($"Exception during section view creation: {ex.Message}");
             return null;
         }
     }
 
+
     public bool InsertModelDimensioning()
     {
+        if (_swView == null || _model == null)
+        {
+            Logger.Warn("Cannot insert model dimensioning. Model or View is null.");
+            return false;
+        }
+
         try
         {
             _model.ForceRebuild3(false);
 
-            bool selected = _model.Extension.SelectByID2(_swView.Name, "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
-            if (!selected)
+            if (!_model.Extension.SelectByID2(_swView.Name, "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0))
             {
-                Console.WriteLine($"Failed to select drawing view: {_swView.Name}");
+                Logger.Warn($"Failed to select drawing view: {_swView.Name}");
                 return false;
             }
 
@@ -315,47 +356,46 @@ public class ViewService : IViewService
                 drawingDoc.ActivateView(_swView.Name);
                 _swView = (View)drawingDoc.ActiveDrawingView;
 
-                // Ensure model items are marked for drawing
-                IModelDoc2 refModel = _swView.ReferencedDocument;
-                if (refModel != null)
-                {
-                    refModel.ForceRebuild3(false);
-                    refModel.ShowNamedView2("*Front", -1);
-                    refModel.ViewZoomtofit2();
-                }
+                IModelDoc2 refModel = _swView?.ReferencedDocument;
+                refModel?.ForceRebuild3(false);
+                refModel?.ShowNamedView2("*Front", -1);
+                refModel?.ViewZoomtofit2();
 
-                // Insert all model dimensions
-                object result = drawingDoc.InsertModelAnnotations3(
+                object insertedItems = drawingDoc.InsertModelAnnotations3(
                     (int)swImportModelItemsSource_e.swImportModelItemsFromEntireModel,
                     (int)swInsertAnnotation_e.swInsertDimensionsMarkedForDrawing,
                     false, true, false, false
                 );
 
-                if (result is object[] inserted && inserted.Length > 0)
+                if (insertedItems is object[] dimensions && dimensions.Length > 0)
                 {
-                    Console.WriteLine($"Inserted {inserted.Length} model dimensions.");
+                    Logger.Success($"Inserted {dimensions.Length} model dimensions into view.");
                     return true;
                 }
-                else
-                {
-                    Console.WriteLine("No model dimensions inserted.");
-                    return false;
-                }
 
+                Logger.Warn("No model dimensions inserted.");
+                return false;
             }
 
-            Console.WriteLine("_model is not a DrawingDoc.");
+            Logger.Warn("Model is not a DrawingDoc.");
             return false;
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Exception in InsertModelDimensioning: " + ex.Message);
+            Logger.Error($"Exception during InsertModelDimensioning: {ex.Message}");
             return false;
         }
     }
 
+
     public bool SetPositionAndNameDimensioning(DynamicDataContainer wedgeDimensions, DynamicDimensioningContainer drawDimensions, Dictionary<string, string> dimensionTypes)
     {
+        if (_swView == null)
+        {
+            Logger.Warn("Cannot set position and name. View is null.");
+            return false;
+        }
+
         try
         {
             DisplayDimension swDispDim = _swView.GetFirstDisplayDimension5();
@@ -365,23 +405,29 @@ public class ViewService : IViewService
                 var swAnn = swDispDim.GetAnnotation() as Annotation;
                 var swDim = swDispDim.GetDimension2(0);
 
+                if (swAnn == null || swDim == null)
+                {
+                    swDispDim = (DisplayDimension)swDispDim.GetNext3();
+                    continue;
+                }
+
                 foreach (var (dimKey, selector) in dimensionTypes)
                 {
                     if (selector == "SelectByName" && swDim.Name == dimKey)
                     {
                         SetAnnotationPositionAndName(swAnn, drawDimensions[dimKey].Position, dimKey);
+                        break;
                     }
-                    else if (selector == "SelectByValue")
+                    else if (selector == "SelectByValue" &&
+                             wedgeDimensions.GetAll().TryGetValue(dimKey, out var modelValue))
                     {
-                        if (wedgeDimensions.GetAll().TryGetValue(dimKey, out var modelValue))
-                        {
-                            double modelVal = modelValue.GetValue(Unit.Millimeter);
-                            double dimVal = (double)swDim.GetSystemValue3((int)swSetValueInConfiguration_e.swSetValue_InThisConfiguration, "");
+                        double modelVal = modelValue.GetValue(Unit.Millimeter);
+                        double dimVal = (double)swDim.GetSystemValue3((int)swSetValueInConfiguration_e.swSetValue_InThisConfiguration, "");
 
-                            if (Math.Abs(modelVal - dimVal) < 1e-4)
-                            {
-                                SetAnnotationPositionAndName(swAnn, drawDimensions[dimKey].Position, dimKey);
-                            }
+                        if (Math.Abs(modelVal - dimVal) < 1e-4)
+                        {
+                            SetAnnotationPositionAndName(swAnn, drawDimensions[dimKey].Position, dimKey);
+                            break;
                         }
                     }
                 }
@@ -389,40 +435,47 @@ public class ViewService : IViewService
                 swDispDim = (DisplayDimension)swDispDim.GetNext3();
             }
 
+            Logger.Success("Finished setting dimension positions and names.");
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            Logger.Error($"Error during SetPositionAndNameDimensioning: {ex.Message}");
             return false;
         }
     }
+
 
     private void SetAnnotationPositionAndName(Annotation swAnn, DataStorage pos, string name)
     {
         if (swAnn == null || pos == null)
         {
-            //Console.WriteLine($"Cannot set position for {name}: Missing annotation or position data.");
+            Logger.Warn($"Cannot set annotation position for {name}: Missing Annotation or Position.");
             return;
         }
 
         double[] coords = pos.GetValues(Unit.Meter);
+
         if (coords.Length < 2)
         {
-            Console.WriteLine($"Invalid position array for dimension {name}");
+            Logger.Warn($"Invalid position array for dimension {name}");
             return;
         }
 
-        // Convert to drawing units — you can scale if necessary here
-        double x = coords[0];
-        double y = coords[1];
+        try
+        {
+            swAnn.SetPosition2(coords[0], coords[1], 0.0);
+            swAnn.Layer = "FORMAT";
+            swAnn.SetName(name);
 
-        // Debug output
-        Console.WriteLine($"Moving annotation '{name}' to: ({x:F4}, {y:F4}) meters");
-
-        swAnn.SetPosition2(x, y, 0.0);
-        swAnn.Layer = "FORMAT";
-        swAnn.SetName(name);
+            Logger.Info($"Moved and renamed annotation '{name}' to ({coords[0]:F4}, {coords[1]:F4}) meters.");
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Error setting annotation '{name}': {ex.Message}");
+        }
     }
+
 
     public bool SetPositionAndLabelDatumFeature(DynamicDataContainer wedgeDimensions, DynamicDimensioningContainer drawDimensions, string label)
     {
@@ -487,50 +540,73 @@ public class ViewService : IViewService
     }
     public void ReactivateView(ref ModelDoc2 swModel)
     {
+        if (swModel == null)
+        {
+            Logger.Warn("Cannot reactivate view. Model is null.");
+            return;
+        }
+
         try
         {
-            if (swModel == null) return;
-
             string viewName = _swView?.Name ?? _viewName;
+
+            if (string.IsNullOrWhiteSpace(viewName))
+            {
+                Logger.Warn("View name is invalid or empty.");
+                return;
+            }
+
             bool selected = swModel.Extension.SelectByID2(viewName, "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
 
-            if (selected && swModel is DrawingDoc drawingDoc)
+            if (!selected)
+            {
+                Logger.Warn($"Failed to select view '{viewName}' for reactivation.");
+                return;
+            }
+
+            if (swModel is DrawingDoc drawingDoc)
             {
                 drawingDoc.ActivateView(viewName);
                 _swView = (View)drawingDoc.ActiveDrawingView;
 
                 if (_swView != null)
-                    Console.WriteLine($"Reactivated view: {_swView.GetName2()}");
+                    Logger.Info($"Reactivated view successfully: {_swView.GetName2()}");
                 else
-                    Console.WriteLine("Failed to get ActiveDrawingView after activating " + viewName);
+                    Logger.Warn($"Activated view '{viewName}' but could not retrieve active drawing view.");
             }
             else
             {
-                Console.WriteLine("Failed to select drawing view: " + viewName);
+                Logger.Warn("Model is not a DrawingDoc during reactivation.");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Error while Reactivating the View: " + ex.Message);
+            Logger.Error($"Exception during ReactivateView: {ex.Message}");
         }
     }
+
     public double[] GetPosition()
     {
-        var position = _swView?.Position as double[];
-
-        if (position != null && position.Length >= 2)
+        if (_swView?.Position is double[] position && position.Length >= 2)
         {
-            Console.WriteLine($"📍 Section View Position: X = {position[0]:F4} m, Y = {position[1]:F4} m");
+            Logger.Info($"Section View Position: X = {position[0]:F4} m, Y = {position[1]:F4} m");
             return position;
         }
 
-        Console.WriteLine("⚠️ Section View Position is null or invalid. Returning default (0,0).");
-        return position ?? new double[] { 0.0, 0.0 };
+        Logger.Warn("Section view position is null or invalid. Returning (0,0).");
+        return new double[] { 0.0, 0.0 };
     }
+
 
     public Dictionary<string, double[]> GetDefaultModelDimensionPositions()
     {
         var dimensionPositions = new Dictionary<string, double[]>();
+
+        if (_swView == null)
+        {
+            Logger.Warn("Cannot capture dimensions. View is null.");
+            return dimensionPositions;
+        }
 
         try
         {
@@ -545,26 +621,24 @@ public class ViewService : IViewService
                 {
                     double[] pos = (double[])swAnn.GetPosition();
 
-                    if (pos != null && pos.Length >= 2)
+                    if (pos is { Length: >= 2 })
                     {
-                        // Store position in millimeters, which is SolidWorks drawing units
-                        dimensionPositions[swDim.Name] = new double[] { pos[0], pos[1] };
-
-                        Console.WriteLine($"[Captured] Dimension '{swDim.Name}': X = {pos[0]:F4} m, Y = {pos[1]:F4} m");
+                        dimensionPositions[swDim.Name] = new[] { pos[0], pos[1] };
+                        Logger.Info($"Captured dimension '{swDim.Name}': ({pos[0]:F4}, {pos[1]:F4}) meters.");
                     }
                 }
 
                 swDispDim = (DisplayDimension)swDispDim.GetNext3();
             }
+
+            return dimensionPositions;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Error capturing model dimension positions: {ex.Message}");
+            Logger.Error($"Error during capturing default dimension positions: {ex.Message}");
+            return dimensionPositions;
         }
-
-        return dimensionPositions;
     }
-
 
 
 }

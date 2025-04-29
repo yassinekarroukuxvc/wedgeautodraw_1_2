@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using wedgeautodraw_1_2.Core.Enums;
 using wedgeautodraw_1_2.Core.Models;
+using wedgeautodraw_1_2.Infrastructure.Helpers;
 
 namespace wedgeautodraw_1_2.Infrastructure.Utilities
 {
@@ -16,7 +17,7 @@ namespace wedgeautodraw_1_2.Infrastructure.Utilities
         {
             if (!File.Exists(equationFilePath))
             {
-                Console.WriteLine($"❌ Equation file not found: {equationFilePath}");
+                Logger.Warn($"Equation file not found: {equationFilePath}");
                 return;
             }
 
@@ -64,11 +65,11 @@ namespace wedgeautodraw_1_2.Infrastructure.Utilities
             try
             {
                 File.WriteAllLines(equationFilePath, outputLines);
-                Console.WriteLine($"✅ Equation file updated at: {equationFilePath}");
+                Logger.Success($"Equation file updated at: {equationFilePath}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Failed to write equation file: {ex.Message}");
+                Logger.Error($"Failed to write equation file: {ex.Message}");
             }
         }
 

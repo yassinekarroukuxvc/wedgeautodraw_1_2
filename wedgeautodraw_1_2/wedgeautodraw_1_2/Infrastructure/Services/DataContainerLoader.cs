@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using wedgeautodraw_1_2.Core.Enums;
 using wedgeautodraw_1_2.Core.Interfaces;
 using wedgeautodraw_1_2.Core.Models;
+using wedgeautodraw_1_2.Infrastructure.Helpers;
 
 namespace wedgeautodraw_1_2.Infrastructure.Services;
 
@@ -93,7 +94,7 @@ public class DataContainerLoader : IDataContainerLoader
         var drawingData = new DrawingData();
         if (!File.Exists(configFilePath))
         {
-            Console.WriteLine("Configuration file not found.");
+            Logger.Warn("Configuration file not found.");
             return drawingData;
         }
 
@@ -152,7 +153,6 @@ public class DataContainerLoader : IDataContainerLoader
         drawingData.BreaklineData["Front_viewLowerPartLength"] = new DataStorage(Get("length_lower_section_fsv"));
         drawingData.BreaklineData["Front_viewUpperPartLength"] = new DataStorage(Get("length_upper_section_fsv"));
         drawingData.BreaklineData["Front_viewBreaklineGap"] = new DataStorage(Get("breakline_gap_fsv"));
-        Console.WriteLine("FrontViewBreaklineGap " + drawingData.BreaklineData["Front_viewBreaklineGap"].GetValue(Unit.Millimeter));
         drawingData.BreaklineData["Side_viewLowerPartLength"] = new DataStorage(Get("length_lower_section_fsv"));
         drawingData.BreaklineData["Side_viewUpperPartLength"] = new DataStorage(Get("length_upper_section_fsv"));
         drawingData.BreaklineData["Side_viewBreaklineGap"] = new DataStorage(Get("breakline_gap_fsv"));
@@ -196,7 +196,7 @@ public class DataContainerLoader : IDataContainerLoader
         drawingData.DimensionKeysInTable = GetStr("dimension_keys_in_table").Split(',');
 
         // Dimension Styles
-        DrawingDataStyler.ApplyDimensionStyles(drawingData, wedgeData);
+        DynamicDimensionStyler.ApplyDynamicStyles(drawingData, wedgeData);
 
         return drawingData;
     }

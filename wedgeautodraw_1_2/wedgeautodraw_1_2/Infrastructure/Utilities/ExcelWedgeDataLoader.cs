@@ -50,7 +50,7 @@ public class ExcelWedgeDataLoader
             wedge.Metadata["drawing_number"] = GetCell(row, columnMap, "drawing#");
             wedge.Metadata["drawing_title"] = GetCell(row, columnMap, "drawing_title");
             wedge.Metadata["wedge_title"] = GetCell(row, columnMap, "wedge_title");
-            wedge.EngravedText = GetCell(row, columnMap, "marking");
+            wedge.EngravedText = GetCell(row, columnMap, "wedge_title");
 
             foreach (var key in dimensionKeys)
             {

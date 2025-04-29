@@ -1,16 +1,21 @@
-﻿using SolidWorks.Interop.sldworks;
+﻿using System.Diagnostics;
+using SolidWorks.Interop.sldworks;
 using wedgeautodraw_1_2.Core.Interfaces;
-using wedgeautodraw_1_2.Core.Models;
 using wedgeautodraw_1_2.Infrastructure.Services;
 using wedgeautodraw_1_2.Infrastructure.Utilities;
 using wedgeautodraw_1_2.Infrastructure.Helpers;
 
 namespace wedgeautodraw_1_2;
+
 class Program
 {
     static void Main(string[] args)
     {
         Console.WriteLine("=== SolidWorks Drawing Automation ===");
+
+        // --- START TIMER ---
+        Stopwatch stopwatch = Stopwatch.StartNew();
+
         ProcessHelper.KillAllSolidWorksProcesses();
 
         string projectRoot = Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).Parent.Parent.Parent.FullName;
@@ -35,7 +40,6 @@ class Program
             var wedge = wedgeDataList[i];
             var drawing = drawingDataList[i];
 
-
             string wedgeId = wedge.Metadata.ContainsKey("drawing_number") ? wedge.Metadata["drawing_number"].ToString() : $"Wedge_{i + 1}";
             string outputDir = Path.Combine(resourcePath, "Generated", wedgeId);
             Directory.CreateDirectory(outputDir);
@@ -54,18 +58,6 @@ class Program
 
             EquationFileUpdater.UpdateEquationFile(modEquationPath, wedge);
             var partService = AutomationExecutor.RunPartAutomation(swApp, modEquationPath, modPartPath, wedge);
-            //AutomationExecutor.RunDrawingAutomation(swApp, drawingPath, modDrawingPath, partPath, modPartPath, fullDrawingData, wedge, outputPdfPath);
-            /*AutomationExecutor.RunPartAndDrawingAutomation(
-                swApp,
-                partPath,
-                drawingPath,
-                modPartPath,
-                modDrawingPath,
-                modEquationPath,
-                fullDrawingData,
-                wedge,
-                outputPdfPath
-            );*/
             AutomationExecutor.RunDrawingAutomation(
                 swApp,
                 partService,
@@ -78,9 +70,12 @@ class Program
                 wedge,
                 outputPdfPath
             );
+
             Console.WriteLine($"✅ Processed wedge: {wedgeId}");
         }
 
-        Console.WriteLine("=== DONE ===");
+        // --- STOP TIMER ---
+        stopwatch.Stop();
+        Console.WriteLine($"=== DONE: Total Execution Time = {stopwatch.Elapsed.TotalSeconds:F2} seconds ===");
     }
 }
