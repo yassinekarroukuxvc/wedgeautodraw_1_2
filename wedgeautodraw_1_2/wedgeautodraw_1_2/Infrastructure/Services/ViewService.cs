@@ -343,6 +343,9 @@ public class ViewService : IViewService
 
         try
         {
+            Logger.Info($"Inserting model dimensions for view: {_swView.Name}");
+
+            // Rebuild model and referenced part to ensure dimensions are up to date
             _model.ForceRebuild3(false);
 
             if (!_model.Extension.SelectByID2(_swView.Name, "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0))
@@ -356,28 +359,35 @@ public class ViewService : IViewService
                 drawingDoc.ActivateView(_swView.Name);
                 _swView = (View)drawingDoc.ActiveDrawingView;
 
-                IModelDoc2 refModel = _swView?.ReferencedDocument;
-                refModel?.ForceRebuild3(false);
-                refModel?.ShowNamedView2("*Front", -1);
-                refModel?.ViewZoomtofit2();
+                var refModel = _swView?.ReferencedDocument;
 
-                object insertedItems = drawingDoc.InsertModelAnnotations3(
+                if (refModel == null)
+                {
+                    Logger.Warn("Referenced model is null. Cannot insert dimensions.");
+                    return false;
+                }
+
+                // Rebuild and fit referenced model before inserting annotations
+                refModel.ForceRebuild3(false);
+                refModel.ViewZoomtofit2();
+
+                // Insert all marked model dimensions
+                object inserted = drawingDoc.InsertModelAnnotations3(
                     (int)swImportModelItemsSource_e.swImportModelItemsFromEntireModel,
                     (int)swInsertAnnotation_e.swInsertDimensionsMarkedForDrawing,
-                    false, true, false, false
-                );
+                    false, true, false, false);
 
-                if (insertedItems is object[] dimensions && dimensions.Length > 0)
+                if (inserted is object[] dimensions && dimensions.Length > 0)
                 {
-                    Logger.Success($"Inserted {dimensions.Length} model dimensions into view.");
+                    Logger.Success($"Inserted {dimensions.Length} model dimensions into view: {_swView.Name}");
                     return true;
                 }
 
-                Logger.Warn("No model dimensions inserted.");
+                Logger.Warn($"No model dimensions were inserted into view: {_swView.Name}");
                 return false;
             }
 
-            Logger.Warn("Model is not a DrawingDoc.");
+            Logger.Warn("Active model is not a DrawingDoc.");
             return false;
         }
         catch (Exception ex)
@@ -386,6 +396,7 @@ public class ViewService : IViewService
             return false;
         }
     }
+
 
 
     public bool SetPositionAndNameDimensioning(DynamicDataContainer wedgeDimensions, DynamicDimensioningContainer drawDimensions, Dictionary<string, string> dimensionTypes)
@@ -444,6 +455,8 @@ public class ViewService : IViewService
             return false;
         }
     }
+
+
 
 
     private void SetAnnotationPositionAndName(Annotation swAnn, DataStorage pos, string name)

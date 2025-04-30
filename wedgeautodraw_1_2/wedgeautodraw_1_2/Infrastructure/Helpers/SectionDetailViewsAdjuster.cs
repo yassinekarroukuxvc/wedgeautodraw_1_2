@@ -35,6 +35,16 @@ public static class SectionViewAdjuster
                 offsetY = secv * GD / 3;
                 break;
 
+            case "W":
+                offsetX = 0.0;
+                offsetY = -8;
+                break;
+
+            case "GD":
+                offsetX = -2;
+                offsetY = 0.0;
+                break;
+
             default:
                 offsetX = 0.0;
                 offsetY = 0.0;

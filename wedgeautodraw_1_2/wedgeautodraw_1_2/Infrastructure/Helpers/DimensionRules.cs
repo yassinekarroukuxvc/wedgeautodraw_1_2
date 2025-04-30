@@ -72,6 +72,8 @@ public static class DimensionRules
             {
                 var detail = drawing.ViewPositions[Constants.DetailView].GetValues(Unit.Millimeter);
                 var lowerPartLength = drawing.BreaklineData["Detail_viewLowerPartLength"].GetValue(Unit.Millimeter);
+                /*var breakline = drawing.BreaklineData["Detail_viewBreaklineGap"].GetValue(Unit.Millimeter);
+                detail[1] = detail[1] - (breakline + lowerPartLength)/2;*/
                 return new[] { detail[0] + 3.5, detail[1] + lowerPartLength - 3.75 };
             }
         },

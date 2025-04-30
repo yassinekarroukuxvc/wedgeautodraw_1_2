@@ -14,21 +14,21 @@ public class ExcelWedgeDataLoader
         _excelFilePath = excelFilePath;
     }
 
-    public List<WedgeData> LoadWedgeDataList()
+    public List<(WedgeData Wedge, DrawingData Drawing)> LoadAllEntries()
     {
-        var wedgeList = new List<WedgeData>();
+        var result = new List<(WedgeData, DrawingData)>();
 
         if (!File.Exists(_excelFilePath))
         {
             Console.WriteLine($"Excel file not found: {_excelFilePath}");
-            return wedgeList;
+            return result;
         }
 
         using var workbook = new XLWorkbook(_excelFilePath);
         var worksheet = workbook.Worksheet(1);
-        var rows = worksheet.RangeUsed().RowsUsed();
-
+        var rows = worksheet.RangeUsed().RowsUsed().Skip(1).ToList(); // Skip header row
         var header = worksheet.Row(1);
+
         var columnMap = new Dictionary<string, int>();
         for (int c = 1; c <= header.CellCount(); c++)
         {
@@ -36,102 +36,90 @@ public class ExcelWedgeDataLoader
             if (!string.IsNullOrEmpty(key)) columnMap[key] = c;
         }
 
-        // Dynamically detect available dimensions
+        // Detect available dimensions
         var dimensionKeys = columnMap.Keys
             .Where(k => k.EndsWith("_NOM"))
             .Select(k => k[..^4])
             .Distinct()
             .ToList();
 
-        foreach (var row in rows.Skip(1))
+        // Parallel processing
+        var parallelResult = rows.AsParallel().Select(row =>
         {
-            var wedge = new WedgeData();
+            var wedge = BuildWedge(row, columnMap, dimensionKeys);
+            var drawing = BuildDrawing(row, columnMap, wedge);
+            return (wedge, drawing);
+        }).ToList();
 
-            wedge.Metadata["drawing_number"] = GetCell(row, columnMap, "drawing#");
-            wedge.Metadata["drawing_title"] = GetCell(row, columnMap, "drawing_title");
-            wedge.Metadata["wedge_title"] = GetCell(row, columnMap, "wedge_title");
-            wedge.EngravedText = GetCell(row, columnMap, "wedge_title");
-
-            foreach (var key in dimensionKeys)
-            {
-                string nom = GetCell(row, columnMap, key + "_NOM");
-                string upper = GetCell(row, columnMap, key + "_UTOL");
-                string lower = GetCell(row, columnMap, key + "_LTOL");
-
-                if (!string.IsNullOrWhiteSpace(nom))
-                {
-                    if (!IsAngle(key))
-                    {
-                        nom = ConvertInchToMillimeter(nom);
-                        upper = ConvertInchToMillimeter(upper);
-                        lower = ConvertInchToMillimeter(lower);
-                    }
-
-                    var data = new DataStorage(nom, upper, lower);
-                    data.SetUnit(IsAngle(key) ? Unit.Degree : Unit.Millimeter);
-                    wedge.Dimensions[key] = data;
-                }
-            }
-
-            if (!wedge.Dimensions.ContainsKey("SymmetryTolerance"))
-            {
-                wedge.Dimensions["SymmetryTolerance"] = new DataStorage(0.04);
-                wedge.Dimensions["SymmetryTolerance"].SetUnit(Unit.Millimeter);
-            }
-
-            wedge.Metadata["Source"] = _excelFilePath;
-            wedgeList.Add(wedge);
-        }
-
-        return wedgeList;
+        return parallelResult;
     }
 
-    public List<DrawingData> LoadDrawingDataList()
+    private WedgeData BuildWedge(IXLRangeRow row, Dictionary<string, int> map, List<string> dimensionKeys)
     {
-        var drawingList = new List<DrawingData>();
-
-        if (!File.Exists(_excelFilePath))
+        var wedge = new WedgeData
         {
-            Console.WriteLine($"Excel file not found: {_excelFilePath}");
-            return drawingList;
+            EngravedText = GetCell(row, map, "wedge_title")
+        };
+
+        wedge.Metadata["drawing_number"] = GetCell(row, map, "drawing#");
+        wedge.Metadata["drawing_title"] = GetCell(row, map, "drawing_title");
+        wedge.Metadata["wedge_title"] = wedge.EngravedText;
+        wedge.Metadata["Source"] = _excelFilePath;
+
+        foreach (var key in dimensionKeys)
+        {
+            string nom = GetCell(row, map, key + "_NOM");
+            string upper = GetCell(row, map, key + "_UTOL");
+            string lower = GetCell(row, map, key + "_LTOL");
+
+            if (!string.IsNullOrWhiteSpace(nom))
+            {
+                if (!IsAngle(key))
+                {
+                    nom = ConvertInchToMillimeter(nom);
+                    upper = ConvertInchToMillimeter(upper);
+                    lower = ConvertInchToMillimeter(lower);
+                }
+
+                var data = new DataStorage(nom, upper, lower);
+                data.SetUnit(IsAngle(key) ? Unit.Degree : Unit.Millimeter);
+                wedge.Dimensions[key] = data;
+            }
         }
 
-        using var workbook = new XLWorkbook(_excelFilePath);
-        var worksheet = workbook.Worksheet(1);
-        var rows = worksheet.RangeUsed().RowsUsed();
-
-        var header = worksheet.Row(1);
-        var columnMap = new Dictionary<string, int>();
-        for (int c = 1; c <= header.CellCount(); c++)
+        if (!wedge.Dimensions.ContainsKey("SymmetryTolerance"))
         {
-            string key = header.Cell(c).GetValue<string>().Trim();
-            if (!string.IsNullOrEmpty(key)) columnMap[key] = c;
+            wedge.Dimensions["SymmetryTolerance"] = new DataStorage(0.04);
+            wedge.Dimensions["SymmetryTolerance"].SetUnit(Unit.Millimeter);
         }
 
-        foreach (var row in rows.Skip(1))
-        {
-            var drawing = new DrawingData();
+        return wedge;
+    }
 
-            drawing.TitleInfo["number"] = GetCell(row, columnMap, "drawing#");
-            drawing.TitleInfo["info"] = GetCell(row, columnMap, "drawing_comments");
-            drawing.Title = drawing.TitleInfo["number"] + " - Production Copy";
-            drawing.TitleBlockInfo["DRAWING_NUMBER"] = drawing.TitleInfo["number"] + "-DW";
-            drawing.TitleBlockInfo["TITLE"] = drawing.Title;
-            drawing.TitleBlockInfo["COMPANY_NAME"] = "SMALL PRECISION TOOLS";
-            drawing.TitleBlockInfo["DRAWN_BY"] = "AUTODRAW SERVICE";
-            drawing.TitleBlockInfo["DRAWN_ON"] = DateTime.Now.ToString("yyyy-MM-dd");
+    private DrawingData BuildDrawing(IXLRangeRow row, Dictionary<string, int> map, WedgeData wedge)
+    {
+        var drawing = new DrawingData();
 
-            drawing.HowToOrderInfo["number"] = drawing.TitleInfo["number"];
-            drawing.HowToOrderInfo["packaging"] = GetCell(row, columnMap, "packaging");
+        string drawingNumber = GetCell(row, map, "drawing#");
+        drawing.TitleInfo["number"] = drawingNumber;
+        drawing.TitleInfo["info"] = GetCell(row, map, "drawing_comments");
 
-            drawing.LabelAsItems = GetCell(row, columnMap, "engrave").Split('¶');
-            drawing.PolishItems = GetCell(row, columnMap, "finishing").Split('¶');
+        drawing.Title = drawingNumber + " - Production Copy";
+        drawing.TitleBlockInfo["DRAWING_NUMBER"] = drawingNumber + "-DW";
+        drawing.TitleBlockInfo["TITLE"] = drawing.Title;
+        drawing.TitleBlockInfo["COMPANY_NAME"] = "SMALL PRECISION TOOLS";
+        drawing.TitleBlockInfo["DRAWN_BY"] = "AUTODRAW SERVICE";
+        drawing.TitleBlockInfo["DRAWN_ON"] = DateTime.Now.ToString("yyyy-MM-dd");
 
-            drawing.DrawingType = DrawingType.Production;
-            drawingList.Add(drawing);
-        }
+        drawing.HowToOrderInfo["number"] = drawingNumber;
+        drawing.HowToOrderInfo["packaging"] = GetCell(row, map, "packaging");
 
-        return drawingList;
+        drawing.LabelAsItems = GetCell(row, map, "engrave").Split('¶');
+        drawing.PolishItems = GetCell(row, map, "finishing").Split('¶');
+
+        drawing.DrawingType = DrawingType.Production;
+
+        return drawing;
     }
 
     private string GetCell(IXLRangeRow row, Dictionary<string, int> map, string columnName)

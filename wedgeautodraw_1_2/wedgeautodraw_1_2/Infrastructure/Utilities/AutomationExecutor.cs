@@ -18,8 +18,6 @@ public static class AutomationExecutor
         partService.ApplyTolerances(wedgeData.Dimensions);
         partService.UpdateEquations(modEquationPath);
         partService.SetEngravedText(wedgeData.EngravedText);
-        /*partService.ToggleSketchVisibility(Constants.SketchEngraving, false);
-        partService.ToggleSketchVisibility(Constants.SketchGrooveDimensions, true);*/
         partService.Rebuild();
         partService.Save();
 
@@ -93,9 +91,7 @@ public static class AutomationExecutor
             sketchSegment,
             wedgeData.Dimensions,
             drawingData);
-
-        drawingService.SaveDrawing();
-        drawingService.SaveAndCloseDrawing();
+        drawingService.Rebuild();
 
         return sectionViewName;
     }
@@ -115,7 +111,6 @@ public static class AutomationExecutor
         partService.ToggleSketchVisibility(Constants.SketchGrooveDimensions, true);
         partService.Save();
 
-        drawingService.Reopen();
         var model = drawingService.GetModel();
         drawingService.Rebuild();
 
@@ -123,14 +118,20 @@ public static class AutomationExecutor
         sectionView.ReactivateView(ref model);
         sectionView.SetViewScale(drawingData.ViewScales[Constants.SectionView].GetValue(Unit.Millimeter));
         sectionView.InsertModelDimensioning();
-        AdjustSectionViewDimensions(sectionView, drawingData, wedgeData);
+        AdjustSectionOrDetailViewDimensions(sectionView, drawingData, wedgeData, Constants.SectionView, new()
+        {
+            { "F", "SelectByName" },
+            { "FL", "SelectByName" },
+            { "FR", "SelectByName" },
+            { "BR", "SelectByName" }
+        });
 
         partService.ToggleSketchVisibility(Constants.SketchGrooveDimensions, false);
         partService.Save(close: true);
         partService.Unlock();
 
         CreateDrawingTables(swApp, drawingService, drawingData, wedgeData);
-        drawingService.ZoomToFit();
+        drawingService.GetModel().GraphicsRedraw2();
         drawingService.SaveAsPdf(outputPdfPath);
         drawingService.Unlock();
         drawingService.SaveAndCloseDrawing();
@@ -218,38 +219,36 @@ public static class AutomationExecutor
         detail.SetBreakLineGap(drawData.BreaklineData["Detail_viewBreaklineGap"].GetValue(Unit.Meter));
         detail.CreateFixedCenterline(wedgeData.Dimensions, drawData);
         detail.SetPositionAndValuesAndLabelGeometricTolerance(wedgeData.Dimensions, drawData.DimensionStyles, Constants.DatumFeatureLabel);
+        AdjustSectionOrDetailViewDimensions(detail, drawData, wedgeData, Constants.DetailView, new()
+        {
+            { "ISA", "SelectByName" },
+            { "GA", "SelectByName" },
+            { "B", "SelectByName" },
+            { "W", "SelectByName" },
+            { "GD", "SelectByName" },
+            { "GR", "SelectByName" }
+        });
     }
 
-    private static void AdjustSectionViewDimensions(ViewService sectionView, DrawingData drawData, WedgeData wedgeData)
+    private static void AdjustSectionOrDetailViewDimensions(ViewService view, DrawingData drawData, WedgeData wedgeData, string viewKey, Dictionary<string, string> dimensionTypes)
     {
-        var defaultPositions = sectionView.GetDefaultModelDimensionPositions();
-        var secv = drawData.ViewScales[Constants.SectionView].GetValue(Unit.Millimeter);
-        var FL = wedgeData.Dimensions["FL"].GetValue(Unit.Millimeter);
-        var GD = wedgeData.Dimensions["GD"].GetValue(Unit.Millimeter);
+        var defaultPositions = view.GetDefaultModelDimensionPositions();
+        var scale = drawData.ViewScales[viewKey].GetValue(Unit.Millimeter);
+        var FL = wedgeData.Dimensions.ContainsKey("FL") ? wedgeData.Dimensions["FL"].GetValue(Unit.Millimeter) : 0;
+        var GD = wedgeData.Dimensions.ContainsKey("GD") ? wedgeData.Dimensions["GD"].GetValue(Unit.Millimeter) : 0;
 
         foreach (var kvp in defaultPositions)
         {
             string dimName = kvp.Key;
             double[] pos = kvp.Value;
-
-            double[] adjustedPos = SectionViewAdjuster.ApplyOffset(dimName, pos, secv, FL, GD);
+            double[] adjustedPos = SectionDetailViewsAdjuster.ApplyOffset(dimName, pos, scale, FL, GD);
 
             if (drawData.DimensionStyles.ContainsKey(dimName))
-            {
                 drawData.DimensionStyles[dimName].Position = new DataStorage(adjustedPos);
-            }
             else
-            {
                 drawData.DimensionStyles[dimName] = new DimensioningStorage(new DataStorage(adjustedPos));
-            }
         }
 
-        sectionView.SetPositionAndNameDimensioning(wedgeData.Dimensions, drawData.DimensionStyles, new()
-        {
-            { "F", "SelectByName" },
-            { "FL", "SelectByName" },
-            { "FR", "SelectByName" },
-            { "BR", "SelectByName" }
-        });
+        view.SetPositionAndNameDimensioning(wedgeData.Dimensions, drawData.DimensionStyles, dimensionTypes);
     }
 }

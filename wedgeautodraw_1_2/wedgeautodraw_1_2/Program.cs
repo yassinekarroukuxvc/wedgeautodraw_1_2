@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
+using System.IO;
 using SolidWorks.Interop.sldworks;
 using wedgeautodraw_1_2.Core.Interfaces;
 using wedgeautodraw_1_2.Infrastructure.Services;
@@ -32,15 +34,14 @@ class Program
         SldWorks swApp = swService.GetApplication();
 
         var excelLoader = new ExcelWedgeDataLoader(excelPath);
-        var wedgeDataList = excelLoader.LoadWedgeDataList();
-        var drawingDataList = excelLoader.LoadDrawingDataList();
+        var allEntries = excelLoader.LoadAllEntries();
 
-        for (int i = 0; i < wedgeDataList.Count; i++)
+        foreach (var (wedge, drawing) in allEntries)
         {
-            var wedge = wedgeDataList[i];
-            var drawing = drawingDataList[i];
+            string wedgeId = wedge.Metadata.ContainsKey("drawing_number")
+                ? wedge.Metadata["drawing_number"].ToString()
+                : $"Wedge_{Guid.NewGuid()}";
 
-            string wedgeId = wedge.Metadata.ContainsKey("drawing_number") ? wedge.Metadata["drawing_number"].ToString() : $"Wedge_{i + 1}";
             string outputDir = Path.Combine(resourcePath, "Generated", wedgeId);
             Directory.CreateDirectory(outputDir);
 
@@ -53,11 +54,13 @@ class Program
             FileHelper.CopyTemplateFile(drawingPath, modDrawingPath);
             FileHelper.CopyTemplateFile(equationPath, modEquationPath);
 
+            EquationFileUpdater.UpdateEquationFile(modEquationPath, wedge);
+
             IDataContainerLoader dataLoader = new DataContainerLoader(modEquationPath);
             var fullDrawingData = dataLoader.LoadDrawingData(wedge, configurationPath);
 
-            EquationFileUpdater.UpdateEquationFile(modEquationPath, wedge);
             var partService = AutomationExecutor.RunPartAutomation(swApp, modEquationPath, modPartPath, wedge);
+
             AutomationExecutor.RunDrawingAutomation(
                 swApp,
                 partService,
@@ -71,7 +74,7 @@ class Program
                 outputPdfPath
             );
 
-            Console.WriteLine($"✅ Processed wedge: {wedgeId}");
+            Console.WriteLine($"Processed wedge: {wedgeId}");
         }
 
         // --- STOP TIMER ---
