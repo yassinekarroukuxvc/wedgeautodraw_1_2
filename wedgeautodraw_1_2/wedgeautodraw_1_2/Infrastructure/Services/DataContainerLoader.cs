@@ -165,8 +165,8 @@ public class DataContainerLoader : IDataContainerLoader
 
         // Title Info
         drawingData.TitleInfo["info"] = GetStr("how_to_order_info");
-        drawingData.TitleInfo["number"] = GetStr("how_to_order_number");
-        drawingData.Title = drawingData.TitleInfo["number"] + " - Production Copy";
+        drawingData.TitleInfo["number"] = (string)wedgeData.Metadata["drawing_number"];
+        drawingData.Title = wedgeData.Metadata["drawing_title"] + " - Production Copy";
 
         // Title Block Info
         drawingData.TitleBlockInfo["Material"] = GetStr("material");
@@ -180,6 +180,8 @@ public class DataContainerLoader : IDataContainerLoader
         drawingData.TitleBlockInfo["TYPE"] = "PRODUCTION COPY";
         drawingData.TitleBlockInfo["SCALING_FRONT_SIDE_TOP_VIEW"] = Get("scaling_fsv").ToString();
         drawingData.TitleBlockInfo["SCALING_DETAIL_SECTION_VIEW"] = Get("scaling_dsv").ToString();
+        drawingData.TitleBlockInfo["DATE"] = DateTime.Now.ToString("yyyy-MM-dd");
+
 
         // How To Order Info
         drawingData.HowToOrderInfo["number"] = drawingData.TitleInfo["number"];

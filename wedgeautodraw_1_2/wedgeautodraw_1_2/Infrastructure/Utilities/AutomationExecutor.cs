@@ -118,7 +118,14 @@ public static class AutomationExecutor
         sectionView.ReactivateView(ref model);
         sectionView.SetViewScale(drawingData.ViewScales[Constants.SectionView].GetValue(Unit.Millimeter));
         sectionView.InsertModelDimensioning();
-        AdjustSectionOrDetailViewDimensions(sectionView, drawingData, wedgeData, Constants.SectionView, new()
+        /*AdjustSectionOrDetailViewDimensions(sectionView, drawingData, wedgeData, Constants.SectionView, new()
+        {
+            { "F", "SelectByName" },
+            { "FL", "SelectByName" },
+            { "FR", "SelectByName" },
+            { "BR", "SelectByName" }
+        });*/
+        sectionView.SetPositionAndNameDimensioning(wedgeData.Dimensions, drawingData.DimensionStyles, new()
         {
             { "F", "SelectByName" },
             { "FL", "SelectByName" },
@@ -219,7 +226,16 @@ public static class AutomationExecutor
         detail.SetBreakLineGap(drawData.BreaklineData["Detail_viewBreaklineGap"].GetValue(Unit.Meter));
         detail.CreateFixedCenterline(wedgeData.Dimensions, drawData);
         detail.SetPositionAndValuesAndLabelGeometricTolerance(wedgeData.Dimensions, drawData.DimensionStyles, Constants.DatumFeatureLabel);
-        AdjustSectionOrDetailViewDimensions(detail, drawData, wedgeData, Constants.DetailView, new()
+        /*AdjustSectionOrDetailViewDimensions(detail, drawData, wedgeData, Constants.DetailView, new()
+        {
+            { "ISA", "SelectByName" },
+            { "GA", "SelectByName" },
+            { "B", "SelectByName" },
+            { "W", "SelectByName" },
+            { "GD", "SelectByName" },
+            { "GR", "SelectByName" }
+        });*/
+        detail.SetPositionAndNameDimensioning(wedgeData.Dimensions, drawData.DimensionStyles, new()
         {
             { "ISA", "SelectByName" },
             { "GA", "SelectByName" },

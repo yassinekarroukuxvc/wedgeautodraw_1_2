@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace wedgeautodraw_1_2.Infrastructure.Helpers;
 
-namespace wedgeautodraw_1_2.Infrastructure.Helpers;
-
-public static class SectionViewAdjuster
+public static class SectionDetailViewsAdjuster
 {
     public static double[] ApplyOffset(string dimName, double[] originalPos, double secv, double FL, double GD)
     {

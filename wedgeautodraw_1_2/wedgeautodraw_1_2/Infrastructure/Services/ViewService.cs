@@ -1,4 +1,5 @@
-﻿using SolidWorks.Interop.sldworks;
+﻿using DocumentFormat.OpenXml.EMMA;
+using SolidWorks.Interop.sldworks;
 using SolidWorks.Interop.swconst;
 using wedgeautodraw_1_2.Core.Enums;
 using wedgeautodraw_1_2.Core.Interfaces;
@@ -427,10 +428,10 @@ public class ViewService : IViewService
                     if (selector == "SelectByName" && swDim.Name == dimKey)
                     {
                         SetAnnotationPositionAndName(swAnn, drawDimensions[dimKey].Position, dimKey);
+                        ApplyDimensionStyling(swDispDim, dimKey);
                         break;
                     }
-                    else if (selector == "SelectByValue" &&
-                             wedgeDimensions.GetAll().TryGetValue(dimKey, out var modelValue))
+                    else if (selector == "SelectByValue" && wedgeDimensions.GetAll().TryGetValue(dimKey, out var modelValue))
                     {
                         double modelVal = modelValue.GetValue(Unit.Millimeter);
                         double dimVal = (double)swDim.GetSystemValue3((int)swSetValueInConfiguration_e.swSetValue_InThisConfiguration, "");
@@ -438,6 +439,7 @@ public class ViewService : IViewService
                         if (Math.Abs(modelVal - dimVal) < 1e-4)
                         {
                             SetAnnotationPositionAndName(swAnn, drawDimensions[dimKey].Position, dimKey);
+                            ApplyDimensionStyling(swDispDim, dimKey);
                             break;
                         }
                     }
@@ -455,9 +457,6 @@ public class ViewService : IViewService
             return false;
         }
     }
-
-
-
 
     private void SetAnnotationPositionAndName(Annotation swAnn, DataStorage pos, string name)
     {
@@ -489,6 +488,30 @@ public class ViewService : IViewService
         }
     }
 
+    private void ApplyDimensionStyling(DisplayDimension swDispDim, string dimKey)
+    {
+        try
+        {
+            if (dimKey == "FR" || dimKey == "BR")
+            {
+                swDispDim.CenterText = true;
+                swDispDim.ArrowSide = 2; 
+                swDispDim.WitnessVisibility = 2;
+                swDispDim.ExtensionLineExtendsFromCenterOfSet = false;
+                swDispDim.MaxWitnessLineLength = 0;
+                // Optional: apply extension line as centerline on index 1
+                swDispDim.SetExtensionLineAsCenterline(1, false);
+                
+                _model.GraphicsRedraw2();
+                Logger.Info($"Applied static styling for '{dimKey}'.");
+
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn($"Styling failed for '{dimKey}': {ex.Message}");
+        }
+    }
 
     public bool SetPositionAndLabelDatumFeature(DynamicDataContainer wedgeDimensions, DynamicDimensioningContainer drawDimensions, string label)
     {

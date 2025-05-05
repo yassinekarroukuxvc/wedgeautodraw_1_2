@@ -14,12 +14,12 @@ public static class Logger
 
     public static void Warn(string message)
     {
-        Write("⚠️ " + message, ConsoleColor.Yellow);
+        Write(message, ConsoleColor.Yellow);
     }
 
     public static void Error(string message)
     {
-        Write("❌ " + message, ConsoleColor.Red);
+        Write(message, ConsoleColor.Red);
     }
 
     private static void Write(string message, ConsoleColor color)
