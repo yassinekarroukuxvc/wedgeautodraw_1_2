@@ -26,7 +26,7 @@ public static class DimensionRules
                 var TD = wedge.Dimensions["TD"].GetValue(Unit.Millimeter);
                 var TL = wedge.Dimensions["TL"].GetValue(Unit.Millimeter);
                 var fsv = drawing.ViewScales[Constants.FrontView].GetValue(Unit.Millimeter);
-                return new[] { front[0] + fsv * TD / 2 + 4, front[1] * 45};
+                return new[] { front[0] + fsv * TD / 2 + 4, front[1] + 45};
             }
         },
         ["TDF"] = new DimensionRule

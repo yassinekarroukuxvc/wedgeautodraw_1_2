@@ -1,4 +1,5 @@
-﻿using wedgeautodraw_1_2.Core.Models;
+﻿using SolidWorks.Interop.sldworks;
+using wedgeautodraw_1_2.Core.Models;
 
 namespace wedgeautodraw_1_2.Core.Interfaces;
 
@@ -15,4 +16,5 @@ public interface IPartService
     void Save(bool close = false);
     void Reopen(string partPath);
     void Unlock();
+    ModelDoc2 GetModel();
 }

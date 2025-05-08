@@ -1,0 +1,44 @@
+# === Drawing Type ===
+drawing_type=Overlay
+
+# === View Scaling ===
+scaling_fsv=1.2
+scaling_dsv=0  # Not used in overlay
+
+# === View Positions ===
+front_view_posX=40
+front_view_posY=120
+detail_view_posX=0  # Not used
+detail_view_posY=0
+section_view_posX=90
+
+# === Table Positions ===
+dim_table_posX=150
+dim_table_posY=100
+dim_table_width=50
+
+how_to_order_posX=140
+how_to_order_posY=85
+how_to_order_width=60
+
+# === Breakline (if applicable to overlay) ===
+length_lower_section_fsv=0
+length_upper_section_fsv=0
+breakline_gap_fsv=0
+
+# === Title Info ===
+how_to_order_info=FOR COINING USE
+how_to_order_number=2030815-MA
+
+# === Title Block Info ===
+material=CKVD-500-G SPECIAL
+author=INT:VO
+packaging=—
+
+# === Extra Metadata ===
+acad_file=2032090-TF
+drawing_number=2032090-DW
+checked_by=
+
+# === Dimension Keys to Display ===
+dimension_keys_in_table=FL,F,W,FR,BR,E,X,VR,VW

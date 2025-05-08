@@ -96,7 +96,6 @@ public class DrawingService : IDrawingService
 
     public void SetCustomProperties(DrawingData drawingData)
     {
-        drawingData.TitleBlockInfo["DRAWN_ON"] = _swModel.SummaryInfo[(int)swSummInfoField_e.swSumInfoSaveDate].Split(' ')[0];
         _swCustProps = _swModel.Extension.get_CustomPropertyManager("");
 
         foreach (var kvp in drawingData.TitleBlockInfo)

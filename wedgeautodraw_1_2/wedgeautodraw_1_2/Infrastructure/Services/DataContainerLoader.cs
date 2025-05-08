@@ -172,7 +172,7 @@ public class DataContainerLoader : IDataContainerLoader
         drawingData.TitleBlockInfo["Material"] = GetStr("material");
         drawingData.TitleBlockInfo["Autor"] = GetStr("author");
         drawingData.TitleBlockInfo["DRAWN_BY"] = "AUTODRAW SERVICE";
-        drawingData.TitleBlockInfo["DRAWN_ON"] = "NOT SET YET!";
+        //drawingData.TitleBlockInfo["DRAWN_ON"] = "NOT SET YET!";
         drawingData.TitleBlockInfo["COMPANY_NAME"] = "SMALL PRECISION TOOLS";
         drawingData.TitleBlockInfo["TITLE"] = drawingData.Title;
         drawingData.TitleBlockInfo["DRAWING_NUMBER"] = drawingData.TitleInfo["number"] + "-DW";
@@ -180,7 +180,7 @@ public class DataContainerLoader : IDataContainerLoader
         drawingData.TitleBlockInfo["TYPE"] = "PRODUCTION COPY";
         drawingData.TitleBlockInfo["SCALING_FRONT_SIDE_TOP_VIEW"] = Get("scaling_fsv").ToString();
         drawingData.TitleBlockInfo["SCALING_DETAIL_SECTION_VIEW"] = Get("scaling_dsv").ToString();
-        drawingData.TitleBlockInfo["DATE"] = DateTime.Now.ToString("yyyy-MM-dd");
+        drawingData.TitleBlockInfo["DRAWN_ON"] = DateTime.Now.ToString("MM-dd-yy");
 
 
         // How To Order Info

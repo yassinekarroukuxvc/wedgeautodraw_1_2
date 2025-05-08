@@ -1,4 +1,4 @@
-"_Offset"=0.01mm
+﻿"_Offset"=0.01mm
 
 "TL"=85.4964mm
 
@@ -192,9 +192,12 @@
 
 "FX@sketch_groove_dimensions" = "cleaned_FX"
 
-"EngravingStart"=15mm
+"EngravingStart"=32mm
 
 "engraving_start@sketch_engraving" = "EngravingStart"
+
 "ER"=0.508mm
+
 "TIP"=2.032mm
+
 "SymmetryTolerance"=0.04mm

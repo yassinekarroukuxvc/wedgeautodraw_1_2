@@ -1,4 +1,5 @@
 ﻿using DocumentFormat.OpenXml.EMMA;
+using DocumentFormat.OpenXml.Spreadsheet;
 using SolidWorks.Interop.sldworks;
 using SolidWorks.Interop.swconst;
 using wedgeautodraw_1_2.Core.Enums;
@@ -47,7 +48,7 @@ public class ViewService : IViewService
             _scaling = _swView.ScaleDecimal;
         }
     }
-
+    
     public bool SetViewScale(double scale)
     {
         if (_swView == null)
@@ -133,7 +134,7 @@ public class ViewService : IViewService
                         0.0,
                         0.0,
                         0.0,
-                        -tlDetail / 2 + ScaleOffset(5)
+                        -tlDetail / 2 + ScaleOffset(10)
                     };
 
                     default:
@@ -492,26 +493,29 @@ public class ViewService : IViewService
     {
         try
         {
+            
+            swDispDim.CenterText = true;
+            
+
+
             if (dimKey == "FR" || dimKey == "BR")
             {
-                swDispDim.CenterText = true;
-                swDispDim.ArrowSide = 2; 
-                swDispDim.WitnessVisibility = 2;
+                swDispDim.ArrowSide = 2; // Both sides
+                swDispDim.WitnessVisibility = 2; // Hide witness lines
                 swDispDim.ExtensionLineExtendsFromCenterOfSet = false;
                 swDispDim.MaxWitnessLineLength = 0;
-                // Optional: apply extension line as centerline on index 1
                 swDispDim.SetExtensionLineAsCenterline(1, false);
-                
-                _model.GraphicsRedraw2();
-                Logger.Info($"Applied static styling for '{dimKey}'.");
-
             }
+
+            _model.GraphicsRedraw2();
+            Logger.Info($"Applied styling for '{dimKey}' (centered).");
         }
         catch (Exception ex)
         {
             Logger.Warn($"Styling failed for '{dimKey}': {ex.Message}");
         }
     }
+
 
     public bool SetPositionAndLabelDatumFeature(DynamicDataContainer wedgeDimensions, DynamicDimensioningContainer drawDimensions, string label)
     {
@@ -673,6 +677,28 @@ public class ViewService : IViewService
         {
             Logger.Error($"Error during capturing default dimension positions: {ex.Message}");
             return dimensionPositions;
+        }
+    }
+    public bool RotateView(double angleInDegrees)
+    {
+        if (_swView == null)
+        {
+            Logger.Warn("Cannot rotate view. View is null.");
+            return false;
+        }
+
+        try
+        {
+            double angleInRadians = angleInDegrees * Math.PI / 180.0;
+            _swView.Angle = angleInRadians;
+            _model.EditRebuild3(); // Optional: force update
+            Logger.Info($"Rotated view '{_swView.Name}' by {angleInDegrees} degrees ({angleInRadians:F4} radians).");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Failed to rotate view '{_swView.Name}': {ex.Message}");
+            return false;
         }
     }
 

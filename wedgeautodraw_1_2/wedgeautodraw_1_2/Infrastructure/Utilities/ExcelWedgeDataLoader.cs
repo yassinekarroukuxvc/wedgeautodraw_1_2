@@ -2,6 +2,7 @@
 using System.Globalization;
 using wedgeautodraw_1_2.Core.Enums;
 using wedgeautodraw_1_2.Core.Models;
+using wedgeautodraw_1_2.Infrastructure.Helpers;
 
 namespace wedgeautodraw_1_2.Infrastructure.Utilities;
 
@@ -62,8 +63,10 @@ public class ExcelWedgeDataLoader
         };
 
         wedge.Metadata["drawing_number"] = GetCell(row, map, "drawing#");
-        wedge.Metadata["drawing_title"] = GetCell(row, map, "drawing_title");
+        wedge.Metadata["drawing_title"] = GetCell(row, map, "drawing#") + "-DW";
         wedge.Metadata["wedge_title"] = wedge.EngravedText;
+        wedge.EngravedText = wedge.EngravedText.Replace("¶", " ");
+
         wedge.Metadata["Source"] = _excelFilePath;
 
         foreach (var key in dimensionKeys)
@@ -109,7 +112,8 @@ public class ExcelWedgeDataLoader
         drawing.TitleBlockInfo["TITLE"] = drawing.Title;
         drawing.TitleBlockInfo["COMPANY_NAME"] = "SMALL PRECISION TOOLS";
         drawing.TitleBlockInfo["DRAWN_BY"] = "AUTODRAW SERVICE";
-        drawing.TitleBlockInfo["DRAWN_ON"] = DateTime.Now.ToString("yyyy-MM-dd");
+        drawing.TitleBlockInfo["DRAWN_ON"] = DateTime.Now.ToString("MM/dd/yyyy");
+        Logger.Success(drawing.TitleBlockInfo["DRAWN_ON"]);
 
         drawing.HowToOrderInfo["number"] = drawingNumber;
         drawing.HowToOrderInfo["packaging"] = GetCell(row, map, "packaging");

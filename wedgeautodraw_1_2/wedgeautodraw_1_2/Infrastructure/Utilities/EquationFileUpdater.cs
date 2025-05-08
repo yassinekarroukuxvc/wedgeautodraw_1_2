@@ -1,81 +1,139 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
+﻿using System.Globalization;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+using System.Text;
 using wedgeautodraw_1_2.Core.Enums;
 using wedgeautodraw_1_2.Core.Models;
 using wedgeautodraw_1_2.Infrastructure.Helpers;
+using SolidWorks.Interop.sldworks;
+using SolidWorks.Interop.swconst;
 
-namespace wedgeautodraw_1_2.Infrastructure.Utilities
+public static class EquationFileUpdater
 {
-    public static class EquationFileUpdater
+    public static void UpdateEquationFile(string equationFilePath, WedgeData wedge)
     {
-        public static void UpdateEquationFile(string equationFilePath, WedgeData wedge)
+        if (!File.Exists(equationFilePath))
         {
-            if (!File.Exists(equationFilePath))
+            Logger.Warn($"Equation file not found: {equationFilePath}");
+            return;
+        }
+
+        var encoding = GetFileEncoding(equationFilePath);
+        var originalLines = File.ReadAllLines(equationFilePath, encoding).ToList();
+        var outputLines = new List<string>();
+
+        var dimensionKeys = wedge.Dimensions.GetAll().Keys.ToHashSet();
+        var updatedKeys = new HashSet<string>();
+
+        var dimensionRegex = new Regex("^\"(?<key>[^\"]+)\"\\s*=.*$", RegexOptions.Compiled);
+
+        foreach (var line in originalLines)
+        {
+            var match = dimensionRegex.Match(line);
+            if (match.Success)
             {
-                Logger.Warn($"Equation file not found: {equationFilePath}");
-                return;
-            }
-
-            var originalLines = File.ReadAllLines(equationFilePath).ToList();
-            var outputLines = new List<string>();
-            var dimensionKeys = wedge.Dimensions.GetAll().Keys.ToHashSet();
-            var updatedKeys = new HashSet<string>();
-
-            var dimensionRegex = new Regex("^\"(?<key>[^\"]+)\"\\s*=.*$", RegexOptions.Compiled);
-
-            foreach (var line in originalLines)
-            {
-                var match = dimensionRegex.Match(line);
-                if (match.Success)
+                string key = match.Groups["key"].Value;
+                if (dimensionKeys.Contains(key))
                 {
-                    string key = match.Groups["key"].Value;
-                    if (dimensionKeys.Contains(key))
-                    {
-                        var data = wedge.Dimensions[key];
-                        string valueStr = data.GetValue(Unit.Millimeter).ToString("0.#####", CultureInfo.InvariantCulture);
-                        string unitStr = IsAngle(key) ? "deg" : "mm";
+                    var data = wedge.Dimensions[key];
+                    string valueStr = data.GetValue(Unit.Millimeter).ToString("0.#####", CultureInfo.InvariantCulture);
+                    string unitStr = IsAngle(key) ? "deg" : "mm";
 
-                        outputLines.Add($"\"{key}\"={valueStr}{unitStr}");
-                        updatedKeys.Add(key);
-                        continue;
-                    }
+                    outputLines.Add($"\"{key}\"={valueStr}{unitStr}");
+                    updatedKeys.Add(key);
+                    continue;
                 }
-
-                outputLines.Add(line); // Keep original line
             }
 
-            // Append any missing dimensions from the wedge
-            foreach (var kvp in wedge.Dimensions.GetAll())
-            {
-                string key = kvp.Key;
-                if (updatedKeys.Contains(key)) continue;
+            outputLines.Add(line); // Preserve original line
+        }
 
-                var data = kvp.Value;
+        var missingKeys = wedge.Dimensions.GetAll()
+            .Where(kvp => !updatedKeys.Contains(kvp.Key))
+            .Select(kvp => kvp.Key)
+            .ToList();
+
+        // Add spacing before/after new entries
+        if (missingKeys.Count > 0)
+        {
+            outputLines.Add(""); // one empty line before
+            foreach (var key in missingKeys)
+            {
+                var data = wedge.Dimensions[key];
                 string valueStr = data.GetValue(Unit.Millimeter).ToString("0.#####", CultureInfo.InvariantCulture);
                 string unitStr = IsAngle(key) ? "deg" : "mm";
 
                 outputLines.Add($"\"{key}\"={valueStr}{unitStr}");
-            }
-
-            try
-            {
-                File.WriteAllLines(equationFilePath, outputLines);
-                Logger.Success($"Equation file updated at: {equationFilePath}");
-            }
-            catch (Exception ex)
-            {
-                Logger.Error($"Failed to write equation file: {ex.Message}");
+                outputLines.Add(""); // one empty line after
             }
         }
 
-        private static bool IsAngle(string key)
+        try
         {
-            return key is "ISA" or "FA" or "BA" or "GA" or "FL_groove_angle";
+            File.WriteAllText(equationFilePath, string.Join("\r\n", outputLines), encoding);
+            Logger.Success($"Equation file updated at: {equationFilePath}");
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Failed to write equation file: {ex.Message}");
         }
     }
+
+    private static bool IsAngle(string key)
+    {
+        return key is "ISA" or "FA" or "BA" or "GA" or "FL_groove_angle";
+    }
+
+    private static Encoding GetFileEncoding(string filePath)
+    {
+        using var reader = new StreamReader(filePath, true);
+        if (reader.Peek() >= 0)
+        {
+            reader.Read(); // Trigger encoding detection
+        }
+        return reader.CurrentEncoding;
+    }
+    public static void EnsureAllEquationsExist(ModelDoc2 model, WedgeData wedge)
+    {
+        var mgr = (EquationMgr)model.GetEquationMgr();
+        int count = mgr.GetCount();
+
+        var existingKeys = new HashSet<string>();
+        for (int i = 0; i < count; i++)
+        {
+            string eq = mgr.Equation[i];
+            string key = eq.Split('=')[0].Trim().Trim('"');
+            existingKeys.Add(key);
+        }
+
+        foreach (var kvp in wedge.Dimensions.GetAll())
+        {
+            string key = kvp.Key;
+            if (existingKeys.Contains(key)) continue;
+
+            string unitStr = key switch
+            {
+                "ISA" or "FA" or "BA" or "GA" or "FL_groove_angle" => "deg",
+                _ => "mm"
+            };
+
+            double value = kvp.Value.GetValue(Unit.Millimeter);
+            string equation = $"\"{key}\" = {value.ToString("0.#####", CultureInfo.InvariantCulture)}{unitStr}";
+
+            int idx = mgr.Add3(
+                -1,                            // Index = -1 to append
+                equation,                      // The actual equation string
+                true,                          // Solve immediately
+                (int)swInConfigurationOpts_e.swThisConfiguration,
+                null                           // Applies to current config
+            );
+
+            if (idx >= 0)
+                Logger.Info($"Added equation to part: {equation}");
+            else
+                Logger.Warn($"Failed to add equation: {equation}");
+        }
+
+        model.EditRebuild3(); // force rebuild so equations apply
+    }
+
 }

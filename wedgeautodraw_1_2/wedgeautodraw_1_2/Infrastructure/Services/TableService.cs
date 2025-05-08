@@ -68,9 +68,18 @@ public class TableService : ITableService
 
             if (wedgeDimensions.TryGet(key, out var dataStorage) && dataStorage != null)
             {
-                string valInch = dataStorage.GetValue(Unit.Inch).ToString("F4") + " Inch";
-                string tolInch = $"+{dataStorage.GetTolerance(Unit.Inch, "+").ToString("F4")}/-{dataStorage.GetTolerance(Unit.Inch, "-").ToString("F4")}";
-                table.set_Text(i + 1, 0, $"{key}: {valInch} ({tolInch})");
+                double value = dataStorage.GetValue(Unit.Inch);
+                double upperTol = dataStorage.GetTolerance(Unit.Inch, "+");
+                double lowerTol = dataStorage.GetTolerance(Unit.Inch, "-");
+
+                string valInch = $"{value:F4} Inch";
+
+                string tolStr =
+                    (!double.IsNaN(upperTol) && !double.IsNaN(lowerTol))
+                    ? $"(+{upperTol:F4}/-{lowerTol:F4})"
+                    : "(REF)";
+
+                table.set_Text(i + 1, 0, $"{key}: {valInch} {tolStr}".Trim());
             }
             else
             {
@@ -80,6 +89,7 @@ public class TableService : ITableService
 
         return true;
     }
+
 
     public bool CreateLabelAsTable(DataStorage position, DrawingData drawingData)
     {

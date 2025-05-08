@@ -17,6 +17,7 @@ public static class AutomationExecutor
         partService.OpenPart(modPartPath);
         partService.ApplyTolerances(wedgeData.Dimensions);
         partService.UpdateEquations(modEquationPath);
+        //EquationFileUpdater.EnsureAllEquationsExist(partService.GetModel(), wedgeData);
         partService.SetEngravedText(wedgeData.EngravedText);
         partService.Rebuild();
         partService.Save();
@@ -118,13 +119,6 @@ public static class AutomationExecutor
         sectionView.ReactivateView(ref model);
         sectionView.SetViewScale(drawingData.ViewScales[Constants.SectionView].GetValue(Unit.Millimeter));
         sectionView.InsertModelDimensioning();
-        /*AdjustSectionOrDetailViewDimensions(sectionView, drawingData, wedgeData, Constants.SectionView, new()
-        {
-            { "F", "SelectByName" },
-            { "FL", "SelectByName" },
-            { "FR", "SelectByName" },
-            { "BR", "SelectByName" }
-        });*/
         sectionView.SetPositionAndNameDimensioning(wedgeData.Dimensions, drawingData.DimensionStyles, new()
         {
             { "F", "SelectByName" },
@@ -226,15 +220,6 @@ public static class AutomationExecutor
         detail.SetBreakLineGap(drawData.BreaklineData["Detail_viewBreaklineGap"].GetValue(Unit.Meter));
         detail.CreateFixedCenterline(wedgeData.Dimensions, drawData);
         detail.SetPositionAndValuesAndLabelGeometricTolerance(wedgeData.Dimensions, drawData.DimensionStyles, Constants.DatumFeatureLabel);
-        /*AdjustSectionOrDetailViewDimensions(detail, drawData, wedgeData, Constants.DetailView, new()
-        {
-            { "ISA", "SelectByName" },
-            { "GA", "SelectByName" },
-            { "B", "SelectByName" },
-            { "W", "SelectByName" },
-            { "GD", "SelectByName" },
-            { "GR", "SelectByName" }
-        });*/
         detail.SetPositionAndNameDimensioning(wedgeData.Dimensions, drawData.DimensionStyles, new()
         {
             { "ISA", "SelectByName" },
@@ -245,26 +230,56 @@ public static class AutomationExecutor
             { "GR", "SelectByName" }
         });
     }
-
-    private static void AdjustSectionOrDetailViewDimensions(ViewService view, DrawingData drawData, WedgeData wedgeData, string viewKey, Dictionary<string, string> dimensionTypes)
+    private static ViewService EnsureOrCreateView(string viewName, ModelDoc2 model, string partPath)
     {
-        var defaultPositions = view.GetDefaultModelDimensionPositions();
-        var scale = drawData.ViewScales[viewKey].GetValue(Unit.Millimeter);
-        var FL = wedgeData.Dimensions.ContainsKey("FL") ? wedgeData.Dimensions["FL"].GetValue(Unit.Millimeter) : 0;
-        var GD = wedgeData.Dimensions.ContainsKey("GD") ? wedgeData.Dimensions["GD"].GetValue(Unit.Millimeter) : 0;
-
-        foreach (var kvp in defaultPositions)
+        var drawingDoc = model as DrawingDoc;
+        if (drawingDoc == null)
         {
-            string dimName = kvp.Key;
-            double[] pos = kvp.Value;
-            double[] adjustedPos = SectionDetailViewsAdjuster.ApplyOffset(dimName, pos, scale, FL, GD);
-
-            if (drawData.DimensionStyles.ContainsKey(dimName))
-                drawData.DimensionStyles[dimName].Position = new DataStorage(adjustedPos);
-            else
-                drawData.DimensionStyles[dimName] = new DimensioningStorage(new DataStorage(adjustedPos));
+            Logger.Error("Model is not a DrawingDoc.");
+            return null;
         }
 
-        view.SetPositionAndNameDimensioning(wedgeData.Dimensions, drawData.DimensionStyles, dimensionTypes);
+        object[] views = drawingDoc.GetViews() as object[];
+        if (views != null)
+        {
+            foreach (object obj in views)
+            {
+                if (obj is View view)
+                {
+                    string lowerName = view.Name?.ToLowerInvariant() ?? "";
+                    string lowerTarget = viewName.ToLowerInvariant();
+
+                    // Fuzzy match: view name contains "front", "side", etc.
+                    if (lowerName.Contains(lowerTarget.Replace("_view", "")))
+                    {
+                        Logger.Info($"Matched existing view '{view.Name}' to '{viewName}'");
+                        return new ViewService(view.Name, ref model);
+                    }
+                }
+            }
+        }
+
+        Logger.Info($"View '{viewName}' not found. Creating...");
+
+        string orientation = viewName switch
+        {
+            "Front_view" => "*Front",
+            "Top_view" => "*Top",
+            "Side_view" => "*Right",
+            _ => "*Front"
+        };
+
+        View createdView = drawingDoc.CreateDrawViewFromModelView3(partPath, orientation, 0.0, 0.0, 0.0);
+        if (createdView == null)
+        {
+            Logger.Error($"Failed to create view: {viewName} with orientation '{orientation}'");
+            return null;
+        }
+
+        Logger.Success($"Successfully created view '{viewName}' from orientation '{orientation}'.");
+
+        return new ViewService(createdView.Name, ref model);
     }
+
+
 }

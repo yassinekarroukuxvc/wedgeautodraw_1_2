@@ -195,4 +195,9 @@ public class PartService : IPartService
             Logger.Error("Error unlocking part: " + ex.Message);
         }
     }
+    public ModelDoc2 GetModel()
+    {
+        return _swModel;
+    }
+
 }

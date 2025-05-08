@@ -19,5 +19,7 @@ public interface IViewService
     void ReactivateView(ref ModelDoc2 swModel);
     public double[] GetPosition();
     public Dictionary<string, double[]> GetDefaultModelDimensionPositions();
+    public bool RotateView(double angleInDegrees);
+
 
 }
