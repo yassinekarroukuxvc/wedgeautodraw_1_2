@@ -192,7 +192,7 @@
 
 "FX@sketch_groove_dimensions" = "cleaned_FX"
 
-"EngravingStart"=32mm
+"EngravingStart" = "TL" * 0.45
 
 "engraving_start@sketch_engraving" = "EngravingStart"
 

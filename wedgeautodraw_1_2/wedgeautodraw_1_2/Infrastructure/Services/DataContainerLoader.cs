@@ -166,7 +166,7 @@ public class DataContainerLoader : IDataContainerLoader
         // Title Info
         drawingData.TitleInfo["info"] = GetStr("how_to_order_info");
         drawingData.TitleInfo["number"] = (string)wedgeData.Metadata["drawing_number"];
-        drawingData.Title = wedgeData.Metadata["drawing_title"] + " - Production Copy";
+        drawingData.Title = wedgeData.Metadata["wedge_title"] + "";
 
         // Title Block Info
         drawingData.TitleBlockInfo["Material"] = GetStr("material");

@@ -32,6 +32,14 @@ public static class EquationFileUpdater
             if (match.Success)
             {
                 string key = match.Groups["key"].Value;
+
+                if (key == "EngravingStart" && wedge.Dimensions.ContainsKey("TL"))
+                {
+                    outputLines.Add("\"EngravingStart\" = \"TL\" * 0.45");
+                    updatedKeys.Add("EngravingStart");
+                    continue;
+                }
+
                 if (dimensionKeys.Contains(key))
                 {
                     var data = wedge.Dimensions[key];
@@ -105,35 +113,42 @@ public static class EquationFileUpdater
             existingKeys.Add(key);
         }
 
+        // Clear selection and force rebuild before adding
+        model.ClearSelection2(true);
+        model.EditRebuild3();
+
         foreach (var kvp in wedge.Dimensions.GetAll())
         {
             string key = kvp.Key;
             if (existingKeys.Contains(key)) continue;
 
-            string unitStr = key switch
+            double value = kvp.Value.GetValue(Unit.Millimeter);
+
+            // Use unit only for known angle types — otherwise omit to prevent Add3 failures
+            string equation = key switch
             {
-                "ISA" or "FA" or "BA" or "GA" or "FL_groove_angle" => "deg",
-                _ => "mm"
+                "ISA" or "FA" or "BA" or "GA" or "FL_groove_angle" =>
+                    $"\"{key}\" = {value.ToString("0.#####", CultureInfo.InvariantCulture)}deg",
+                _ =>
+                    $"\"{key}\" = {value.ToString("0.#####", CultureInfo.InvariantCulture)}"
             };
 
-            double value = kvp.Value.GetValue(Unit.Millimeter);
-            string equation = $"\"{key}\" = {value.ToString("0.#####", CultureInfo.InvariantCulture)}{unitStr}";
-
             int idx = mgr.Add3(
-                -1,                            // Index = -1 to append
-                equation,                      // The actual equation string
+                -1,                            // Append at end
+                equation,                      // Full equation string
                 true,                          // Solve immediately
                 (int)swInConfigurationOpts_e.swThisConfiguration,
-                null                           // Applies to current config
+                null                           // Current configuration
             );
 
             if (idx >= 0)
                 Logger.Info($"Added equation to part: {equation}");
             else
-                Logger.Warn($"Failed to add equation: {equation}");
+                Logger.Warn($"[EquationMgr] Add3 failed for: {equation} (key: {key})");
         }
 
-        model.EditRebuild3(); // force rebuild so equations apply
+        model.EditRebuild3(); // Final rebuild to apply changes
     }
+
 
 }

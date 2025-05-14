@@ -1,0 +1,11 @@
+
+Started importing sheet: Model
+
+Dimension's value differs from actual measurement:
+Type: Angular , Handle: 281, Displayed Value: 8.000000, Actual Value: 4.368800
+Dimension's value differs from actual measurement:
+Type: Linear , Handle: 2A2, Displayed Value: 0.106300, Actual Value: 0.001620
+Dimension's value differs from actual measurement:
+Type: Diametrical , Handle: 2B9, Displayed Value: 0.118000, Actual Value: 0.001798
+
+Finished importing sheet: Model

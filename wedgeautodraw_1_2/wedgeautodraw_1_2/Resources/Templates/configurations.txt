@@ -12,11 +12,11 @@ detail_view_posY=180
 section_view_posX=83
 
 # === Table Positions ===
-dim_table_posX=130
+dim_table_posX=100
 dim_table_posY=61
-dim_table_width=45
+dim_table_width=70
 
-how_to_order_posX=130
+how_to_order_posX=100
 how_to_order_posY=77
 how_to_order_width=60
 

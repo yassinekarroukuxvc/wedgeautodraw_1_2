@@ -2,7 +2,7 @@
 
 namespace wedgeautodraw_1_2.Core.Models;
 
-public class DynamicDataContainer : DynamicObject
+public class NamedDimensionValues
 {
     private readonly Dictionary<string, DataStorage> _data = new();
 

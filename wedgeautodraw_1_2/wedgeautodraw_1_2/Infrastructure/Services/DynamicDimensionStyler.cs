@@ -16,7 +16,7 @@ public static class DynamicDimensionStyler
 
             if (computedPosition != null && computedPosition.Length == 2)
             {
-                drawingData.DimensionStyles[dimName] = new DimensioningStorage(new DataStorage(computedPosition));
+                drawingData.DimensionStyles[dimName] = new DimensionAnnotation(new DataStorage(computedPosition));
             }
         }
     }

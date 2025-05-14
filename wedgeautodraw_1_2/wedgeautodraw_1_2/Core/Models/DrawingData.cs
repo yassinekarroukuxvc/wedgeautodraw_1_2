@@ -4,10 +4,10 @@ namespace wedgeautodraw_1_2.Core.Models;
 
 public class DrawingData
 {
-    public DynamicDataContainer ViewPositions { get; set; } = new();
-    public DynamicDataContainer ViewScales { get; set; } = new();
-    public DynamicDataContainer TablePositions { get; set; } = new();
-    public DynamicDataContainer BreaklineData { get; set; } = new();
+    public NamedDimensionValues ViewPositions { get; set; } = new();
+    public NamedDimensionValues ViewScales { get; set; } = new();
+    public NamedDimensionValues TablePositions { get; set; } = new();
+    public NamedDimensionValues BreaklineData { get; set; } = new();
 
     public Dictionary<string, string> TitleBlockInfo { get; set; } = new();
     public Dictionary<string, string> HowToOrderInfo { get; set; } = new();
@@ -17,7 +17,7 @@ public class DrawingData
     public string[] PolishItems { get; set; } = new string[] { };
     public string[] DimensionKeysInTable { get; set; } = new string[] { };
 
-    public DynamicDimensioningContainer DimensionStyles { get; set; } = new();
+    public NamedDimensionAnnotations DimensionStyles { get; set; } = new();
     public DrawingType DrawingType { get; set; }
     public string Title { get; set; } = string.Empty;
     public override string ToString()

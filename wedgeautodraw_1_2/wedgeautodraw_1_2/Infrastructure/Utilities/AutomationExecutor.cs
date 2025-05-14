@@ -18,7 +18,8 @@ public static class AutomationExecutor
         partService.ApplyTolerances(wedgeData.Dimensions);
         partService.UpdateEquations(modEquationPath);
         //EquationFileUpdater.EnsureAllEquationsExist(partService.GetModel(), wedgeData);
-        partService.SetEngravedText(wedgeData.EngravedText);
+        //partService.SetEngravedText(wedgeData.EngravedText);
+        partService.SetEngravedText("Test");
         partService.Rebuild();
         partService.Save();
 
@@ -119,7 +120,7 @@ public static class AutomationExecutor
         sectionView.ReactivateView(ref model);
         sectionView.SetViewScale(drawingData.ViewScales[Constants.SectionView].GetValue(Unit.Millimeter));
         sectionView.InsertModelDimensioning();
-        sectionView.SetPositionAndNameDimensioning(wedgeData.Dimensions, drawingData.DimensionStyles, new()
+        sectionView.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawingData.DimensionStyles, new()
         {
             { "F", "SelectByName" },
             { "FL", "SelectByName" },
@@ -173,9 +174,9 @@ public static class AutomationExecutor
         front.SetViewScale(drawData.ViewScales[Constants.FrontView].GetValue(Unit.Millimeter));
         front.SetViewPosition(drawData.ViewPositions[Constants.FrontView]);
         front.SetBreaklinePosition(wedgeData.Dimensions, drawData);
-        front.CreateFixedCenterline(wedgeData.Dimensions, drawData);
+        front.CreateCenterline(wedgeData.Dimensions, drawData);
         front.SetBreakLineGap(drawData.BreaklineData["Front_viewBreaklineGap"].GetValue(Unit.Meter));
-        front.SetPositionAndNameDimensioning(wedgeData.Dimensions, drawData.DimensionStyles, new()
+        front.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, new()
         {
             { "TL", "SelectByName" },
             { "EngravingStart", "SelectByName" }
@@ -188,8 +189,8 @@ public static class AutomationExecutor
         side.SetViewPosition(drawData.ViewPositions[Constants.SideView]);
         side.SetBreaklinePosition(wedgeData.Dimensions, drawData);
         side.SetBreakLineGap(drawData.BreaklineData["Side_viewBreaklineGap"].GetValue(Unit.Meter));
-        side.CreateFixedCenterline(wedgeData.Dimensions, drawData);
-        side.SetPositionAndNameDimensioning(wedgeData.Dimensions, drawData.DimensionStyles, new()
+        side.CreateCenterline(wedgeData.Dimensions, drawData);
+        side.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, new()
         {
             { "FA", "SelectByName" },
             { "BA", "SelectByName" },
@@ -202,13 +203,13 @@ public static class AutomationExecutor
     {
         var top = new ViewService(Constants.TopView, ref model);
         top.SetViewPosition(drawData.ViewPositions[Constants.TopView]);
-        top.CreateFixedCentermark(wedgeData.Dimensions, drawData);
-        top.SetPositionAndNameDimensioning(wedgeData.Dimensions, drawData.DimensionStyles, new()
+        top.CreateCentermark(wedgeData.Dimensions, drawData);
+        top.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, new()
         {
             { "TDF", "SelectByName" },
             { "TD", "SelectByName" }
         });
-        top.SetPositionAndLabelDatumFeature(wedgeData.Dimensions, drawData.DimensionStyles, "A");
+        top.PlaceDatumFeatureLabel(wedgeData.Dimensions, drawData.DimensionStyles, "A");
     }
 
     private static void CreateDetailView(ModelDoc2 model, DrawingData drawData, WedgeData wedgeData)
@@ -218,9 +219,9 @@ public static class AutomationExecutor
         detail.SetViewPosition(drawData.ViewPositions[Constants.DetailView]);
         detail.SetBreaklinePosition(wedgeData.Dimensions, drawData);
         detail.SetBreakLineGap(drawData.BreaklineData["Detail_viewBreaklineGap"].GetValue(Unit.Meter));
-        detail.CreateFixedCenterline(wedgeData.Dimensions, drawData);
-        detail.SetPositionAndValuesAndLabelGeometricTolerance(wedgeData.Dimensions, drawData.DimensionStyles, Constants.DatumFeatureLabel);
-        detail.SetPositionAndNameDimensioning(wedgeData.Dimensions, drawData.DimensionStyles, new()
+        detail.CreateCenterline(wedgeData.Dimensions, drawData);
+        detail.PlaceGeometricToleranceFrame(wedgeData.Dimensions, drawData.DimensionStyles, Constants.DatumFeatureLabel);
+        detail.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, new()
         {
             { "ISA", "SelectByName" },
             { "GA", "SelectByName" },

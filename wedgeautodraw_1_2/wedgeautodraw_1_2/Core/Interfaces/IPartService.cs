@@ -8,7 +8,7 @@ public interface IPartService
     void OpenPart(string partPath);
     void UpdateEquations(string equationFilePath);
     void SetEngravedText(string text);
-    void ApplyTolerances(DynamicDataContainer dimensions);
+    void ApplyTolerances(NamedDimensionValues dimensions);
     void ToggleSketchVisibility(string sketchName, bool visible);
     void EnableSolveOrder(bool enable);
     void EnableAutoRebuild(bool enable);

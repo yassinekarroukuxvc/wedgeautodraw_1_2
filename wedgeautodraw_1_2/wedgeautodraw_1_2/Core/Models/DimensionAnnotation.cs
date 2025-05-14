@@ -2,10 +2,10 @@
 
 namespace wedgeautodraw_1_2.Core.Models;
 
-public class DimensioningStorage
+public class DimensionAnnotation
 {
     public DataStorage Position { get; set; }
-    public DimensioningStorage(DataStorage position)
+    public DimensionAnnotation(DataStorage position)
     {
         Position = position;
     }

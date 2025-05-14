@@ -7,15 +7,15 @@ public interface IViewService
 {
     bool SetViewScale(double scale);
     bool SetViewPosition(DataStorage position);
-    bool CreateFixedCenterline(DynamicDataContainer wedgeDimensions, DrawingData drawData);
-    bool CreateFixedCentermark(DynamicDataContainer wedgeDimensions, DrawingData drawData);
-    bool SetBreaklinePosition(DynamicDataContainer wedgeDimensions, DrawingData drawData);
+    bool CreateCenterline(NamedDimensionValues wedgeDimensions, DrawingData drawData);
+    bool CreateCentermark(NamedDimensionValues wedgeDimensions, DrawingData drawData);
+    bool SetBreaklinePosition(NamedDimensionValues wedgeDimensions, DrawingData drawData);
     bool SetBreakLineGap(double gap);
-    public string CreateSectionView(IViewService parentView, DataStorage position, SketchSegment sketchSegment, DynamicDataContainer wedgeDimensions, DrawingData drawData);
+    public string CreateSectionView(IViewService parentView, DataStorage position, SketchSegment sketchSegment, NamedDimensionValues wedgeDimensions, DrawingData drawData);
     bool InsertModelDimensioning();
-    bool SetPositionAndNameDimensioning(DynamicDataContainer wedgeDimensions, DynamicDimensioningContainer drawDimensions, Dictionary<string, string> dimensionTypes);
-    bool SetPositionAndLabelDatumFeature(DynamicDataContainer wedgeDimensions, DynamicDimensioningContainer drawDimensions, string label);
-    bool SetPositionAndValuesAndLabelGeometricTolerance(DynamicDataContainer wedgeDimensions, DynamicDimensioningContainer drawDimensions, string label);
+    bool ApplyDimensionPositionsAndNames(NamedDimensionValues wedgeDimensions, NamedDimensionAnnotations drawDimensions, Dictionary<string, string> dimensionTypes);
+    bool PlaceDatumFeatureLabel(NamedDimensionValues wedgeDimensions, NamedDimensionAnnotations drawDimensions, string label);
+    bool PlaceGeometricToleranceFrame(NamedDimensionValues wedgeDimensions, NamedDimensionAnnotations drawDimensions, string label);
     void ReactivateView(ref ModelDoc2 swModel);
     public double[] GetPosition();
     public Dictionary<string, double[]> GetDefaultModelDimensionPositions();

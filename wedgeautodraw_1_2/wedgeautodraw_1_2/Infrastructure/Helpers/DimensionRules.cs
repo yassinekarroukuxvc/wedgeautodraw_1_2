@@ -4,9 +4,9 @@ namespace wedgeautodraw_1_2.Infrastructure.Helpers;
 
 public static class DimensionRules
 {
-    public static readonly Dictionary<string, DimensionRule> Rules = new()
+    public static readonly Dictionary<string, DimensionLayoutRule> Rules = new()
     {
-        ["TL"] = new DimensionRule
+        ["TL"] = new DimensionLayoutRule
         {
             BasedOnView = Constants.FrontView,
             CalculatePosition = (wedge, drawing) =>
@@ -17,7 +17,7 @@ public static class DimensionRules
                 return new[] { front[0] - fsv * TD / 2 - 7.5, front[1] };
             }
         },
-        ["EngravingStart"] = new DimensionRule
+        ["EngravingStart"] = new DimensionLayoutRule
         {
             BasedOnView = Constants.FrontView,
             CalculatePosition = (wedge, drawing) =>
@@ -26,10 +26,10 @@ public static class DimensionRules
                 var TD = wedge.Dimensions["TD"].GetValue(Unit.Millimeter);
                 var TL = wedge.Dimensions["TL"].GetValue(Unit.Millimeter);
                 var fsv = drawing.ViewScales[Constants.FrontView].GetValue(Unit.Millimeter);
-                return new[] { front[0] + fsv * TD / 2 + 4, front[1] + 45};
+                return new[] { front[0] + fsv * TD / 2 + 4 , front[1] + 45};
             }
         },
-        ["TDF"] = new DimensionRule
+        ["TDF"] = new DimensionLayoutRule
         {
             BasedOnView = Constants.TopView,
             CalculatePosition = (wedge, drawing) =>
@@ -41,7 +41,7 @@ public static class DimensionRules
                 return new[] { top[0] + tsv * TDF / 2 + 20, top[1] + tsv * TD / 2 + 3 };
             }
         },
-        ["TD"] = new DimensionRule
+        ["TD"] = new DimensionLayoutRule
         {
             BasedOnView = Constants.TopView,
             CalculatePosition = (wedge, drawing) =>
@@ -53,7 +53,7 @@ public static class DimensionRules
                 return new[] { top[0] + tsv * TDF / 2 + 20, top[1] - tsv * TD / 2 };
             }
         },
-        ["DatumFeature"] = new DimensionRule
+        ["DatumFeature"] = new DimensionLayoutRule
         {
             BasedOnView = Constants.TopView,
             CalculatePosition = (wedge, drawing) =>
@@ -65,7 +65,7 @@ public static class DimensionRules
                 return new[] { top[0] - tsv * TDF / 2, top[1] - tsv * TD / 2 - 1 };
             }
         },
-        ["ISA"] = new DimensionRule
+        ["ISA"] = new DimensionLayoutRule
         {
             BasedOnView = Constants.DetailView,
             CalculatePosition = (wedge, drawing) =>
@@ -77,7 +77,7 @@ public static class DimensionRules
                 return new[] { detail[0] + 3.5, y + lowerPartLength - 3.75 };
             }
         },
-        ["GA"] = new DimensionRule
+        ["GA"] = new DimensionLayoutRule
         {
             BasedOnView = Constants.DetailView,
             CalculatePosition = (wedge, drawing) =>
@@ -89,7 +89,7 @@ public static class DimensionRules
                 return new[] { detail[0], y - 2 };
             }
         },
-        ["B"] = new DimensionRule
+        ["B"] = new DimensionLayoutRule
         {
             BasedOnView = Constants.DetailView,
             CalculatePosition = (wedge, drawing) =>
@@ -101,7 +101,7 @@ public static class DimensionRules
                 return new[] { detail[0], y - 10 };
             }
         },
-        ["W"] = new DimensionRule
+        ["W"] = new DimensionLayoutRule
         {
             BasedOnView = Constants.DetailView,
             CalculatePosition = (wedge, drawing) =>
@@ -113,7 +113,7 @@ public static class DimensionRules
                 return new[] { detail[0], y - 15 };
             }
         },
-        ["GeometricTolerance"] = new DimensionRule
+        ["GeometricTolerance"] = new DimensionLayoutRule
         {
             BasedOnView = Constants.DetailView,
             CalculatePosition = (wedge, drawing) =>
@@ -122,7 +122,7 @@ public static class DimensionRules
                 return new[] { detail[0] - 13.5, detail[1] - 70 };
             }
         },
-        ["GD"] = new DimensionRule
+        ["GD"] = new DimensionLayoutRule
         {
             BasedOnView = Constants.DetailView,
             CalculatePosition = (wedge, drawing) =>
@@ -137,7 +137,7 @@ public static class DimensionRules
                 return new[] { detail[0] - dsv * W / 2 - 10, y + dsv * GD / 2 };
             }
         },
-        ["GR"] = new DimensionRule
+        ["GR"] = new DimensionLayoutRule
         {
             BasedOnView = Constants.DetailView,
             CalculatePosition = (wedge, drawing) =>
@@ -151,7 +151,7 @@ public static class DimensionRules
                 return new[] { detail[0] + 10, y + dsv * GD + 5 };
             }
         },
-        ["FA"] = new DimensionRule
+        ["FA"] = new DimensionLayoutRule
         {
             BasedOnView = Constants.SideView,
             CalculatePosition = (wedge, drawing) =>
@@ -162,7 +162,7 @@ public static class DimensionRules
                 return new[] { side[0] - ssv * TD / 2 - 4, side[1] + 20 };
             }
         },
-        ["BA"] = new DimensionRule
+        ["BA"] = new DimensionLayoutRule
         {
             BasedOnView = Constants.SideView,
             CalculatePosition = (wedge, drawing) =>
@@ -173,7 +173,7 @@ public static class DimensionRules
                 return new[] { side[0] + ssv * TD / 2 + 4, side[1] + 15 };
             }
         },
-        ["E"] = new DimensionRule
+        ["E"] = new DimensionLayoutRule
         {
             BasedOnView = Constants.SideView,
             CalculatePosition = (wedge, drawing) =>
@@ -184,7 +184,7 @@ public static class DimensionRules
                 return new[] { side[0] + ssv * TD / 2 + 2.5, side[1] - 68 };
             }
         },
-        ["FX"] = new DimensionRule
+        ["FX"] = new DimensionLayoutRule
         {
             BasedOnView = Constants.SideView,
             CalculatePosition = (wedge, drawing) =>
@@ -195,7 +195,7 @@ public static class DimensionRules
                 return new[] { side[0] - ssv * TD / 2 - 10, side[1] - 81.5 };
             }
         },
-        ["F"] = new DimensionRule
+        ["F"] = new DimensionLayoutRule
         {
             BasedOnView = "Section_view",
             CalculatePosition = (wedge, drawing) =>
@@ -226,7 +226,7 @@ public static class DimensionRules
                 return new[] { secv_x, secv_y -10 };
             }
         },
-        ["FL"] = new DimensionRule
+        ["FL"] = new DimensionLayoutRule
         {
             BasedOnView = Constants.SectionView,
             CalculatePosition = (wedge, drawing) =>
@@ -257,7 +257,7 @@ public static class DimensionRules
                 return new[] { secv_x, secv_y - 15 };
             }
         },
-        ["FR"] = new DimensionRule
+        ["FR"] = new DimensionLayoutRule
         {
             BasedOnView = Constants.SectionView,
             CalculatePosition = (wedge, drawing) =>
@@ -289,7 +289,7 @@ public static class DimensionRules
                 return new[] { secv_x - scale * FL / 2 - 10, secv_y + scale * GD / 2 };
             }
         },
-        ["BR"] = new DimensionRule
+        ["BR"] = new DimensionLayoutRule
         {
             BasedOnView = Constants.SectionView,
             CalculatePosition = (wedge, drawing) =>

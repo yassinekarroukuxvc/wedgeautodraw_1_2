@@ -91,7 +91,7 @@ public class ViewService : IViewService
         }
     }
 
-    public bool CreateFixedCenterline(DynamicDataContainer wedgeDimensions, DrawingData drawData)
+    public bool CreateCenterline(NamedDimensionValues wedgeDimensions, DrawingData drawData)
     {
         try
         {
@@ -157,7 +157,7 @@ public class ViewService : IViewService
         }
     }
 
-    public bool CreateFixedCentermark(DynamicDataContainer wedgeDimensions, DrawingData drawData)
+    public bool CreateCentermark(NamedDimensionValues wedgeDimensions, DrawingData drawData)
     {
         if (_swView == null || _model == null)
         {
@@ -200,7 +200,7 @@ public class ViewService : IViewService
     }
 
 
-    public bool SetBreaklinePosition(DynamicDataContainer wedgeDimensions, DrawingData drawData)
+    public bool SetBreaklinePosition(NamedDimensionValues wedgeDimensions, DrawingData drawData)
     {
         if (_swView == null)
         {
@@ -278,7 +278,7 @@ public class ViewService : IViewService
     IViewService parentView,
     DataStorage position,
     SketchSegment sketchSegment,
-    DynamicDataContainer wedgeDimensions,
+    NamedDimensionValues wedgeDimensions,
     DrawingData drawData)
     {
         if (_model == null || sketchSegment == null)
@@ -399,9 +399,7 @@ public class ViewService : IViewService
         }
     }
 
-
-
-    public bool SetPositionAndNameDimensioning(DynamicDataContainer wedgeDimensions, DynamicDimensioningContainer drawDimensions, Dictionary<string, string> dimensionTypes)
+    public bool ApplyDimensionPositionsAndNames(NamedDimensionValues wedgeDimensions, NamedDimensionAnnotations drawDimensions, Dictionary<string, string> dimensionTypes)
     {
         if (_swView == null)
         {
@@ -428,8 +426,8 @@ public class ViewService : IViewService
                 {
                     if (selector == "SelectByName" && swDim.Name == dimKey)
                     {
-                        SetAnnotationPositionAndName(swAnn, drawDimensions[dimKey].Position, dimKey);
-                        ApplyDimensionStyling(swDispDim, dimKey);
+                        UpdateAnnotationPositionAndName(swAnn, drawDimensions[dimKey].Position, dimKey);
+                        StyleDimensionAnnotation(swDispDim, dimKey);
                         break;
                     }
                     else if (selector == "SelectByValue" && wedgeDimensions.GetAll().TryGetValue(dimKey, out var modelValue))
@@ -439,8 +437,8 @@ public class ViewService : IViewService
 
                         if (Math.Abs(modelVal - dimVal) < 1e-4)
                         {
-                            SetAnnotationPositionAndName(swAnn, drawDimensions[dimKey].Position, dimKey);
-                            ApplyDimensionStyling(swDispDim, dimKey);
+                            UpdateAnnotationPositionAndName(swAnn, drawDimensions[dimKey].Position, dimKey);
+                            StyleDimensionAnnotation(swDispDim, dimKey);
                             break;
                         }
                     }
@@ -459,7 +457,7 @@ public class ViewService : IViewService
         }
     }
 
-    private void SetAnnotationPositionAndName(Annotation swAnn, DataStorage pos, string name)
+    private void UpdateAnnotationPositionAndName(Annotation swAnn, DataStorage pos, string name)
     {
         if (swAnn == null || pos == null)
         {
@@ -489,19 +487,20 @@ public class ViewService : IViewService
         }
     }
 
-    private void ApplyDimensionStyling(DisplayDimension swDispDim, string dimKey)
+    
+    private void StyleDimensionAnnotation(DisplayDimension swDispDim, string dimKey)
     {
         try
         {
+            if(dimKey != "ISA")
+            {
+                swDispDim.CenterText = true;
+            }
             
-            swDispDim.CenterText = true;
-            
-
-
             if (dimKey == "FR" || dimKey == "BR")
             {
-                swDispDim.ArrowSide = 2; // Both sides
-                swDispDim.WitnessVisibility = 2; // Hide witness lines
+                swDispDim.ArrowSide = 2;
+                swDispDim.WitnessVisibility = 2;
                 swDispDim.ExtensionLineExtendsFromCenterOfSet = false;
                 swDispDim.MaxWitnessLineLength = 0;
                 swDispDim.SetExtensionLineAsCenterline(1, false);
@@ -516,8 +515,7 @@ public class ViewService : IViewService
         }
     }
 
-
-    public bool SetPositionAndLabelDatumFeature(DynamicDataContainer wedgeDimensions, DynamicDimensioningContainer drawDimensions, string label)
+    public bool PlaceDatumFeatureLabel(NamedDimensionValues wedgeDimensions, NamedDimensionAnnotations drawDimensions, string label)
     {
         try
         {
@@ -545,7 +543,7 @@ public class ViewService : IViewService
             return false;
         }
     }
-    public bool SetPositionAndValuesAndLabelGeometricTolerance(DynamicDataContainer wedgeDimensions, DynamicDimensioningContainer drawDimensions, string label)
+    public bool PlaceGeometricToleranceFrame(NamedDimensionValues wedgeDimensions, NamedDimensionAnnotations drawDimensions, string label)
     {
         try
         {
@@ -636,7 +634,6 @@ public class ViewService : IViewService
         Logger.Warn("Section view position is null or invalid. Returning (0,0).");
         return new double[] { 0.0, 0.0 };
     }
-
 
     public Dictionary<string, double[]> GetDefaultModelDimensionPositions()
     {

@@ -61,11 +61,13 @@ public class ExcelWedgeDataLoader
         {
             EngravedText = GetCell(row, map, "wedge_title")
         };
+        string EngravedText = GetCell(row, map, "wedge_title");
 
         wedge.Metadata["drawing_number"] = GetCell(row, map, "drawing#");
         wedge.Metadata["drawing_title"] = GetCell(row, map, "drawing#") + "-DW";
-        wedge.Metadata["wedge_title"] = wedge.EngravedText;
-        wedge.EngravedText = wedge.EngravedText.Replace("¶", " ");
+        wedge.Metadata["wedge_title"] = GetCell(row, map, "wedge_title");
+        wedge.Metadata["wedge_title"] = EngravedText.Replace("¶", " "); ;
+        //wedge.EngravedText = EngravedText.Replace("¶", " ");
 
         wedge.Metadata["Source"] = _excelFilePath;
 
@@ -106,10 +108,11 @@ public class ExcelWedgeDataLoader
         string drawingNumber = GetCell(row, map, "drawing#");
         drawing.TitleInfo["number"] = drawingNumber;
         drawing.TitleInfo["info"] = GetCell(row, map, "drawing_comments");
+        string wedge_title = GetCell(row, map, "wedge_title");
 
         drawing.Title = drawingNumber + " - Production Copy";
         drawing.TitleBlockInfo["DRAWING_NUMBER"] = drawingNumber + "-DW";
-        drawing.TitleBlockInfo["TITLE"] = drawing.Title;
+        drawing.TitleBlockInfo["TITLE"] = wedge_title;
         drawing.TitleBlockInfo["COMPANY_NAME"] = "SMALL PRECISION TOOLS";
         drawing.TitleBlockInfo["DRAWN_BY"] = "AUTODRAW SERVICE";
         drawing.TitleBlockInfo["DRAWN_ON"] = DateTime.Now.ToString("MM/dd/yyyy");

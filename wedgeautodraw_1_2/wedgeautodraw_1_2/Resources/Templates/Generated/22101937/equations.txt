@@ -2,7 +2,7 @@
 
 "TL"=75.9968mm
 
-"TD"=2.70002mm
+"TD"=2.9972mm
 
 "TDF"=2.70002mm
 
@@ -192,7 +192,7 @@
 
 "FX@sketch_groove_dimensions" = "cleaned_FX"
 
-"EngravingStart"=32mm
+"EngravingStart" = "TL" * 0.45
 
 "engraving_start@sketch_engraving" = "EngravingStart"
 

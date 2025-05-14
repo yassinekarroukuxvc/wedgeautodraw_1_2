@@ -54,40 +54,102 @@ public class TableService : ITableService
         }
     }
 
-    public bool CreateDimensionTable(DataStorage position, string[] wedgeKeys, string header, DrawingData drawingData, DynamicDataContainer wedgeDimensions)
+    public bool CreateDimensionTable(DataStorage position, string[] wedgeKeys, string header, DrawingData drawingData, NamedDimensionValues wedgeDimensions)
     {
-        var table = InsertBasicTable(position, wedgeKeys.Length + 1, "Dimensions", drawingData.TablePositions[Constants.DimensionTable].GetValues(Unit.Meter)[2]);
+        var validRows = new List<string>();
+
+        foreach (var key in wedgeKeys)
+        {
+            if (wedgeDimensions.TryGet(key, out var dataStorage) && dataStorage != null)
+            {
+                double valueInch = dataStorage.GetValue(Unit.Inch);
+                double upperTolInch = dataStorage.GetTolerance(Unit.Inch, "+");
+                double lowerTolInch = dataStorage.GetTolerance(Unit.Inch, "-");
+
+                double valueMm = dataStorage.GetValue(Unit.Millimeter);
+                double upperTolMm = dataStorage.GetTolerance(Unit.Millimeter, "+");
+                double lowerTolMm = dataStorage.GetTolerance(Unit.Millimeter, "-");
+
+                if (!double.IsNaN(valueInch))
+                {
+                    bool isRef = IsRef(upperTolInch, lowerTolInch);
+
+                    string tolStrInch = isRef ? "" : FormatTolerance(upperTolInch, lowerTolInch, 4, true);
+                    string tolStrMm = isRef ? "" : FormatTolerance(upperTolMm, lowerTolMm, 4, false);
+
+                    // Format inch value without leading 0
+                    string inchStr = TrimLeadingZero(valueInch.ToString("F4"));
+
+                    string valStr = $"{key} = {inchStr} {tolStrInch} [{valueMm:F3} {tolStrMm}]";
+
+                    if (isRef)
+                        valStr += " (REF)";
+
+                    validRows.Add(valStr.Trim());
+                }
+            }
+        }
+
+        if (validRows.Count == 0)
+        {
+            Logger.Warn("No valid dimension entries found. Skipping dimension table creation.");
+            return false;
+        }
+
+        var table = InsertBasicTable(position, validRows.Count + 1, "Dimensions", drawingData.TablePositions[Constants.DimensionTable].GetValues(Unit.Meter)[2]);
         if (table == null) return false;
 
         table.SetHeader((int)swTableHeaderPosition_e.swTableHeader_Top, 1);
         table.set_Text(0, 0, header);
 
-        for (int i = 0; i < wedgeKeys.Length; i++)
+        for (int i = 0; i < validRows.Count; i++)
         {
-            string key = wedgeKeys[i];
-
-            if (wedgeDimensions.TryGet(key, out var dataStorage) && dataStorage != null)
-            {
-                double value = dataStorage.GetValue(Unit.Inch);
-                double upperTol = dataStorage.GetTolerance(Unit.Inch, "+");
-                double lowerTol = dataStorage.GetTolerance(Unit.Inch, "-");
-
-                string valInch = $"{value:F4} Inch";
-
-                string tolStr =
-                    (!double.IsNaN(upperTol) && !double.IsNaN(lowerTol))
-                    ? $"(+{upperTol:F4}/-{lowerTol:F4})"
-                    : "(REF)";
-
-                table.set_Text(i + 1, 0, $"{key}: {valInch} {tolStr}".Trim());
-            }
-            else
-            {
-                table.set_Text(i + 1, 0, $"{key}: N/A");
-            }
+            table.set_Text(i + 1, 0, validRows[i]);
         }
 
         return true;
+    }
+
+    private string FormatTolerance(double upper, double lower, int precision, bool removeLeadingZero)
+    {
+        bool upperValid = !double.IsNaN(upper);
+        bool lowerValid = !double.IsNaN(lower);
+
+        string Format(double val) =>
+            Math.Abs(val) < 1e-6 ? "0" :
+            removeLeadingZero ? TrimLeadingZero(val.ToString($"F{precision}")) :
+            val.ToString($"F{precision}");
+
+        if (!upperValid && !lowerValid)
+            return "";
+
+        bool upperZero = Math.Abs(upper) < 1e-6;
+        bool lowerZero = Math.Abs(lower) < 1e-6;
+
+        if (!upperZero && !lowerZero && Math.Abs(upper - lower) < 1e-6)
+            return $"±{Format(upper)}";
+
+        if (!upperZero && lowerZero)
+            return $"+{Format(upper)}/-0";
+
+        if (upperZero && !lowerZero)
+            return $"+0/-{Format(lower)}";
+
+        if (!upperZero && !lowerZero)
+            return $"+{Format(upper)}/-{Format(lower)}";
+
+        return "";
+    }
+
+    private bool IsRef(double upper, double lower)
+    {
+        return (double.IsNaN(upper) && double.IsNaN(lower)) ||
+               (Math.Abs(upper) < 1e-6 && Math.Abs(lower) < 1e-6);
+    }
+
+    private string TrimLeadingZero(string input)
+    {
+        return input.StartsWith("0.") ? input.Substring(1) : input;
     }
 
 

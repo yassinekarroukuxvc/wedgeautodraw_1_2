@@ -1,4 +1,5 @@
 ﻿using SolidWorks.Interop.sldworks;
+using SolidWorks.Interop.swcommands;
 using SolidWorks.Interop.swconst;
 using wedgeautodraw_1_2.Core.Enums;
 using wedgeautodraw_1_2.Core.Interfaces;
@@ -66,7 +67,7 @@ public class PartService : IPartService
         }
     }
 
-    public void ApplyTolerances(DynamicDataContainer dimensions)
+    public void ApplyTolerances(NamedDimensionValues dimensions)
     {
         try
         {

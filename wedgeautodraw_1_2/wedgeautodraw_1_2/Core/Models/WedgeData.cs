@@ -4,7 +4,7 @@ namespace wedgeautodraw_1_2.Core.Models;
 
 public class WedgeData
 {
-    public DynamicDataContainer Dimensions { get; set; } = new();
+    public NamedDimensionValues Dimensions { get; set; } = new();
     public Dictionary<string, object> Metadata { get; set; } = new();
     public string EngravedText { get; set; } = string.Empty;
     public override string ToString()
