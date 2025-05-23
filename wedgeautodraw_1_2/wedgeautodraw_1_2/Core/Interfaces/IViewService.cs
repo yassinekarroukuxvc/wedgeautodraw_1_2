@@ -20,6 +20,6 @@ public interface IViewService
     public double[] GetPosition();
     public Dictionary<string, double[]> GetDefaultModelDimensionPositions();
     public bool RotateView(double angleInDegrees);
-
+    bool DeleteAnnotationsByName(string[] annotationNames);
 
 }

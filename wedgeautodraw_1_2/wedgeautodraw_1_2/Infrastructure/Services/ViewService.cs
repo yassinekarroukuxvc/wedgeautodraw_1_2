@@ -6,6 +6,7 @@ using wedgeautodraw_1_2.Core.Enums;
 using wedgeautodraw_1_2.Core.Interfaces;
 using wedgeautodraw_1_2.Core.Models;
 using wedgeautodraw_1_2.Infrastructure.Helpers;
+using wedgeautodraw_1_2.Infrastructure.Services.ViewServices;
 
 namespace wedgeautodraw_1_2.Infrastructure.Services;
 
@@ -15,8 +16,13 @@ public class ViewService : IViewService
     private ModelDoc2 _model;
     private DrawingDoc _drawingDoc;
     private string _viewName;
-    private double _scaling;
     private bool _status;
+
+    private ViewScaler _scaler;
+    private BreaklineHandler _breaklineHandler;
+    private DimensionStyler _dimensionStyler;
+    private AnnotationManager _annotationManager;
+    private SectionViewCreator _sectionViewCreator;
 
     public ViewService(string viewName, ref ModelDoc2 model)
     {
@@ -25,9 +31,7 @@ public class ViewService : IViewService
 
         _status = _model.Extension.SelectByID2(viewName, "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
         if (!_status)
-        {
-            Logger.Warn($"Equation file not found: {viewName}");
-        }
+            Logger.Warn($"View not found: {viewName}");
 
         _drawingDoc = _model as DrawingDoc;
         if (_drawingDoc == null)
@@ -40,36 +44,16 @@ public class ViewService : IViewService
         _swView = (View)_drawingDoc.ActiveDrawingView;
 
         if (_swView == null)
-        {
             Logger.Warn($"Failed to get ActiveDrawingView after activating {viewName}");
-        }
-        else
-        {
-            _scaling = _swView.ScaleDecimal;
-        }
-    }
-    
-    public bool SetViewScale(double scale)
-    {
-        if (_swView == null)
-        {
-            Logger.Warn("Cannot set scale. View is null.");
-            return false;
-        }
 
-        try
-        {
-            _scaling = scale;
-            _swView.ScaleDecimal = scale;
-            Logger.Info($"Set view scale to {scale:F3}.");
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Logger.Error($"Failed to set view scale: {ex.Message}");
-            return false;
-        }
+        _scaler = new ViewScaler(_swView);
+        _breaklineHandler = new BreaklineHandler(_swView, _model);
+        _dimensionStyler = new DimensionStyler(_model);
+        _annotationManager = new AnnotationManager(_swView);
+        _sectionViewCreator = new SectionViewCreator(_model);
     }
+
+    public bool SetViewScale(double scale) => _scaler.SetScale(scale);
 
     public bool SetViewPosition(DataStorage position)
     {
@@ -199,141 +183,19 @@ public class ViewService : IViewService
         }
     }
 
-
     public bool SetBreaklinePosition(NamedDimensionValues wedgeDimensions, DrawingData drawData)
-    {
-        if (_swView == null)
-        {
-            Logger.Warn("Cannot set breakline position. View is null.");
-            return false;
-        }
-
-        try
-        {
-            double scale = _swView.ScaleDecimal;
-            double tl = wedgeDimensions["TL"].GetValue(Unit.Meter);
-            BreakLine breakLine = _swView.IGetBreakLines(_swView.GetBreakLineCount2(out _));
-
-            if (breakLine == null)
-            {
-                Logger.Warn("No breakline object found.");
-                return false;
-            }
-
-            string viewName = _swView.Name.ToLower();
-            (double lower, double upper, bool isDetail) = viewName switch
-            {
-                "front_view" => (drawData.BreaklineData["Front_viewLowerPartLength"].GetValue(Unit.Meter), drawData.BreaklineData["Front_viewLowerPartLength"].GetValue(Unit.Meter), false),
-                "side_view" => (drawData.BreaklineData["Side_viewLowerPartLength"].GetValue(Unit.Meter), drawData.BreaklineData["Side_viewLowerPartLength"].GetValue(Unit.Meter), false),
-                "detail_view" => (drawData.BreaklineData["Detail_viewLowerPartLength"].GetValue(Unit.Meter), tl / 2, true),
-                _ => (0, 0, false)
-            };
-
-            double[] breaklinePos = isDetail
-                ? new[] { lower - scale * tl / 2, scale * upper }
-                : new[] { -tl * scale / 2 + lower, tl * scale / 2 - upper };
-
-            bool result = breakLine.SetPosition(breaklinePos[0], breaklinePos[1]);
-
-            if (isDetail)
-            {
-                _model.Extension.SelectByID2("TL@Detail_View", "DIMENSION", 0, 0, 0, false, 0, null, 0);
-                bool deletion = _model.Extension.DeleteSelection2((int)swDeleteSelectionOptions_e.swDelete_Advanced);
-                result &= deletion;
-            }
-
-            Logger.Info($"Breakline position set successfully in {viewName} view.");
-            return result;
-        }
-        catch (Exception ex)
-        {
-            Logger.Error($"Error setting breakline position: {ex.Message}");
-            return false;
-        }
-    }
-
+        => _breaklineHandler.SetBreaklinePosition(wedgeDimensions, drawData);
 
     public bool SetBreakLineGap(double gap)
-    {
-        if (_swView == null)
-        {
-            Logger.Warn("Cannot set breakline gap. View is null.");
-            return false;
-        }
-
-        try
-        {
-            _swView.BreakLineGap = gap;
-            Logger.Info($"Set breakline gap to {gap:F3} meters.");
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Logger.Error($"Failed to set breakline gap: {ex.Message}");
-            return false;
-        }
-    }
+        => _breaklineHandler.SetBreaklineGap(gap);
 
     public string CreateSectionView(
-    IViewService parentView,
-    DataStorage position,
-    SketchSegment sketchSegment,
-    NamedDimensionValues wedgeDimensions,
-    DrawingData drawData)
-    {
-        if (_model == null || sketchSegment == null)
-        {
-            Logger.Warn("Cannot create section view. Model or SketchSegment is null.");
-            return null;
-        }
-
-        try
-        {
-            Logger.Info("Starting section view creation...");
-
-            _model.ClearSelection2(true);
-            bool selected = sketchSegment.Select4(false, null);
-
-            if (!selected)
-            {
-                Logger.Warn("Failed to select cutting sketch segment.");
-                return null;
-            }
-
-            var drawingDoc = (DrawingDoc)_model;
-            var view = drawingDoc.CreateSectionViewAt5(
-                position.GetValues(Unit.Meter)[0],
-                position.GetValues(Unit.Meter)[1],
-                0.0,
-                "",
-                (int)swCreateSectionViewAtOptions_e.swCreateSectionView_ChangeDirection,
-                null,
-                0.01
-            );
-
-            if (view is null)
-            {
-                Logger.Warn("Section view creation returned null.");
-                return null;
-            }
-
-            if (view.GetSection() is DrSection swSection)
-            {
-                swSection.SetAutoHatch(true);
-                swSection.SetLabel2("Section_view");
-            }
-
-            string newName = view.Name;
-            Logger.Success($"Section view created successfully: {newName}");
-            return newName;
-        }
-        catch (Exception ex)
-        {
-            Logger.Error($"Exception during section view creation: {ex.Message}");
-            return null;
-        }
-    }
-
+        IViewService parentView,
+        DataStorage position,
+        SketchSegment sketchSegment,
+        NamedDimensionValues wedgeDimensions,
+        DrawingData drawData)
+        => _sectionViewCreator.Create(position, sketchSegment, wedgeDimensions, drawData);
 
     public bool InsertModelDimensioning()
     {
@@ -346,8 +208,6 @@ public class ViewService : IViewService
         try
         {
             Logger.Info($"Inserting model dimensions for view: {_swView.Name}");
-
-            // Rebuild model and referenced part to ensure dimensions are up to date
             _model.ForceRebuild3(false);
 
             if (!_model.Extension.SelectByID2(_swView.Name, "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0))
@@ -362,18 +222,15 @@ public class ViewService : IViewService
                 _swView = (View)drawingDoc.ActiveDrawingView;
 
                 var refModel = _swView?.ReferencedDocument;
-
                 if (refModel == null)
                 {
                     Logger.Warn("Referenced model is null. Cannot insert dimensions.");
                     return false;
                 }
 
-                // Rebuild and fit referenced model before inserting annotations
                 refModel.ForceRebuild3(false);
                 refModel.ViewZoomtofit2();
 
-                // Insert all marked model dimensions
                 object inserted = drawingDoc.InsertModelAnnotations3(
                     (int)swImportModelItemsSource_e.swImportModelItemsFromEntireModel,
                     (int)swInsertAnnotation_e.swInsertDimensionsMarkedForDrawing,
@@ -399,183 +256,18 @@ public class ViewService : IViewService
         }
     }
 
-    public bool ApplyDimensionPositionsAndNames(NamedDimensionValues wedgeDimensions, NamedDimensionAnnotations drawDimensions, Dictionary<string, string> dimensionTypes)
-    {
-        if (_swView == null)
-        {
-            Logger.Warn("Cannot set position and name. View is null.");
-            return false;
-        }
-
-        try
-        {
-            DisplayDimension swDispDim = _swView.GetFirstDisplayDimension5();
-
-            while (swDispDim != null)
-            {
-                var swAnn = swDispDim.GetAnnotation() as Annotation;
-                var swDim = swDispDim.GetDimension2(0);
-
-                if (swAnn == null || swDim == null)
-                {
-                    swDispDim = (DisplayDimension)swDispDim.GetNext3();
-                    continue;
-                }
-
-                foreach (var (dimKey, selector) in dimensionTypes)
-                {
-                    if (selector == "SelectByName" && swDim.Name == dimKey)
-                    {
-                        UpdateAnnotationPositionAndName(swAnn, drawDimensions[dimKey].Position, dimKey);
-                        StyleDimensionAnnotation(swDispDim, dimKey);
-                        break;
-                    }
-                    else if (selector == "SelectByValue" && wedgeDimensions.GetAll().TryGetValue(dimKey, out var modelValue))
-                    {
-                        double modelVal = modelValue.GetValue(Unit.Millimeter);
-                        double dimVal = (double)swDim.GetSystemValue3((int)swSetValueInConfiguration_e.swSetValue_InThisConfiguration, "");
-
-                        if (Math.Abs(modelVal - dimVal) < 1e-4)
-                        {
-                            UpdateAnnotationPositionAndName(swAnn, drawDimensions[dimKey].Position, dimKey);
-                            StyleDimensionAnnotation(swDispDim, dimKey);
-                            break;
-                        }
-                    }
-                }
-
-                swDispDim = (DisplayDimension)swDispDim.GetNext3();
-            }
-
-            Logger.Success("Finished setting dimension positions and names.");
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Logger.Error($"Error during SetPositionAndNameDimensioning: {ex.Message}");
-            return false;
-        }
-    }
-
-    private void UpdateAnnotationPositionAndName(Annotation swAnn, DataStorage pos, string name)
-    {
-        if (swAnn == null || pos == null)
-        {
-            Logger.Warn($"Cannot set annotation position for {name}: Missing Annotation or Position.");
-            return;
-        }
-
-        double[] coords = pos.GetValues(Unit.Meter);
-
-        if (coords.Length < 2)
-        {
-            Logger.Warn($"Invalid position array for dimension {name}");
-            return;
-        }
-
-        try
-        {
-            swAnn.SetPosition2(coords[0], coords[1], 0.0);
-            swAnn.Layer = "FORMAT";
-            swAnn.SetName(name);
-
-            Logger.Info($"Moved and renamed annotation '{name}' to ({coords[0]:F4}, {coords[1]:F4}) meters.");
-        }
-        catch (Exception ex)
-        {
-            Logger.Error($"Error setting annotation '{name}': {ex.Message}");
-        }
-    }
-
-    
-    private void StyleDimensionAnnotation(DisplayDimension swDispDim, string dimKey)
-    {
-        try
-        {
-            if(dimKey != "ISA")
-            {
-                swDispDim.CenterText = true;
-            }
-            
-            if (dimKey == "FR" || dimKey == "BR")
-            {
-                swDispDim.ArrowSide = 2;
-                swDispDim.WitnessVisibility = 2;
-                swDispDim.ExtensionLineExtendsFromCenterOfSet = false;
-                swDispDim.MaxWitnessLineLength = 0;
-                swDispDim.SetExtensionLineAsCenterline(1, false);
-            }
-
-            _model.GraphicsRedraw2();
-            Logger.Info($"Applied styling for '{dimKey}' (centered).");
-        }
-        catch (Exception ex)
-        {
-            Logger.Warn($"Styling failed for '{dimKey}': {ex.Message}");
-        }
-    }
+    public bool ApplyDimensionPositionsAndNames(
+        NamedDimensionValues wedgeDimensions,
+        NamedDimensionAnnotations drawDimensions,
+        Dictionary<string, string> dimensionTypes)
+        => _dimensionStyler.Apply(_swView, wedgeDimensions, drawDimensions, dimensionTypes);
 
     public bool PlaceDatumFeatureLabel(NamedDimensionValues wedgeDimensions, NamedDimensionAnnotations drawDimensions, string label)
-    {
-        try
-        {
-            DatumTag datumTag = _swView.GetFirstDatumTag() as DatumTag;
-            if (datumTag == null) return false;
+        => _annotationManager.PlaceDatumFeatureLabel(wedgeDimensions, drawDimensions, label);
 
-            var ann = datumTag.GetAnnotation() as Annotation;
-            double val = wedgeDimensions["SymmetryTolerance"].GetValue(Unit.Millimeter);
-
-            if (val == 0.0 || double.IsNaN(val))
-            {
-                ann.Visible = (int)swAnnotationVisibilityState_e.swAnnotationHidden;
-            }
-            else
-            {
-                datumTag.SetLabel(label);
-                var pos = drawDimensions["DatumFeature"].Position;
-                ann.SetPosition2(pos.GetValues(Unit.Meter)[0], pos.GetValues(Unit.Meter)[1], 0.0);
-            }
-
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
     public bool PlaceGeometricToleranceFrame(NamedDimensionValues wedgeDimensions, NamedDimensionAnnotations drawDimensions, string label)
-    {
-        try
-        {
-            Gtol gtol = _swView.GetFirstGTOL() as Gtol;
-            if (gtol == null) return false;
+        => _annotationManager.PlaceGeometricToleranceFrame(wedgeDimensions, drawDimensions, label);
 
-            double symTol = wedgeDimensions["SymmetryTolerance"].GetValue(Unit.Millimeter);
-            var ann = gtol.GetAnnotation() as Annotation;
-
-            if (symTol == 0.0 || double.IsNaN(symTol))
-            {
-                ann.Visible = (int)swAnnotationVisibilityState_e.swAnnotationHidden;
-            }
-            else
-            {
-                var pos = drawDimensions["GeometricTolerance"].Position;
-                gtol.SetPosition(pos.GetValues(Unit.Meter)[0], pos.GetValues(Unit.Meter)[1], 0.0);
-
-                string tolInInch = Math.Round(wedgeDimensions["SymmetryTolerance"].GetValue(Unit.Millimeter), 4).ToString("0.0000");
-                string tolInMm = "[" + wedgeDimensions["SymmetryTolerance"].GetValue(Unit.Millimeter).ToString("0.###") + "]";
-
-                bool result = gtol.SetFrameValues2(1, tolInInch, "", tolInMm, label, "");
-                return result;
-            }
-
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
     public void ReactivateView(ref ModelDoc2 swModel)
     {
         if (swModel == null)
@@ -631,7 +323,7 @@ public class ViewService : IViewService
             return position;
         }
 
-        Logger.Warn("Section view position is null or invalid. Returning (0,0).");
+        //Logger.Warn("Section view position is null or invalid. Returning (0,0).\");
         return new double[] { 0.0, 0.0 };
     }
 
@@ -676,6 +368,7 @@ public class ViewService : IViewService
             return dimensionPositions;
         }
     }
+
     public bool RotateView(double angleInDegrees)
     {
         if (_swView == null)
@@ -688,7 +381,7 @@ public class ViewService : IViewService
         {
             double angleInRadians = angleInDegrees * Math.PI / 180.0;
             _swView.Angle = angleInRadians;
-            _model.EditRebuild3(); // Optional: force update
+            _model.EditRebuild3();
             Logger.Info($"Rotated view '{_swView.Name}' by {angleInDegrees} degrees ({angleInRadians:F4} radians).");
             return true;
         }
@@ -698,6 +391,59 @@ public class ViewService : IViewService
             return false;
         }
     }
+    public bool DeleteAnnotationsByName(string[] annotationNames)
+    {
+        if (_swView == null || _model == null)
+        {
+            Logger.Warn("Cannot delete annotations. View or model is null.");
+            return false;
+        }
 
+        try
+        {
+            int deletedCount = 0;
+            DisplayDimension swDispDim = _swView.GetFirstDisplayDimension5();
+
+            while (swDispDim != null)
+            {
+                var swAnn = swDispDim.GetAnnotation() as Annotation;
+                var swDim = swDispDim.GetDimension2(0);
+
+                if (swAnn != null && swDim != null && annotationNames.Contains(swDim.Name))
+                {
+                    // Select the annotation
+                    bool selected = swAnn.Select2(false, -1);
+                    if (!selected)
+                    {
+                        Logger.Warn($"Failed to select annotation '{swDim.Name}' for deletion.");
+                        swDispDim = (DisplayDimension)swDispDim.GetNext3();
+                        continue;
+                    }
+
+                    // Delete it
+                    bool deleted = _model.Extension.DeleteSelection2((int)swDeleteSelectionOptions_e.swDelete_Absorbed);
+                    if (deleted)
+                    {
+                        Logger.Info($"Deleted annotation '{swDim.Name}'.");
+                        deletedCount++;
+                    }
+                    else
+                    {
+                        Logger.Warn($"Failed to delete annotation '{swDim.Name}'.");
+                    }
+                }
+
+                swDispDim = (DisplayDimension)swDispDim.GetNext3();
+            }
+
+            Logger.Success($"Deleted {deletedCount} annotations.");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Error deleting annotations: {ex.Message}");
+            return false;
+        }
+    }
 
 }

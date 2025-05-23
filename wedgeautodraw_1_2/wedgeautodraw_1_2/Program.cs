@@ -6,6 +6,9 @@ using wedgeautodraw_1_2.Core.Interfaces;
 using wedgeautodraw_1_2.Infrastructure.Services;
 using wedgeautodraw_1_2.Infrastructure.Utilities;
 using wedgeautodraw_1_2.Infrastructure.Helpers;
+using wedgeautodraw_1_2.Core.Enums;
+using wedgeautodraw_1_2.Infrastructure.Executors;
+using wedgeautodraw_1_2.Core.Models;
 
 namespace wedgeautodraw_1_2;
 
@@ -23,12 +26,13 @@ class Program
         string projectRoot = Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).Parent.Parent.Parent.FullName;
         string resourcePath = Path.Combine(projectRoot, "Resources", "Templates");
 
+
         string partPath = Path.Combine(resourcePath, "wedge.SLDPRT");
         string drawingPath = Path.Combine(resourcePath, "wedge.SLDDRW");
         string equationPath = Path.Combine(resourcePath, "equations.txt");
         string tolerancePath = Path.Combine(resourcePath, "tolerances.txt");
-        string configurationPath = Path.Combine(resourcePath, "configurations.txt");
-        string excelPath = Path.Combine(resourcePath, "Copy.xlsx");
+        string configurationPath = Path.Combine(resourcePath, "drawing_config.json");
+        string excelPath = Path.Combine(resourcePath, "CKVD_DATA_10_Parts.xlsx");
 
         ISolidWorksService swService = new SolidWorksService();
         SldWorks swApp = swService.GetApplication();
@@ -56,13 +60,14 @@ class Program
 
             EquationFileUpdater.UpdateEquationFile(modEquationPath, wedge);
 
-            IDataContainerLoader dataLoader = new DataContainerLoader(modEquationPath);
-            var fullDrawingData = dataLoader.LoadDrawingData(wedge, configurationPath);
+            DrawingType selectedType = DrawingType.Production;
+            IDrawingDataLoader dataLoader = new DrawingDataLoader(modEquationPath);
+            var fullDrawingData = dataLoader.LoadDrawingData(wedge, configurationPath,selectedType);
 
-            var partService = AutomationExecutor.RunPartAutomation(swApp, modEquationPath, modPartPath, wedge);
+            var partService = PartAutomationExecutor.Run(swApp, modEquationPath, modPartPath, wedge);
 
-            AutomationExecutor.RunDrawingAutomation(
-                swApp,
+            ///
+            DrawingAutomationExecutor.Run(swApp,
                 partService,
                 partPath,
                 drawingPath,
@@ -71,8 +76,7 @@ class Program
                 modEquationPath,
                 fullDrawingData,
                 wedge,
-                outputPdfPath
-            );
+                outputPdfPath);
 
             Console.WriteLine($"Processed wedge: {wedgeId}");
         }

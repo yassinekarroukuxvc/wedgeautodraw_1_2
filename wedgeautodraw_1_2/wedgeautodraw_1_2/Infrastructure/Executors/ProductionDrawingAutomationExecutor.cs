@@ -2,33 +2,15 @@
 using wedgeautodraw_1_2.Core.Enums;
 using wedgeautodraw_1_2.Core.Interfaces;
 using wedgeautodraw_1_2.Core.Models;
-using wedgeautodraw_1_2.Infrastructure.Services;
-using wedgeautodraw_1_2.Infrastructure.Helpers;
 using wedgeautodraw_1_2.Infrastructure.Factories;
+using wedgeautodraw_1_2.Infrastructure.Helpers;
+using wedgeautodraw_1_2.Infrastructure.Services;
 
-namespace wedgeautodraw_1_2.Infrastructure.Utilities;
+namespace wedgeautodraw_1_2.Infrastructure.Executors;
 
-public static class AutomationExecutor
+public class ProductionDrawingAutomationExecutor : IDrawingAutomationExecutor
 {
-    public static IPartService RunPartAutomation(SldWorks swApp, string modEquationPath, string modPartPath, WedgeData wedgeData)
-    {
-        Logger.Info("=== Starting Part Automation ===");
-
-        var partService = new PartService(swApp);
-        partService.OpenPart(modPartPath);
-        partService.ApplyTolerances(wedgeData.Dimensions);
-        partService.UpdateEquations(modEquationPath);
-        EquationFileUpdater.EnsureAllEquationsExist(partService.GetModel(), wedgeData);
-        //partService.SetEngravedText(wedgeData.EngravedText);
-        partService.SetEngravedText("Test");
-        partService.Rebuild();
-        partService.Save();
-
-        Logger.Success("Part automation completed.");
-        return partService;
-    }
-
-    public static void RunDrawingAutomation(
+    public void Run(
         SldWorks swApp,
         IPartService partService,
         string partPath,
@@ -99,7 +81,7 @@ public static class AutomationExecutor
         return sectionViewName;
     }
 
-    private static void FinalizeDrawing(
+    private static void FinalizeDrawing( 
         IDrawingService drawingService,
         string sectionViewName,
         DrawingData drawingData,
@@ -178,11 +160,15 @@ public static class AutomationExecutor
         front.SetBreaklinePosition(wedgeData.Dimensions, drawData);
         front.CreateCenterline(wedgeData.Dimensions, drawData);
         front.SetBreakLineGap(drawData.BreaklineData["Front_viewBreaklineGap"].GetValue(Unit.Meter));
+        front.InsertModelDimensioning();
+
         front.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, new()
         {
             { "TL", "SelectByName" },
-            { "EngravingStart", "SelectByName" }
+            { "EngravingStart", "SelectByName" },
+            { "D2", "SelectByName" },
         });
+        front.DeleteAnnotationsByName(new[] { "GR" });
     }
 
     private static void CreateSideView(ModelDoc2 model, DrawingData drawData, WedgeData wedgeData)
@@ -236,6 +222,5 @@ public static class AutomationExecutor
             { "GR", "SelectByName" }
         });
     }
-   
-
 }
+

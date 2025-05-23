@@ -29,6 +29,28 @@ public static class DimensionRules
                 return new[] { front[0] + fsv * TD / 2 + 4 , front[1] + 45};
             }
         },
+        ["D2"] = new DimensionLayoutRule
+        {
+            BasedOnView = Constants.FrontView,
+            CalculatePosition = (wedge, drawing) =>
+            {
+                var front = drawing.ViewPositions[Constants.FrontView].GetValues(Unit.Millimeter);
+                var TD = wedge.Dimensions["TD"].GetValue(Unit.Millimeter);
+                var fsv = drawing.ViewScales[Constants.FrontView].GetValue(Unit.Millimeter);
+                return new[] { front[0] - fsv * TD / 2 + 25, front[1] - 25 };
+            }
+        },
+        ["VW"] = new DimensionLayoutRule
+        {
+            BasedOnView = Constants.FrontView,
+            CalculatePosition = (wedge, drawing) =>
+            {
+                var front = drawing.ViewPositions[Constants.FrontView].GetValues(Unit.Millimeter);
+                var TD = wedge.Dimensions["TD"].GetValue(Unit.Millimeter);
+                var fsv = drawing.ViewScales[Constants.FrontView].GetValue(Unit.Millimeter);
+                return new[] { front[0] - fsv * TD / 2, front[1] - 75 };
+            }
+        },
         ["TDF"] = new DimensionLayoutRule
         {
             BasedOnView = Constants.TopView,
