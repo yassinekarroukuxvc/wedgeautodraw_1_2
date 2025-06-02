@@ -94,4 +94,135 @@ public class BreaklineHandler
             return false;
         }
     }
+    public bool SetOverlayBreaklineRightShift(double shiftAmount = 0.005)
+    {
+        if (_swView == null)
+        {
+            Logger.Warn("Cannot shift breakline. View is null.");
+            return false;
+        }
+
+        try
+        {
+            int count = _swView.GetBreakLineCount2(out _);
+            if (count == 0)
+            {
+                Logger.Warn("No breakline exists in the view to adjust.");
+                return false;
+            }
+
+            BreakLine breakLine = _swView.IGetBreakLines(count);
+            if (breakLine == null)
+            {
+                Logger.Warn("Breakline object could not be retrieved.");
+                return false;
+            }
+
+            // Get original positions for both ends of the breakline
+            double lowerPos = breakLine.GetPosition(0); 
+            double upperPos = breakLine.GetPosition(1);
+
+            // Shift both sides to the right
+            double newLowerPos = lowerPos + shiftAmount;
+            double newUpperPos = upperPos + shiftAmount;
+
+            bool success = breakLine.SetPosition(newLowerPos, newUpperPos);
+
+            if (success)
+            {
+                Logger.Info($"Overlay breakline shifted by {shiftAmount} meters. New positions: ({newLowerPos:F4}, {newUpperPos:F4})");
+            }
+            else
+            {
+                Logger.Warn("Breakline position update failed.");
+            }
+
+            return success;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Error shifting overlay breakline: {ex.Message}");
+            return false;
+        }
+    }
+
+    public bool SetOverlayBreaklinePosition(NamedDimensionValues wedgeDimensions, DrawingData drawData)
+    {
+        if (_swView == null)
+        {
+            Logger.Warn("Cannot set breakline position. View is null.");
+            return false;
+        }
+
+        try
+        {
+            string viewName = _swView.Name;
+
+
+            // Applies only to overlay views
+            if (viewName != Constants.OverlayDetailView && viewName != Constants.OverlaySectionView)
+            {
+                Logger.Warn($"SetOverlayBreaklinePosition skipped: {viewName} is not an overlay view.");
+                return false;
+            }
+
+            double scale = _swView.ScaleDecimal;
+            double tl = wedgeDimensions["TL"].GetValue(Unit.Meter);
+            BreakLine breakLine = _swView.IGetBreakLines(_swView.GetBreakLineCount2(out _));
+
+            // Load lower part reference
+            string breakKey = viewName == Constants.OverlayDetailView
+                ? "Detail_viewLowerPartLength"
+                : "Section_viewLowerPartLength";
+
+            if (!drawData.BreaklineData.TryGet(breakKey, out var lowerStorage))
+            {
+                Logger.Warn($"{breakKey} not found.");
+                return false;
+            }
+
+
+            /////
+
+            var x = drawData.BreaklineData["Detail_viewLowerPartLength"].GetValue(Unit.Meter);
+            var y = tl / 2;
+            bool isDetail = true;
+            double[] breaklinePos = isDetail
+                ? new[] { x - scale * tl * 30 / 2, scale * y * 100 }
+                : new[] { -tl * scale / 2 + y * 100, tl * scale / 2 - y };
+
+            ////
+
+
+
+
+            double lower = lowerStorage.GetValue(Unit.Meter);
+            double visibleLength = 0.01; // Show only 10mm of detail in drawing
+            double upper = lower + visibleLength;
+
+            // Shift both to drawing space using view scale
+            double lowerPos = scale * lower;
+            double upperPos = scale * upper;
+
+
+            if (breakLine == null)
+            {
+                Logger.Warn("No breakline object found in overlay view.");
+                return false;
+            }
+
+            bool result = breakLine.SetPosition(breaklinePos[0], breaklinePos[1]);
+
+            Logger.Info($"Overlay breakline set in {viewName} to show range: {breaklinePos[0]:F4} m to {breaklinePos[1]:F4} m");
+            return result;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Error setting overlay breakline position: {ex.Message}");
+            return false;
+        }
+    }
+
+
+
 }

@@ -27,4 +27,21 @@ public class SolidWorksService : ISolidWorksService
 
         return _swApp;
     }
+    public void CloseApplication()
+    {
+        try
+        {
+            if (_swApp != null)
+            {
+                _swApp.ExitApp();
+                _swApp = null;
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error closing SolidWorks: {ex.Message}");
+        }
+    }
 }

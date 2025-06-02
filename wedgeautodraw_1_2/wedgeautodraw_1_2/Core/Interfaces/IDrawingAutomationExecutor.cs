@@ -15,6 +15,7 @@ public interface IDrawingAutomationExecutor
         string modEquationPath,
         DrawingData drawingData,
         WedgeData wedgeData,
-        string outputPdfPath);
+        string outputPdfPath,
+        string outputTiffPath);
 }
 

@@ -198,4 +198,6 @@
 
 "ER"=0.508mm
 
+"VRR"=0mm
+
 "SymmetryTolerance"=0.04mm

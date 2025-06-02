@@ -29,12 +29,39 @@ public class DrawingService : IDrawingService
     public void OpenDrawing(string filePath)
     {
         _drawingPath = filePath;
-        _swApp.OpenDoc6(filePath, (int)swDocumentTypes_e.swDocDRAWING, (int)swOpenDocOptions_e.swOpenDocOptions_Silent, "", ref _error, ref _warning);
+        _swApp.OpenDoc6(filePath,
+                        (int)swDocumentTypes_e.swDocDRAWING,
+                        (int)swOpenDocOptions_e.swOpenDocOptions_Silent,
+                        "",
+                        ref _error,
+                        ref _warning);
+
         _swModel = (ModelDoc2)_swApp.ActiveDoc;
-        _swDrawing = (DrawingDoc)_swModel;
+
+        if (_swModel == null)
+        {
+            Logger.Error($"Failed to open document at: {filePath}");
+            throw new InvalidOperationException("No active document after opening.");
+        }
+
+        if (_swModel.GetType() != (int)swDocumentTypes_e.swDocDRAWING)
+        {
+            Logger.Error($"Opened document is not a drawing: {filePath}");
+            throw new InvalidCastException("Active document is not a drawing.");
+        }
+
+        _swDrawing = _swModel as DrawingDoc;
+
+        if (_swDrawing == null)
+        {
+            Logger.Error("Casting to DrawingDoc failed.");
+            throw new InvalidCastException("Failed to cast ModelDoc2 to DrawingDoc.");
+        }
+
         _swModelExt = _swModel.Extension;
         _swModel.Lock();
     }
+
 
     public void SaveDrawing()
     {
@@ -147,4 +174,66 @@ public class DrawingService : IDrawingService
             Logger.Warn("Unable to Unlock the Drawing");
         }
     }
+    public void SaveAsTiff(string outputPath)
+    {
+        try
+        {
+            bool success = _swModelExt.SaveAs(
+                outputPath,
+                (int)swSaveAsVersion_e.swSaveAsCurrentVersion,
+                (int)swSaveAsOptions_e.swSaveAsOptions_Silent,
+                null,
+                ref _error,
+                ref _warning
+            );
+
+            if (success)
+                Logger.Success($"Drawing saved as TIF: {outputPath}");
+            else
+                Logger.Error($"Failed to save TIF. Error code: {_error}, Warning code: {_warning}");
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Exception during TIF export: {ex.Message}");
+        }
+    }
+    public void SaveAsPdfAndConvertToTiff(string pdfPath, string tiffPath, int dpi = 300)
+    {
+        try
+        {
+            // Step 1: Save as PDF
+            Logger.Info($"Saving drawing as PDF: {pdfPath}");
+            SaveAsPdf(pdfPath);
+
+            // Step 2: Convert PDF → TIFF using Magick.NET
+            Logger.Info($"Converting PDF to TIFF at {dpi} DPI...");
+
+            using (var images = new ImageMagick.MagickImageCollection())
+            {
+                // Set read settings
+                var settings = new ImageMagick.MagickReadSettings
+                {
+                    Density = new ImageMagick.Density(dpi) // Controls DPI of the output TIFF
+                };
+
+                // Read PDF pages
+                images.Read(pdfPath, settings);
+
+                // Optionally, flatten multi-page PDF to one TIFF page
+                using (var merged = images.AppendVertically())
+                {
+                    merged.Format = ImageMagick.MagickFormat.Tiff;
+                    merged.Write(tiffPath);
+                }
+            }
+
+            Logger.Success($"PDF converted to TIFF successfully: {tiffPath}");
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Exception during PDF → TIFF conversion: {ex.Message}");
+        }
+    }
+
+
 }

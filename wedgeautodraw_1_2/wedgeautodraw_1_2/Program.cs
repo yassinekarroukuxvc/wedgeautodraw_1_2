@@ -18,21 +18,20 @@ class Program
     {
         Console.WriteLine("=== SolidWorks Drawing Automation ===");
 
-        // --- START TIMER ---
         Stopwatch stopwatch = Stopwatch.StartNew();
-
         ProcessHelper.KillAllSolidWorksProcesses();
 
         string projectRoot = Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).Parent.Parent.Parent.FullName;
         string resourcePath = Path.Combine(projectRoot, "Resources", "Templates");
 
+        string prodPartTemplate = Path.Combine(resourcePath, "wedge.SLDPRT");
+        string prodDrawingTemplate = Path.Combine(resourcePath, "wedge.SLDDRW");
+        string overlayPartTemplate = "C:\\Users\\mounir\\Desktop\\Oussama_test\\overlay_wedgev2.SLDPRT";
+        string overlayDrawingTemplate = "C:\\Users\\mounir\\Desktop\\Oussama_test\\overlay_wedgev2.SLDDRW";
 
-        string partPath = Path.Combine(resourcePath, "wedge.SLDPRT");
-        string drawingPath = Path.Combine(resourcePath, "wedge.SLDDRW");
         string equationPath = Path.Combine(resourcePath, "equations.txt");
-        string tolerancePath = Path.Combine(resourcePath, "tolerances.txt");
         string configurationPath = Path.Combine(resourcePath, "drawing_config.json");
-        string excelPath = Path.Combine(resourcePath, "CKVD_DATA_10_Parts.xlsx");
+        string excelPath = Path.Combine(resourcePath, "Copy.xlsx");
 
         ISolidWorksService swService = new SolidWorksService();
         SldWorks swApp = swService.GetApplication();
@@ -46,43 +45,63 @@ class Program
                 ? wedge.Metadata["drawing_number"].ToString()
                 : $"Wedge_{Guid.NewGuid()}";
 
+            DrawingType selectedType = DrawingType.Overlay;
+
             string outputDir = Path.Combine(resourcePath, "Generated", wedgeId);
             Directory.CreateDirectory(outputDir);
 
-            string modPartPath = Path.Combine(outputDir, $"{wedgeId}.SLDPRT");
-            string modDrawingPath = Path.Combine(outputDir, $"{wedgeId}.SLDDRW");
-            string modEquationPath = Path.Combine(outputDir, $"equations.txt");
-            string outputPdfPath = Path.Combine(outputDir, $"{wedgeId}.pdf");
+            string templatePartPath = selectedType == DrawingType.Production ? prodPartTemplate : overlayPartTemplate;
+            string templateDrawingPath = selectedType == DrawingType.Production ? prodDrawingTemplate : overlayDrawingTemplate;
 
-            FileHelper.CopyTemplateFile(partPath, modPartPath);
-            FileHelper.CopyTemplateFile(drawingPath, modDrawingPath);
+            string modEquationPath = Path.Combine(outputDir, "equations.txt"); // Always the same
+
+            string modPartPath;
+            string modDrawingPath;
+            string outputPdfPath;
+            string outputTiffPath;
+            if (selectedType == DrawingType.Overlay)
+            {
+                modPartPath = Path.Combine(outputDir, $"overlay_{wedgeId}.SLDPRT");
+                modDrawingPath = Path.Combine(outputDir, $"overlay_{wedgeId}.SLDDRW");
+                outputPdfPath = Path.Combine(outputDir, $"overlay_{wedgeId}.pdf");
+                outputTiffPath = Path.Combine(outputDir, $"overlay_{wedgeId}.tif");
+            }
+            else
+            {
+                modPartPath = Path.Combine(outputDir, $"{wedgeId}.SLDPRT");
+                modDrawingPath = Path.Combine(outputDir, $"{wedgeId}.SLDDRW");
+                outputPdfPath = Path.Combine(outputDir, $"{wedgeId}.pdf");
+                outputTiffPath = "";
+            }
+
+            FileHelper.CopyTemplateFile(templatePartPath, modPartPath);
+            FileHelper.CopyTemplateFile(templateDrawingPath, modDrawingPath);
             FileHelper.CopyTemplateFile(equationPath, modEquationPath);
 
             EquationFileUpdater.UpdateEquationFile(modEquationPath, wedge);
 
-            DrawingType selectedType = DrawingType.Production;
             IDrawingDataLoader dataLoader = new DrawingDataLoader(modEquationPath);
-            var fullDrawingData = dataLoader.LoadDrawingData(wedge, configurationPath,selectedType);
-
+            var fullDrawingData = dataLoader.LoadDrawingData(wedge, configurationPath, selectedType);
             var partService = PartAutomationExecutor.Run(swApp, modEquationPath, modPartPath, wedge);
 
-            ///
             DrawingAutomationExecutor.Run(swApp,
                 partService,
-                partPath,
-                drawingPath,
+                templatePartPath,
+                templateDrawingPath,
                 modPartPath,
                 modDrawingPath,
                 modEquationPath,
                 fullDrawingData,
                 wedge,
-                outputPdfPath);
+                outputPdfPath,
+                outputTiffPath,
+                selectedType);
 
             Console.WriteLine($"Processed wedge: {wedgeId}");
         }
 
-        // --- STOP TIMER ---
         stopwatch.Stop();
+        swService.CloseApplication();
         Console.WriteLine($"=== DONE: Total Execution Time = {stopwatch.Elapsed.TotalSeconds:F2} seconds ===");
     }
 }

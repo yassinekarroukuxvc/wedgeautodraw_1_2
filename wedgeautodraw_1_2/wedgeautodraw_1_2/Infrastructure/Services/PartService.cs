@@ -75,7 +75,9 @@ public class PartService : IPartService
             {
                 new { Name = "TL", Sketch = "TL_cutting" },
                 new { Name = "TD", Sketch = "sketch_TL_cutting" },
-                new { Name = "TDF", Sketch = "sketch_TDF_grinding" }
+                new { Name = "TDF", Sketch = "sketch_TDF_grinding" },
+                new { Name = "W", Sketch = "sketch_ISA_grinding" },
+                new { Name = "FL", Sketch = "sketch_FA_BA_grinding" }
             };
 
             foreach (var target in targets)

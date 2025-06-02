@@ -20,7 +20,8 @@ public class ProductionDrawingAutomationExecutor : IDrawingAutomationExecutor
         string modEquationPath,
         DrawingData drawingData,
         WedgeData wedgeData,
-        string outputPdfPath)
+        string outputPdfPath,
+        string outputTiffPath)
     {
         Logger.Info("=== Starting Drawing Automation ===");
 

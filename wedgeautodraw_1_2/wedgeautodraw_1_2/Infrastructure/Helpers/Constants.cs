@@ -8,7 +8,13 @@ public static class Constants
     public const string TopView = "Top_view";
     public const string DetailView = "Detail_view";
     public const string SectionView = "Section_view";
-
+    public const string OverlaySectionView = "Section View O-O";
+    public const string OverlayDetailView = "Drawing View5";
+    public const string OverlaySideView = "Drawing View1";
+    public const string OverlayTopView = "Drawing View2";
+    public const string OverlayFrontView = "Drawing View3";
+    //public const string OverlayDetailView2 = "Detail View P (100 : 1)";
+    /// </summary>
     // Sketch names
     public const string SketchEngraving = "sketch_engraving";
     public const string SketchGrooveDimensions = "sketch_groove_dimensions";

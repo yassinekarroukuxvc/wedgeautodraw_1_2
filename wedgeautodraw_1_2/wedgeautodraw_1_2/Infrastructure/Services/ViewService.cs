@@ -2,6 +2,7 @@
 using DocumentFormat.OpenXml.Spreadsheet;
 using SolidWorks.Interop.sldworks;
 using SolidWorks.Interop.swconst;
+using System.Reflection.Emit;
 using wedgeautodraw_1_2.Core.Enums;
 using wedgeautodraw_1_2.Core.Interfaces;
 using wedgeautodraw_1_2.Core.Models;
@@ -51,6 +52,12 @@ public class ViewService : IViewService
         _dimensionStyler = new DimensionStyler(_model);
         _annotationManager = new AnnotationManager(_swView);
         _sectionViewCreator = new SectionViewCreator(_model);
+
+        /*var viewNames = DrawingViewHelper.GetAllViewNames(_model);
+        foreach (var name in viewNames)
+        {
+           Logger.Success("View: " + name);
+        }*/
     }
 
     public bool SetViewScale(double scale) => _scaler.SetScale(scale);
@@ -81,6 +88,7 @@ public class ViewService : IViewService
         {
             string viewName = _swView.Name.ToLower();
             double scale = _swView.ScaleDecimal;
+            bool isOverlay = drawData.DrawingType == DrawingType.Overlay;
 
             double ScaleOffset(double mm) => mm / 1000 / scale;
 
@@ -89,37 +97,22 @@ public class ViewService : IViewService
                 switch (viewName)
                 {
                     case "front_view":
-                        double tlFront = wedgeDimensions["TL"].GetValue(Unit.Meter);
-                        return new[]
-                        {
-                        0.0,
-                        tlFront / 2 + ScaleOffset(2),
-                        0.0,
-                        -tlFront / 2 - ScaleOffset(2)
-                    };
-
                     case "side_view":
-                        double tlSide = wedgeDimensions["TL"].GetValue(Unit.Meter);
-                        double tdf = wedgeDimensions["TDF"].GetValue(Unit.Meter);
-                        double td = wedgeDimensions["TD"].GetValue(Unit.Meter);
-                        double offset = (tdf - td) / 2;
-                        return new[]
+                        double tl = wedgeDimensions["TL"].GetValue(Unit.Meter);
+
+                        // ↕️ Production: vertical / ↔️ Overlay: horizontal
+                        if (!isOverlay)
                         {
-                        offset,
-                        tlSide / 2 + ScaleOffset(2),
-                        offset,
-                        -tlSide / 2 - ScaleOffset(2)
-                    };
+                            return new[] { 0.0, tl / 2 + ScaleOffset(2), 0.0, -tl / 2 - ScaleOffset(2) };
+                        }
+                        else
+                        {
+                            return new[] { -tl / 2 - ScaleOffset(2), 0.0, tl / 2 + ScaleOffset(2), 0.0 };
+                        }
 
                     case "detail_view":
                         double tlDetail = wedgeDimensions["TL"].GetValue(Unit.Meter);
-                        return new[]
-                        {
-                        0.0,
-                        0.0,
-                        0.0,
-                        -tlDetail / 2 + ScaleOffset(10)
-                    };
+                        return new[] { 0.0, 0.0, 0.0, -tlDetail / 2 + ScaleOffset(10) };
 
                     default:
                         return null;
@@ -129,17 +122,23 @@ public class ViewService : IViewService
             double[] pos = GetCenterlineCoordinates();
             if (pos == null) return false;
 
-            SketchSegment line = _model.SketchManager.CreateCenterLine(pos[0], pos[1], 0.0, pos[2], pos[3], 0.0);
+            SketchSegment line = _model.SketchManager.CreateCenterLine(
+                pos[0], pos[1], 0.0,
+                pos[2], pos[3], 0.0);
+
             line.Layer = "FORMAT";
-            line.GetSketch().RelationManager.AddRelation(new[] { line }, (int)swConstraintType_e.swConstraintType_FIXED);
+            line.GetSketch().RelationManager.AddRelation(
+                new[] { line }, (int)swConstraintType_e.swConstraintType_FIXED);
 
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            Logger.Error($"CreateCenterline failed: {ex.Message}");
             return false;
         }
     }
+
 
     public bool CreateCentermark(NamedDimensionValues wedgeDimensions, DrawingData drawData)
     {
@@ -442,6 +441,97 @@ public class ViewService : IViewService
         catch (Exception ex)
         {
             Logger.Error($"Error deleting annotations: {ex.Message}");
+            return false;
+        }
+    }
+
+    public bool SetOverlayBreaklineRightShift(double shiftAmount = 0.005)
+         => _breaklineHandler.SetOverlayBreaklineRightShift(shiftAmount);
+
+    public bool SetOverlayBreaklinePosition(NamedDimensionValues wedgeDimensions, DrawingData drawData)
+        => _breaklineHandler.SetOverlayBreaklinePosition(wedgeDimensions, drawData);
+
+    public void SetSketchDimensionValue(string dimensionName, double value)
+    {
+        try
+        {
+            // Example: "D1@Sketch100"
+            bool selected = _model.Extension.SelectByID2(
+                dimensionName,
+                "DIMENSION",
+                0, 0, 0,
+                false, 0, null, 0
+            );
+
+            if (!selected)
+            {
+                Logger.Warn($"Failed to select dimension: {dimensionName}");
+                return;
+            }
+
+            // Get selected DisplayDimension
+            var selectionMgr = (ISelectionMgr)_model.SelectionManager;
+            var dispDim = selectionMgr.GetSelectedObject6(1, -1) as DisplayDimension;
+
+            if (dispDim == null)
+            {
+                Logger.Warn($"Selected object is not a DisplayDimension: {dimensionName}");
+                return;
+            }
+
+            var dim = dispDim.GetDimension2(0);
+            if (dim == null)
+            {
+                Logger.Warn($"Failed to get Dimension2 from DisplayDimension: {dimensionName}");
+                return;
+            }
+
+            // Set the value (in METERS)
+            dim.SystemValue = value; // value in meters!
+
+            Logger.Success($"Set dimension '{dimensionName}' to {value} meters.");
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Exception while setting dimension '{dimensionName}': {ex.Message}");
+        }
+    }
+
+    public bool MoveViewToPosition(double targetX_inch, double targetY_inch)
+    {
+        if (_swView == null)
+        {
+            Logger.Warn("Cannot move view. View is null.");
+            return false;
+        }
+
+        try
+        {
+            // Convert inches to meters
+            const double inchToMeter = 0.0254;
+            double targetX = targetX_inch * inchToMeter;
+            double targetY = targetY_inch * inchToMeter;
+
+            object posObj = _swView.Position;
+            double[] currentPos = posObj as double[];
+
+            if (currentPos == null || currentPos.Length < 2)
+            {
+                Logger.Warn("Failed to get valid view position.");
+                return false;
+            }
+
+            Logger.Info($"Current view position: X = {currentPos[0]:F4} m, Y = {currentPos[1]:F4} m");
+
+            _swView.Position = new double[] { targetX, targetY };
+
+            Logger.Success($"Moved view '{_swView.Name}' to: X = {targetX:F4} m, Y = {targetY:F4} m");
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Exception during MoveViewToPosition: {ex.Message}");
             return false;
         }
     }

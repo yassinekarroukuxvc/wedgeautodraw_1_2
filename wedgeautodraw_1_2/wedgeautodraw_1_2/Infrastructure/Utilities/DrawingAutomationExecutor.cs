@@ -21,17 +21,21 @@ public static class DrawingAutomationExecutor
         string modEquationPath,
         DrawingData drawingData,
         WedgeData wedgeData,
-        string outputPdfPath)
+        string outputPdfPath,
+        string outputTiffPath,
+        DrawingType type)
     {
         Logger.Info("=== Starting Drawing Automation ===");
-        var type = DrawingType.Production;
+        //Console.WriteLine(drawingData);
+        //Console.WriteLine(wedgeData);
         IDrawingAutomationExecutor executor = type switch
         {
             DrawingType.Production => new ProductionDrawingAutomationExecutor(),
+            DrawingType.Overlay => new OverlayDrawingAutomationExecutor(),
             _ => throw new NotSupportedException($"DrawingType {type} not supported")
         };
 
-        executor.Run(swApp, partService, partPath, drawingPath, modPartPath, modDrawingPath, modEquationPath, drawingData, wedgeData, outputPdfPath);
+        executor.Run(swApp, partService, partPath, drawingPath, modPartPath, modDrawingPath, modEquationPath, drawingData, wedgeData, outputPdfPath,outputTiffPath);
 
 
         Logger.Success("Drawing automation completed.");

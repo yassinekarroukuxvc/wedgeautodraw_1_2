@@ -21,5 +21,10 @@ public interface IViewService
     public Dictionary<string, double[]> GetDefaultModelDimensionPositions();
     public bool RotateView(double angleInDegrees);
     bool DeleteAnnotationsByName(string[] annotationNames);
+    public bool SetOverlayBreaklineRightShift(double shiftAmount = 0.005);
+
+    public bool SetOverlayBreaklinePosition(NamedDimensionValues wedgeDimensions, DrawingData drawData);
+    public void SetSketchDimensionValue(string dimensionName, double value);
+    public bool MoveViewToPosition(double targetX, double targetY);
 
 }

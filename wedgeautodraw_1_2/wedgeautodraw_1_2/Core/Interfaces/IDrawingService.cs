@@ -17,4 +17,6 @@ public interface IDrawingService
     void ReplaceReferencedModel(string drawingPath, string oldModelPath, string newModelPath);
     void Reopen();
     void Unlock();
+    public void SaveAsTiff(string outputPath);
+    public void SaveAsPdfAndConvertToTiff(string pdfPath, string tiffPath, int dpi = 300);
 }
