@@ -1,4 +1,5 @@
-﻿using SolidWorks.Interop.sldworks;
+﻿using DocumentFormat.OpenXml.Office2013.Drawing.ChartStyle;
+using SolidWorks.Interop.sldworks;
 using SolidWorks.Interop.swconst;
 using System;
 using System.Collections.Generic;
@@ -54,6 +55,7 @@ public class BreaklineHandler
         try
         {
             double scale = _swView.ScaleDecimal;
+            Logger.Warn($"Breakline Scale = {scale}");
             double tl = wedgeDimensions["TL"].GetValue(Unit.Meter);
             BreakLine breakLine = _swView.IGetBreakLines(_swView.GetBreakLineCount2(out _));
 
@@ -119,7 +121,7 @@ public class BreaklineHandler
             }
 
             // Get original positions for both ends of the breakline
-            double lowerPos = breakLine.GetPosition(0); 
+            double lowerPos = breakLine.GetPosition(0);
             double upperPos = breakLine.GetPosition(1);
 
             // Shift both sides to the right
@@ -150,79 +152,63 @@ public class BreaklineHandler
     {
         if (_swView == null)
         {
-            Logger.Warn("Cannot set breakline position. View is null.");
+            Logger.Warn("Cannot set overlay breakline position. View is null.");
             return false;
         }
 
         try
         {
-            string viewName = _swView.Name;
-
-
-            // Applies only to overlay views
-            if (viewName != Constants.OverlayDetailView && viewName != Constants.OverlaySectionView)
-            {
-                Logger.Warn($"SetOverlayBreaklinePosition skipped: {viewName} is not an overlay view.");
-                return false;
-            }
-
             double scale = _swView.ScaleDecimal;
             double tl = wedgeDimensions["TL"].GetValue(Unit.Meter);
             BreakLine breakLine = _swView.IGetBreakLines(_swView.GetBreakLineCount2(out _));
 
-            // Load lower part reference
-            string breakKey = viewName == Constants.OverlayDetailView
-                ? "Detail_viewLowerPartLength"
-                : "Section_viewLowerPartLength";
-
-            if (!drawData.BreaklineData.TryGet(breakKey, out var lowerStorage))
-            {
-                Logger.Warn($"{breakKey} not found.");
-                return false;
-            }
-
-
-            /////
-
-            var x = drawData.BreaklineData["Detail_viewLowerPartLength"].GetValue(Unit.Meter);
-            var y = tl / 2;
-            bool isDetail = true;
-            double[] breaklinePos = isDetail
-                ? new[] { x - scale * tl * 30 / 2, scale * y * 100 }
-                : new[] { -tl * scale / 2 + y * 100, tl * scale / 2 - y };
-
-            ////
-
-
-
-
-            double lower = lowerStorage.GetValue(Unit.Meter);
-            double visibleLength = 0.01; // Show only 10mm of detail in drawing
-            double upper = lower + visibleLength;
-
-            // Shift both to drawing space using view scale
-            double lowerPos = scale * lower;
-            double upperPos = scale * upper;
-
-
             if (breakLine == null)
             {
-                Logger.Warn("No breakline object found in overlay view.");
+                Logger.Warn("No breakline object found.");
                 return false;
             }
 
-            bool result = breakLine.SetPosition(breaklinePos[0], breaklinePos[1]);
+            // Use DrawingDoc to get sheet size
+            if (!(_model is DrawingDoc drawingDoc))
+            {
+                Logger.Warn("Model is not a DrawingDoc.");
+                return false;
+            }
 
-            Logger.Info($"Overlay breakline set in {viewName} to show range: {breaklinePos[0]:F4} m to {breaklinePos[1]:F4} m");
-            return result;
+            var sheet = (Sheet)drawingDoc.GetCurrentSheet();
+            double sheetWidth = 0, sheetHeight = 0;
+            sheet.GetSize(ref sheetWidth, ref sheetHeight);
+
+            // Subtract a small safety margin (e.g., 5mm = 0.005m) from half width
+            const double safetyMargin = 0.065;
+            double maxHalfWidth = (sheetWidth / 2.0) - safetyMargin;
+            double visibleLength_m = maxHalfWidth / scale;
+
+            double lower = visibleLength_m * scale;
+            double upper = visibleLength_m * scale;
+
+            double[] breaklinePos = new[]
+            {
+            lower - scale * tl / 2,
+            upper - scale * tl / 2
+        };
+
+            bool success = breakLine.SetPosition(breaklinePos[0], breaklinePos[1]);
+
+            Logger.Info($"Set breakline position to: lower = {breaklinePos[0]:F4}, upper = {breaklinePos[1]:F4}, scale = {scale}, TL = {tl}");
+
+            if (success)
+                Logger.Success("Overlay breakline successfully positioned.");
+            else
+                Logger.Warn("Failed to position overlay breakline.");
+
+            return success;
         }
         catch (Exception ex)
         {
-            Logger.Error($"Error setting overlay breakline position: {ex.Message}");
+            Logger.Error($"Error in SetOverlayBreaklinePosition: {ex.Message}");
             return false;
         }
     }
-
-
 
 }

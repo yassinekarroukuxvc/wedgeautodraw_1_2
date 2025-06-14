@@ -68,6 +68,49 @@ public class ExcelWedgeDataLoader
         wedge.Metadata["wedge_title"] = GetCell(row, map, "wedge_title");
         wedge.Metadata["wedge_title"] = EngravedText.Replace("¶", " "); ;
         //wedge.EngravedText = EngravedText.Replace("¶", " ");
+        // Set Overlay Calibration
+        wedge.OverlayCalibration = string.Empty;
+        wedge.OverlayScaling = 1.0; // default if parsing fails
+
+        string rawOverlay = GetCell(row, map, "overlay_calibration");
+
+        if (!string.IsNullOrWhiteSpace(rawOverlay))
+        {
+            try
+            {
+                string[] parts = rawOverlay.Split('|');
+                if (parts.Length == 2)
+                {
+                    // Parse scaling → number before X
+                    string scalingPart = parts[0].Trim();
+                    if (scalingPart.EndsWith("X", StringComparison.OrdinalIgnoreCase))
+                    {
+                        string numberPart = scalingPart.Replace("X", "").Trim();
+                        if (double.TryParse(numberPart, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsedScaling))
+                        {
+                            wedge.OverlayScaling = parsedScaling;
+                        }
+                    }
+
+                    // Parse calibration → number before um
+                    string calibPart = parts[1].Trim();
+                    if (calibPart.EndsWith("um", StringComparison.OrdinalIgnoreCase))
+                    {
+                        string numberPart = calibPart.Replace("um", "").Trim();
+                        wedge.OverlayCalibration = numberPart;
+                    }
+                }
+                else
+                {
+                    Logger.Warn($"overlay_calibration format unexpected: '{rawOverlay}'");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn($"Failed to parse overlay_calibration: '{rawOverlay}' → {ex.Message}");
+            }
+        }
+
 
         wedge.Metadata["Source"] = _excelFilePath;
 

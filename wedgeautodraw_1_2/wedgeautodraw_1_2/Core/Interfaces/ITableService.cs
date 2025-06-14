@@ -7,4 +7,5 @@ public interface ITableService
     bool CreateLabelAsTable(DataStorage position, DrawingData drawingData);
     bool CreatePolishTable(DataStorage position, DrawingData drawingData);
     bool CreateHowToOrderTable(DataStorage position, string header, DrawingData drawingData);
+    public bool CreateDimensionNote(DataStorage position, string[] wedgeKeys, string header, DrawingData drawingData, NamedDimensionValues wedgeDimensions);
 }

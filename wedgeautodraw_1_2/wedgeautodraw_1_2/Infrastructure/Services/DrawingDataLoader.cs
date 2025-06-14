@@ -1,5 +1,4 @@
 ﻿using System.Globalization;
-using System.Text.RegularExpressions;
 using wedgeautodraw_1_2.Core.Enums;
 using wedgeautodraw_1_2.Core.Interfaces;
 using wedgeautodraw_1_2.Core.Models;
@@ -24,81 +23,90 @@ public class DrawingDataLoader : IDrawingDataLoader
         double Get(string key) => config.GetDouble(key);
         string GetStr(string key) => config.GetString(key);
         string[] GetArray(string key) => config.GetStringArray(key);
-        bool Has(string key) => !double.IsNaN(config.GetDouble(key));
+        bool Has(string key) => !double.IsNaN(Get(key));
+
+        // === View Scales ===
+        if (Has("scaling_fsv"))
+        {
+            double fsv = Get("scaling_fsv");
+            drawingData.ViewScales["Front_view"] = new DataStorage(fsv);
+            drawingData.ViewScales["Side_view"] = new DataStorage(fsv);
+            drawingData.ViewScales["Top_view"] = new DataStorage(fsv);
+        }
 
         double defaultScale = Get("scaling_dsv");
         double W_value = wedgeData.Dimensions.ContainsKey("W") ? wedgeData.Dimensions["W"].GetValue(Unit.Millimeter) : 10.0;
         double adjustedScale = W_value >= 0.7 ? Math.Max(defaultScale * (1.0 / W_value), 0.2) : defaultScale;
         adjustedScale = Math.Round(adjustedScale, 3);
-
-        if (Has("scaling_fsv"))
-        {
-            drawingData.ViewScales["Front_view"] = new DataStorage(Get("scaling_fsv"));
-            drawingData.ViewScales["Side_view"] = new DataStorage(Get("scaling_fsv"));
-            drawingData.ViewScales["Top_view"] = new DataStorage(Get("scaling_fsv"));
-        }
         drawingData.ViewScales["Detail_view"] = new DataStorage(adjustedScale);
         drawingData.ViewScales["Section_view"] = new DataStorage(adjustedScale);
 
+        // === View Positions ===
         if (Has("front_view_posX") && Has("front_view_posY"))
+        {
             drawingData.ViewPositions["Front_view"] = new DataStorage(new[] { Get("front_view_posX"), Get("front_view_posY") });
+        }
 
-        if (Has("side_view_dX"))
-            drawingData.ViewPositions["Side_view"] = new DataStorage(new[] { Get("front_view_posX") + Get("side_view_dX"), Get("front_view_posY") });
+        if (Has("side_view_dX") && drawingData.ViewPositions.ContainsKey("Front_view"))
+        {
+            var basePos = drawingData.ViewPositions["Front_view"].GetValues(Unit.Millimeter);
+            drawingData.ViewPositions["Side_view"] = new DataStorage(new[] { basePos[0] + Get("side_view_dX"), basePos[1] });
+        }
 
-        if (Has("top_view_dY"))
-            drawingData.ViewPositions["Top_view"] = new DataStorage(new[] { Get("front_view_posX") + Get("side_view_dX"), Get("front_view_posY") + Get("top_view_dY") });
+        if (Has("top_view_dY") && drawingData.ViewPositions.ContainsKey("Side_view"))
+        {
+            var basePos = drawingData.ViewPositions["Side_view"].GetValues(Unit.Millimeter);
+            drawingData.ViewPositions["Top_view"] = new DataStorage(new[] { basePos[0], basePos[1] + Get("top_view_dY") });
+        }
 
         if (Has("detail_view_posX") && Has("detail_view_posY"))
+        {
             drawingData.ViewPositions["Detail_view"] = new DataStorage(new[] { Get("detail_view_posX"), Get("detail_view_posY") });
+        }
 
-        if (Has("section_view_posX"))
+        if (Has("section_view_posX") && drawingData.ViewPositions.ContainsKey("Detail_view"))
         {
             double fx = 0.0;
-            double td = wedgeData.Dimensions["TD"].GetValue(Unit.Millimeter);
-            double tdf = wedgeData.Dimensions["TDF"].GetValue(Unit.Millimeter);
-            double fl = wedgeData.Dimensions["FL"].GetValue(Unit.Millimeter);
+            double td = wedgeData.Dimensions.ContainsKey("TD") ? wedgeData.Dimensions["TD"].GetValue(Unit.Millimeter) : 0;
+            double tdf = wedgeData.Dimensions.ContainsKey("TDF") ? wedgeData.Dimensions["TDF"].GetValue(Unit.Millimeter) : 0;
+            double fl = wedgeData.Dimensions.ContainsKey("FL") ? wedgeData.Dimensions["FL"].GetValue(Unit.Millimeter) : 0;
+            double scale = drawingData.ViewScales["Section_view"].GetValue(Unit.Millimeter);
 
-            double sectionViewCenterX = fx == 0.0 || double.IsNaN(fx)
-                ? Get("section_view_posX") + drawingData.ViewScales["Section_view"].GetValue(Unit.Millimeter) * (td - tdf) / 2
-                : Get("section_view_posX") + drawingData.ViewScales["Section_view"].GetValue(Unit.Millimeter) * ((tdf - fl) / 2 - fx);
+            double offsetX = fx == 0.0 || double.IsNaN(fx)
+                ? Get("section_view_posX") + scale * (td - tdf) / 2
+                : Get("section_view_posX") + scale * ((tdf - fl) / 2 - fx);
 
-            drawingData.ViewPositions["Section_view"] = new DataStorage(new[] {
-                Get("detail_view_posX") + sectionViewCenterX,
-                Get("detail_view_posY")
-            });
+            var detailPos = drawingData.ViewPositions["Detail_view"].GetValues(Unit.Millimeter);
+            drawingData.ViewPositions["Section_view"] = new DataStorage(new[] { detailPos[0] + offsetX, detailPos[1] });
         }
 
-        if (Has("dim_table_posX"))
-            drawingData.TablePositions["dimension"] = new DataStorage(new[] { Get("dim_table_posX"), Get("dim_table_posY"), Get("dim_table_width") });
+        // === Table Positions ===
+        TrySetTable("dimension", "dim_table_posX", "dim_table_posY", "dim_table_width");
+        TrySetTable("how_to_order", "how_to_order_posX", "how_to_order_posY", "how_to_order_width");
+        TrySetTable("label_as", "label_as_posX", "label_as_posY", "label_as_width");
+        TrySetTable("polish", "polish_posX", "polish_posY", "polish_width");
 
-        if (Has("how_to_order_posX"))
-            drawingData.TablePositions["how_to_order"] = new DataStorage(new[] { Get("how_to_order_posX"), Get("how_to_order_posY"), Get("how_to_order_width") });
-
-        if (Has("label_as_posX"))
-            drawingData.TablePositions["label_as"] = new DataStorage(new[] { Get("label_as_posX"), Get("label_as_posY"), Get("label_as_width") });
-
-        if (Has("polish_posX"))
-            drawingData.TablePositions["polish"] = new DataStorage(new[] { Get("polish_posX"), Get("polish_posY"), Get("polish_width") });
-
-        void SetBreakline(string name, string key)
+        // === Breakline Data ===
+        void SetBreakline(string view, string suffix, bool setUpper = true)
         {
-            if (Has(key)) drawingData.BreaklineData[name] = new DataStorage(Get(key));
+            if (Has($"length_lower_section_{suffix}"))
+                drawingData.BreaklineData[$"{view}LowerPartLength"] = new DataStorage(Get($"length_lower_section_{suffix}"));
+
+            if (setUpper && Has($"length_upper_section_{suffix}"))
+                drawingData.BreaklineData[$"{view}UpperPartLength"] = new DataStorage(Get($"length_upper_section_{suffix}"));
+            else if (!setUpper)
+                drawingData.BreaklineData[$"{view}UpperPartLength"] = new DataStorage(0);
+
+            if (Has($"breakline_gap_{suffix}"))
+                drawingData.BreaklineData[$"{view}BreaklineGap"] = new DataStorage(Get($"breakline_gap_{suffix}"));
         }
 
-        SetBreakline("Front_viewLowerPartLength", "length_lower_section_fsv");
-        SetBreakline("Front_viewUpperPartLength", "length_upper_section_fsv");
-        SetBreakline("Front_viewBreaklineGap", "breakline_gap_fsv");
-        SetBreakline("Side_viewLowerPartLength", "length_lower_section_fsv");
-        SetBreakline("Side_viewUpperPartLength", "length_upper_section_fsv");
-        SetBreakline("Side_viewBreaklineGap", "breakline_gap_fsv");
-        SetBreakline("Detail_viewLowerPartLength", "length_lower_section_dsv");
-        SetBreakline("Detail_viewBreaklineGap", "breakline_gap_dsv");
-        SetBreakline("Section_viewLowerPartLength", "length_lower_section_dsv");
-        SetBreakline("Section_viewBreaklineGap", "breakline_gap_dsv");
-        drawingData.BreaklineData["Detail_viewUpperPartLength"] = new DataStorage(0);
-        drawingData.BreaklineData["Section_viewUpperPartLength"] = new DataStorage(0);
+        SetBreakline("Front_view", "fsv");
+        SetBreakline("Side_view", "fsv");
+        SetBreakline("Detail_view", "dsv", false);
+        SetBreakline("Section_view", "dsv", false);
 
+        // === Title Block Info ===
         drawingData.TitleInfo["number"] = wedgeData.Metadata["drawing_number"] + "";
         drawingData.Title = wedgeData.Metadata["wedge_title"] + "";
 
@@ -117,17 +125,28 @@ public class DrawingDataLoader : IDrawingDataLoader
         drawingData.HowToOrderInfo["number"] = drawingData.TitleInfo["number"];
         drawingData.HowToOrderInfo["packaging"] = GetStr("packaging");
 
+        // === Extras ===
+        string engrave = GetStr("engrave");
+        if (!string.IsNullOrWhiteSpace(engrave))
+            drawingData.LabelAsItems = engrave.Split('¶');
+
+        string polish = GetStr("polish_text");
+        if (!string.IsNullOrWhiteSpace(polish))
+            drawingData.PolishItems = polish.Split('¶');
+
+        string dimKeys = GetStr("dimension_keys_in_table");
+        if (!string.IsNullOrWhiteSpace(dimKeys))
+            drawingData.DimensionKeysInTable = dimKeys.Split(',');
+
         drawingData.DrawingType = drawingType;
-        if (!string.IsNullOrWhiteSpace(GetStr("engrave")))
-            drawingData.LabelAsItems = GetArray("engrave");
-
-        if (!string.IsNullOrWhiteSpace(GetStr("polish_text")))
-            drawingData.PolishItems = GetArray("polish_text");
-
-        if (!string.IsNullOrWhiteSpace(GetStr("dimension_keys_in_table")))
-            drawingData.DimensionKeysInTable = GetStr("dimension_keys_in_table").Split(',');
-
         DynamicDimensionStyler.ApplyDynamicStyles(drawingData, wedgeData);
         return drawingData;
+
+        // === Helper for Tables ===
+        void TrySetTable(string name, string xKey, string yKey, string wKey)
+        {
+            if (Has(xKey) && Has(yKey) && Has(wKey))
+                drawingData.TablePositions[name] = new DataStorage(new[] { Get(xKey), Get(yKey), Get(wKey) });
+        }
     }
 }

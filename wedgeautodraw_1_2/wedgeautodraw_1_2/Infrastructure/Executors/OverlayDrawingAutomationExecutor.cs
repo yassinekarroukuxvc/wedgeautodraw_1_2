@@ -26,8 +26,13 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
             Logger.Info("=== Starting Overlay Drawing Automation ===");
 
             var drawingService = InitializeDrawing(swApp, partPath, drawingPath, modPartPath, modDrawingPath);
-            UpdateViewScalesAndPositions(drawingService, drawingData,wedgeData);
-            FinalizeDrawing(drawingService, partService, outputPdfPath,outputTiffPath);
+            UpdateViewScalesAndPositions(drawingService, drawingData, wedgeData);
+            var tableService = new TableService(swApp, drawingService.GetModel());
+
+            tableService.CreateDimensionNote(drawingData.TablePositions[Constants.DimensionTable], drawingData.DimensionKeysInTable, "DIMENSIONS:", drawingData, wedgeData.Dimensions);
+
+            FinalizeDrawing(drawingService, partService, outputPdfPath, outputTiffPath);
+            
 
             Logger.Success("Overlay drawing automation completed.");
         }
@@ -48,72 +53,111 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
             return drawingService;
         }
 
-        private static void UpdateViewScalesAndPositions(IDrawingService drawingService, DrawingData drawData,WedgeData wedgeData)
+        private static void UpdateViewScalesAndPositions(IDrawingService drawingService, DrawingData drawData, WedgeData wedgeData)
         {
             var model = drawingService.GetModel();
             string[] viewNames = new[]
             {
-                Constants.FrontView,
-                Constants.SideView,
-                Constants.TopView,
+                Constants.OverlayFrontView,
+                Constants.OverlaySideView,
+                Constants.OverlayTopView,
                 Constants.OverlayDetailView,
                 Constants.OverlaySectionView
             };
 
             foreach (var viewName in viewNames)
             {
+                Logger.Info($"Processing view: {viewName}");
+
                 var view = new ViewService(viewName, ref model);
-                if (viewName == Constants.OverlayFrontView || viewName == Constants.OverlaySideView)
-                {
-                    view.SetViewScale(3);
-                }
 
                 if (viewName == Constants.OverlayDetailView || viewName == Constants.OverlaySectionView)
                 {
-                    view.SetViewScale(100);
-                    view.SetOverlayBreaklineRightShift(0.030);
-                   /* view.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, new()
-                    {
-                        { "ISA", "SelectByName" },
-                    });*/   
+                    double fl = wedgeData.Dimensions["FL"].GetValue(Unit.Millimeter);
+                    double scale = wedgeData.OverlayScaling;
+                    view.SetViewScale(scale);
                 }
+
+                if (viewName == Constants.OverlaySideView)
+                {
+                    if (wedgeData.Dimensions["TL"].GetValue(Unit.Millimeter) < 40)
+                    {
+                        view.SetViewScale(4);
+                    }
+
+                    view.CreateCenterline(wedgeData.Dimensions, drawData);
+                    // view.SetViewPosition(drawData.ViewPositions[Constants.SideView]);
+                }
+
+                if (viewName == Constants.OverlayTopView)
+                {
+                    if (wedgeData.Dimensions["TL"].GetValue(Unit.Millimeter) < 40)
+                    {
+                        view.SetViewScale(4);
+                    }
+                    view.CreateCentermark(wedgeData.Dimensions, drawData);
+                }
+
+                if (viewName == Constants.OverlaySectionView)
+                {
+                    view.SetOverlayBreaklinePosition(wedgeData.Dimensions, drawData);
+                    /*var centerPosition = view.GetVerticalSheetCenterPosition(drawData);
+                    if (centerPosition != null)
+                    {
+                        double[] values = centerPosition.GetValues(Unit.Millimeter);
+                        Logger.Warn($"Center Position: X = {values[0]:F4} mm, Y = {values[1]:F4} mm");
+
+                        view.SetViewPosition(centerPosition);
+                        Logger.Info($"Section view vertically centered using calculated position.");
+                    }
+                    else
+                    {
+                        Logger.Warn("Failed to calculate vertical center position for section view.");
+                    }*/
+                    view.CenterViewVertically();
+                    view.SetViewX(140);
+                    view.CenterSectionViewVisuallyVertically(wedgeData.Dimensions);
+                    //view.AlignViewHorizontally(isDetailView: false);
+                    //view.AlignViewRightEdgeToTarget(alignToSheetCenter: true);
+
+
+                }
+
                 if (viewName == Constants.OverlayDetailView)
                 {
-                    // Read tolerances from WedgeData
-                    double W_lowerTol = wedgeData.Dimensions["W"].GetTolerance(Unit.Meter, "-");
-                    double W_upperTol = wedgeData.Dimensions["W"].GetTolerance(Unit.Meter, "+");
-
-                    double FL_lowerTol = wedgeData.Dimensions["FL"].GetTolerance(Unit.Meter, "-");
-                    double FL_upperTol = wedgeData.Dimensions["FL"].GetTolerance(Unit.Meter, "+");
-
-                    Logger.Success($"W -> Upper : {W_upperTol} - Lower : {W_lowerTol} ");
-                    Logger.Success($"FL -> Upper : {FL_upperTol} - Lower : {FL_lowerTol} ");
-
-                    view.SetSketchDimensionValue("D1@Sketch100", W_upperTol);
-                    view.SetSketchDimensionValue("D2@Sketch100", W_lowerTol);
-
-                    view.SetSketchDimensionValue("D1@Sketch231", FL_upperTol);  
-                    view.SetSketchDimensionValue("D2@Sketch231", FL_lowerTol);
-                    view.MoveViewToPosition(-1.615013, -0.015391);
-                    //view.DrawBorderBoxInView();
-                    //view.DrawTestBox();
-                    //view.SetOverlayBreaklinePosition(wedgeData.Dimensions, drawData);
-                    //view.InsertModelDimensioning();
-                    //view.SetOverlayBreaklineRightShift(0.030);
+                    view.SetOverlayBreaklinePosition(wedgeData.Dimensions,drawData);
+                    view.CenterViewVertically();
+                    //view.AlignViewHorizontally(isDetailView: true);
+                    //view.AlignViewRightEdgeToTarget(alignToSheetCenter: false);
+                    view.SetViewX(339);
+                    
+                    //view.ShiftViewRightWithClamping(0.002);
+                    /*view.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, new()
+                    {
+                        { "ISA", "SelectByName" },
+                    });*/
                 }
 
-
-
+                // ====== CRITICAL: Force ViewService cleanup ======
+                view = null;
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                // ===============================================
             }
         }
 
-        private static void FinalizeDrawing(IDrawingService drawingService, IPartService partService, string outputPdfPath,string outputTiffPath)
+        private static void FinalizeDrawing(IDrawingService drawingService, IPartService partService, string outputPdfPath, string outputTiffPath)
         {
             var model = drawingService.GetModel();
 
             model.GraphicsRedraw2();
-           //drawingService.SaveAsPdfAndConvertToTiff(outputPdfPath, outputTiffPath);
-            drawingService.SaveAsTiff(outputPdfPath);
+            drawingService.ZoomToSheet();
+            drawingService.DrawCenteredSquareOnSheet(4.5);
+
+            // Optional saves
+            drawingService.SaveAsTiff(outputTiffPath);
+            drawingService.SaveAsPdf(outputPdfPath);
+
             drawingService.Unlock();
             drawingService.SaveAndCloseDrawing();
 

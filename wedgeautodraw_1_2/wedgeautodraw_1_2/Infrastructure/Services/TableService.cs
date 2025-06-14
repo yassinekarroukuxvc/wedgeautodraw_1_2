@@ -207,4 +207,78 @@ public class TableService : ITableService
 
         return true;
     }
+    public bool CreateDimensionNote(DataStorage position, string[] wedgeKeys, string header, DrawingData drawingData, NamedDimensionValues wedgeDimensions)
+    {
+        try
+        {
+            var validLines = new List<string>();
+
+            foreach (var key in wedgeKeys)
+            {
+                if (wedgeDimensions.TryGet(key, out var dataStorage) && dataStorage != null)
+                {
+                    double valueInch = dataStorage.GetValue(Unit.Inch);
+                    double upperTolInch = dataStorage.GetTolerance(Unit.Inch, "+");
+                    double lowerTolInch = dataStorage.GetTolerance(Unit.Inch, "-");
+
+                    double valueMm = dataStorage.GetValue(Unit.Millimeter);
+                    double upperTolMm = dataStorage.GetTolerance(Unit.Millimeter, "+");
+                    double lowerTolMm = dataStorage.GetTolerance(Unit.Millimeter, "-");
+
+                    if (!double.IsNaN(valueInch))
+                    {
+                        bool isRef = IsRef(upperTolInch, lowerTolInch);
+
+                        string tolStrInch = isRef ? "" : FormatTolerance(upperTolInch, lowerTolInch, 4, true);
+                        string tolStrMm = isRef ? "" : FormatTolerance(upperTolMm, lowerTolMm, 4, false);
+
+                        string inchStr = TrimLeadingZero(valueInch.ToString("F4"));
+
+                        string valStr = $"{key} = {inchStr} {tolStrInch} [{valueMm:F3} {tolStrMm}]";
+
+                        if (isRef)
+                            valStr += " (REF)";
+
+                        validLines.Add(valStr.Trim());
+                    }
+                }
+            }
+
+            if (validLines.Count == 0)
+            {
+                Logger.Warn("No valid dimension entries found. Skipping dimension note creation.");
+                return false;
+            }
+
+            // Build note text
+            var noteText = $"{header}\n";
+            foreach (var line in validLines)
+            {
+                noteText += $"{line}\n";
+            }
+
+            double[] pos = position.GetValues(Unit.Meter);
+            double posX = pos[0];
+            double posY = pos[1];
+            double textHeight = 0.004;  // Example text height in meters (~ 4 mm)
+
+            // Now use correct method signature:
+            var noteObj = _swDrawing.CreateText2(noteText, textHeight, posX, posY, 0.0, 0.0);
+
+            if (noteObj == null)
+            {
+                Logger.Warn("Failed to insert dimension note.");
+                return false;
+            }
+
+            Logger.Success("Dimension note created successfully.");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Error creating dimension note: {ex.Message}");
+            return false;
+        }
+    }
+
 }

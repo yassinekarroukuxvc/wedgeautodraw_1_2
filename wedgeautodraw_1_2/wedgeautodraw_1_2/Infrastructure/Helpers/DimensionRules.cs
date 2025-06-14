@@ -39,7 +39,7 @@ public static class DimensionRules
                     var TD = wedge.Dimensions["TD"].GetValue(Unit.Millimeter);
                     var TL = wedge.Dimensions["TL"].GetValue(Unit.Millimeter);
                     var fsv = drawing.ViewScales[Constants.FrontView].GetValue(Unit.Millimeter);
-                    return new[] { front[0] + fsv * TD / 2 + 4, front[1] + 45 };
+                    return new[] { front[0] + fsv * TD / 2 + 10, front[1] + 40 };
                 }
             },
             ["D2"] = new DimensionLayoutRule
@@ -61,7 +61,7 @@ public static class DimensionRules
                     var front = drawing.ViewPositions[Constants.FrontView].GetValues(Unit.Millimeter);
                     var TD = wedge.Dimensions["TD"].GetValue(Unit.Millimeter);
                     var fsv = drawing.ViewScales[Constants.FrontView].GetValue(Unit.Millimeter);
-                    return new[] { front[0] - fsv * TD / 2, front[1] - 75 };
+                    return new[] { front[0] - fsv * TD / 2 - 8, front[1] - 75 };
                 }
             },
             ["TDF"] = new DimensionLayoutRule
@@ -97,7 +97,7 @@ public static class DimensionRules
                     var TDF = wedge.Dimensions["TDF"].GetValue(Unit.Millimeter);
                     var TD = wedge.Dimensions["TD"].GetValue(Unit.Millimeter);
                     var tsv = drawing.ViewScales[Constants.TopView].GetValue(Unit.Millimeter);
-                    return new[] { top[0] - tsv * TDF / 2, top[1] - tsv * TD / 2 - 1 };
+                    return new[] { top[0] - tsv * TDF / 2 - 20, top[1] - tsv * TD / 2 - 1 };
                 }
             },
             ["ISA"] = new DimensionLayoutRule
@@ -109,7 +109,7 @@ public static class DimensionRules
                     var lowerPartLength = drawing.BreaklineData["Detail_viewLowerPartLength"].GetValue(Unit.Millimeter);
                     var breakline = drawing.BreaklineData["Detail_viewBreaklineGap"].GetValue(Unit.Millimeter);
                     var y = detail[1] - (breakline + lowerPartLength) / 2;
-                    return new[] { detail[0] + 3.5, y + lowerPartLength - 3.75 };
+                    return new[] { detail[0] + 3.5, y + lowerPartLength -2 };
                 }
             },
             ["GA"] = new DimensionLayoutRule
@@ -183,7 +183,7 @@ public static class DimensionRules
                     var lowerPartLength = drawing.BreaklineData["Detail_viewLowerPartLength"].GetValue(Unit.Millimeter);
                     var breakline = drawing.BreaklineData["Detail_viewBreaklineGap"].GetValue(Unit.Millimeter);
                     var y = detail[1] - (breakline + lowerPartLength) / 2;
-                    return new[] { detail[0] + 10, y + dsv * GD + 5 };
+                    return new[] { detail[0] - 5, y + dsv * GD + 20 };
                 }
             },
             ["FA"] = new DimensionLayoutRule
@@ -194,7 +194,12 @@ public static class DimensionRules
                     var side = drawing.ViewPositions[Constants.SideView].GetValues(Unit.Millimeter);
                     var TD = wedge.Dimensions["TD"].GetValue(Unit.Millimeter);
                     var ssv = drawing.ViewScales[Constants.SideView].GetValue(Unit.Millimeter);
-                    return new[] { side[0] - ssv * TD / 2 - 4, side[1] + 20 };
+                    double FA = wedge.Dimensions.TryGet("FA", out var faVal) ? faVal.GetValue(Unit.Degree) : double.NaN;
+
+                    if (!double.IsNaN(FA) && FA < 6)
+                        return new[] { side[0] - ssv * TD / 2 - 4, side[1] + 70 };
+                    else
+                        return new[] { side[0] - ssv * TD / 2 - 4, side[1] + 20 };
                 }
             },
             ["BA"] = new DimensionLayoutRule
@@ -205,9 +210,15 @@ public static class DimensionRules
                     var side = drawing.ViewPositions[Constants.SideView].GetValues(Unit.Millimeter);
                     var TD = wedge.Dimensions["TD"].GetValue(Unit.Millimeter);
                     var ssv = drawing.ViewScales[Constants.SideView].GetValue(Unit.Millimeter);
-                    return new[] { side[0] + ssv * TD / 2 + 4, side[1] + 15 };
+                    double BA = wedge.Dimensions.TryGet("BA", out var baVal) ? baVal.GetValue(Unit.Degree) : double.NaN;
+
+                    if (!double.IsNaN(BA) && BA < 6)
+                        return new[] { side[0] - ssv * TD / 2 + 4, side[1] + 55 };
+                    else
+                        return new[] { side[0] + ssv * TD / 2 + 4, side[1] + 15 };
                 }
             },
+
             ["E"] = new DimensionLayoutRule
             {
                 BasedOnView = Constants.SideView,
@@ -216,7 +227,7 @@ public static class DimensionRules
                     var side = drawing.ViewPositions[Constants.SideView].GetValues(Unit.Millimeter);
                     var TD = wedge.Dimensions["TD"].GetValue(Unit.Millimeter);
                     var ssv = drawing.ViewScales[Constants.SideView].GetValue(Unit.Millimeter);
-                    return new[] { side[0] + ssv * TD / 2 + 2.5, side[1] - 68 };
+                    return new[] { side[0] + ssv * TD / 2 + 6, side[1] - 68 };
                 }
             },
             ["FX"] = new DimensionLayoutRule
@@ -376,8 +387,8 @@ public static class DimensionRules
             },
             ["ISA"] = new DimensionLayoutRule
             {
-                BasedOnView = Constants.DetailView,
-                CalculatePosition = (wedge, drawing) => new[] { 20.0, 10.0 }
+                BasedOnView = Constants.OverlayDetailView,
+                CalculatePosition = (wedge, drawing) => new[] { 45.0, 20.0 }
             },
 
             ["VR"] = new()

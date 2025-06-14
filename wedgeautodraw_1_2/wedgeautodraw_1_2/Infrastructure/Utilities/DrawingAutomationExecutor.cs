@@ -27,7 +27,7 @@ public static class DrawingAutomationExecutor
     {
         Logger.Info("=== Starting Drawing Automation ===");
         //Console.WriteLine(drawingData);
-        //Console.WriteLine(wedgeData);
+        Console.WriteLine(wedgeData);
         IDrawingAutomationExecutor executor = type switch
         {
             DrawingType.Production => new ProductionDrawingAutomationExecutor(),

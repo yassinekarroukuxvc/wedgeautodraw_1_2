@@ -13,10 +13,13 @@ public interface IDrawingService
     void SetCustomProperties(DrawingData drawingData);
     void Rebuild();
     void ZoomToFit();
+    void ZoomToSheet();
     ModelDoc2 GetModel();
     void ReplaceReferencedModel(string drawingPath, string oldModelPath, string newModelPath);
     void Reopen();
     void Unlock();
-    public void SaveAsTiff(string outputPath);
-    public void SaveAsPdfAndConvertToTiff(string pdfPath, string tiffPath, int dpi = 300);
+    public void SaveAsTiff(string outputPath, int dpi = 300, int widthPx = 640, int heightPx = 480);
+    public void DrawCenteredRectangleOnSheet(double rectWidthInInches, double rectHeightInInches);
+    public void DrawCenteredSquareOnSheet(double sideLengthInInches);
+    public void DrawPointAtSheetOrigin();
 }

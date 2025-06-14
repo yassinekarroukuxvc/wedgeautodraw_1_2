@@ -2,9 +2,6 @@
 using SolidWorks.Interop.swconst;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using wedgeautodraw_1_2.Core.Enums;
 using wedgeautodraw_1_2.Core.Models;
 using wedgeautodraw_1_2.Infrastructure.Helpers;
@@ -48,7 +45,7 @@ public class DimensionStyler
                     if (selector == "SelectByName" && swDim.Name == dimKey)
                     {
                         UpdateAnnotation(swAnn, drawDimensions[dimKey].Position, dimKey);
-                        Style(swDispDim, dimKey);
+                        Style(swDispDim, dimKey, wedgeDimensions, drawDimensions);
                         break;
                     }
                     else if (selector == "SelectByValue" && wedgeDimensions.TryGet(dimKey, out var modelValue))
@@ -59,7 +56,7 @@ public class DimensionStyler
                         if (Math.Abs(modelVal - dimVal) < 1e-4)
                         {
                             UpdateAnnotation(swAnn, drawDimensions[dimKey].Position, dimKey);
-                            Style(swDispDim, dimKey);
+                            Style(swDispDim, dimKey, wedgeDimensions, drawDimensions);
                             break;
                         }
                     }
@@ -78,7 +75,7 @@ public class DimensionStyler
         }
     }
 
-    private void UpdateAnnotation(Annotation swAnn, DataStorage pos, string name)
+    private void UpdateAnnotation(Annotation swAnn, DataStorage pos, string name, double verticalOffset = 0.0)
     {
         if (swAnn == null || pos == null)
         {
@@ -95,10 +92,10 @@ public class DimensionStyler
 
         try
         {
-            swAnn.SetPosition2(coords[0], coords[1], 0.0);
+            swAnn.SetPosition2(coords[0], coords[1] - verticalOffset, 0.0);
             swAnn.Layer = "FORMAT";
             swAnn.SetName(name);
-            Logger.Info($"Updated annotation '{name}' to ({coords[0]:F4}, {coords[1]:F4}) m.");
+            Logger.Info($"Updated annotation '{name}' to ({coords[0]:F4}, {coords[1] - verticalOffset:F4}) m.");
         }
         catch (Exception ex)
         {
@@ -106,18 +103,68 @@ public class DimensionStyler
         }
     }
 
-    private void Style(DisplayDimension swDispDim, string dimKey)
+    private void Style(DisplayDimension swDispDim, string dimKey, NamedDimensionValues wedgeDimensions, NamedDimensionAnnotations drawDimensions)
     {
         try
         {
             if (dimKey != "ISA")
                 swDispDim.CenterText = true;
+
             if (dimKey == "VW")
             {
                 swDispDim.CenterText = true;
                 Logger.Success("VW is centered");
             }
-           
+
+            if (dimKey == "FL")
+            {
+                swDispDim.ArrowSide = 0;
+                swDispDim.WitnessVisibility = 0;
+                Logger.Success("FL has arrow outside");
+            }
+
+            if (dimKey == "GA")
+            {
+                swDispDim.ArrowSide = 0;
+
+                if (wedgeDimensions.TryGet("W", out var wVal) && wVal.GetValue(Unit.Millimeter) < 0.3)
+                {
+                    swDispDim.OffsetText = true;
+                    swDispDim.CenterText = true;
+
+                    if (drawDimensions.ContainsKey("GA") && drawDimensions["GA"].Position != null)
+                    {
+                        var swAnn = swDispDim.GetAnnotation() as Annotation;
+                        UpdateAnnotation(swAnn, drawDimensions["GA"].Position, "GA", 0.005); // 5mm offset
+                        Logger.Success("GA position reapplied with 5mm vertical offset due to W < 0.9mm.");
+                    }
+                }
+            }
+            if (dimKey == "E")
+            {
+                swDispDim.CenterText = true;
+
+                if (wedgeDimensions.TryGet("E", out var wVal) && wVal.GetValue(Unit.Millimeter) < 0.8)
+                {
+                    swDispDim.OffsetText = true;
+
+                    if (drawDimensions.ContainsKey("E") && drawDimensions["E"].Position != null)
+                    {
+                        var swAnn = swDispDim.GetAnnotation() as Annotation;
+                        UpdateAnnotation(swAnn, drawDimensions["E"].Position, "E", 0.010); // 5mm offset
+                        Logger.Success("E position reapplied with 5mm vertical offset due to E < 0.8mm.");
+                    }
+                }
+            }
+
+            if (dimKey == "GD")
+            {
+                swDispDim.WitnessVisibility = 0;
+            }
+            if (dimKey == "FA" || dimKey == "BA")
+            {
+                swDispDim.CenterText = true;
+            }
 
             if (dimKey is "FR" or "BR")
             {

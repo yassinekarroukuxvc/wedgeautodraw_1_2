@@ -7,6 +7,8 @@ public class WedgeData
     public NamedDimensionValues Dimensions { get; set; } = new();
     public Dictionary<string, object> Metadata { get; set; } = new();
     public string EngravedText { get; set; } = string.Empty;
+    public string OverlayCalibration { get; set; } = string.Empty;
+    public double OverlayScaling { get; set; } = 1.0;
     public override string ToString()
     {
         var result = new System.Text.StringBuilder();
@@ -28,6 +30,8 @@ public class WedgeData
         }
 
         result.AppendLine($"\nEngravedText: {EngravedText}");
+        result.AppendLine($"\nOverlay Calibration: {OverlayCalibration}");
+        result.AppendLine($"\nOverlay Scaling: {OverlayScaling}");
         return result.ToString();
     }
 

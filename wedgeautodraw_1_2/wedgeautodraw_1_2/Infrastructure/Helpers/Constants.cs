@@ -8,11 +8,13 @@ public static class Constants
     public const string TopView = "Top_view";
     public const string DetailView = "Detail_view";
     public const string SectionView = "Section_view";
-    public const string OverlaySectionView = "Section View O-O";
-    public const string OverlayDetailView = "Drawing View5";
+    //public const string OverlaySectionView = "Section View O-O";
+    public const string OverlaySectionView = "Section View L-L";
+    //public const string OverlayDetailView = "Drawing View6";
+    public const string OverlayDetailView = "Drawing View4";
     public const string OverlaySideView = "Drawing View1";
-    public const string OverlayTopView = "Drawing View2";
-    public const string OverlayFrontView = "Drawing View3";
+    public const string OverlayTopView = "Drawing View3";
+    public const string OverlayFrontView = "Drawing View2";
     //public const string OverlayDetailView2 = "Detail View P (100 : 1)";
     /// </summary>
     // Sketch names

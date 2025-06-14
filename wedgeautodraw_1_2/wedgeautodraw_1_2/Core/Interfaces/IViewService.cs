@@ -24,7 +24,7 @@ public interface IViewService
     public bool SetOverlayBreaklineRightShift(double shiftAmount = 0.005);
 
     public bool SetOverlayBreaklinePosition(NamedDimensionValues wedgeDimensions, DrawingData drawData);
-    public void SetSketchDimensionValue(string dimensionName, double value);
     public bool MoveViewToPosition(double targetX, double targetY);
-
+    public bool ShiftViewRight(double shiftAmount);
+    public bool CenterViewVerticallyByFL(NamedDimensionValues wedgeDimensions);
 }

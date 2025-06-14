@@ -27,11 +27,12 @@ class Program
         string prodPartTemplate = Path.Combine(resourcePath, "wedge.SLDPRT");
         string prodDrawingTemplate = Path.Combine(resourcePath, "wedge.SLDDRW");
         string overlayPartTemplate = "C:\\Users\\mounir\\Desktop\\Oussama_test\\overlay_wedgev2.SLDPRT";
-        string overlayDrawingTemplate = "C:\\Users\\mounir\\Desktop\\Oussama_test\\overlay_wedgev2.SLDDRW";
+        //string overlayDrawingTemplate = "C:\\Users\\mounir\\Desktop\\Oussama_test\\overlay_wedgev4.SLDDRW";
+        string overlayDrawingTemplate = "C:\\Users\\mounir\\Desktop\\overlay_wedgev4.SLDDRW";
 
         string equationPath = Path.Combine(resourcePath, "equations.txt");
         string configurationPath = Path.Combine(resourcePath, "drawing_config.json");
-        string excelPath = Path.Combine(resourcePath, "Copy.xlsx");
+        string excelPath = Path.Combine(resourcePath, "CKVD_DATA_10_Parts.xlsx");
 
         ISolidWorksService swService = new SolidWorksService();
         SldWorks swApp = swService.GetApplication();
