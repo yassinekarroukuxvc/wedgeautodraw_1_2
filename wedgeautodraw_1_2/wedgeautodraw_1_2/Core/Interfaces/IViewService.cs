@@ -17,14 +17,7 @@ public interface IViewService
     bool PlaceDatumFeatureLabel(NamedDimensionValues wedgeDimensions, NamedDimensionAnnotations drawDimensions, string label);
     bool PlaceGeometricToleranceFrame(NamedDimensionValues wedgeDimensions, NamedDimensionAnnotations drawDimensions, string label);
     void ReactivateView(ref ModelDoc2 swModel);
-    public double[] GetPosition();
-    public Dictionary<string, double[]> GetDefaultModelDimensionPositions();
-    public bool RotateView(double angleInDegrees);
     bool DeleteAnnotationsByName(string[] annotationNames);
-    public bool SetOverlayBreaklineRightShift(double shiftAmount = 0.005);
-
     public bool SetOverlayBreaklinePosition(NamedDimensionValues wedgeDimensions, DrawingData drawData);
-    public bool MoveViewToPosition(double targetX, double targetY);
-    public bool ShiftViewRight(double shiftAmount);
-    public bool CenterViewVerticallyByFL(NamedDimensionValues wedgeDimensions);
+    public bool CenterSectionViewVisuallyVertically(NamedDimensionValues wedgeDimensions);
 }

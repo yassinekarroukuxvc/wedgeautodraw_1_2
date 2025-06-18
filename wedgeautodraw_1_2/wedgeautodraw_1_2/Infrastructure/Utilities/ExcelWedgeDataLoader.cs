@@ -159,7 +159,6 @@ public class ExcelWedgeDataLoader
         drawing.TitleBlockInfo["COMPANY_NAME"] = "SMALL PRECISION TOOLS";
         drawing.TitleBlockInfo["DRAWN_BY"] = "AUTODRAW SERVICE";
         drawing.TitleBlockInfo["DRAWN_ON"] = DateTime.Now.ToString("MM/dd/yyyy");
-        Logger.Success(drawing.TitleBlockInfo["DRAWN_ON"]);
 
         drawing.HowToOrderInfo["number"] = drawingNumber;
         drawing.HowToOrderInfo["packaging"] = GetCell(row, map, "packaging");

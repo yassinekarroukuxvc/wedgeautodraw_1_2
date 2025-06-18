@@ -14,5 +14,10 @@ public class NamedDimensionAnnotations
 
     public Dictionary<string, DimensionAnnotation> GetAll() => _data;
     public bool ContainsKey(string key) => _data.ContainsKey(key);
+    public bool TryGet(string key, out DimensionAnnotation value)
+    {
+        return _data.TryGetValue(key, out value);
+    }
+
 
 }

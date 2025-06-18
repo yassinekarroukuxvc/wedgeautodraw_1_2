@@ -2,10 +2,12 @@
 using SolidWorks.Interop.sldworks;
 using SolidWorks.Interop.swconst;
 using System.Runtime.InteropServices;
+using wedgeautodraw_1_2.Core.Enums;
 using wedgeautodraw_1_2.Core.Interfaces;
 using wedgeautodraw_1_2.Core.Models;
 using wedgeautodraw_1_2.Infrastructure.Helpers;
 namespace wedgeautodraw_1_2.Infrastructure.Services;
+using System.Runtime.InteropServices;
 
 public class DrawingService : IDrawingService
 {
@@ -157,9 +159,7 @@ public class DrawingService : IDrawingService
         }
     }
 
-
     public ModelDoc2 GetModel() => _swModel;
-
     public void ReplaceReferencedModel(string drawingPath, string oldModelPath, string newModelPath)
     {
         _swApp.ReplaceReferencedDocument(drawingPath, oldModelPath, newModelPath);
@@ -270,54 +270,6 @@ public class DrawingService : IDrawingService
             Logger.Error($"TIFF export exception: {ex.Message}");
         }
     }
-
-    public void DrawCenteredRectangleOnSheet(double rectWidthInInches, double rectHeightInInches)
-    {
-        try
-        {
-            if (_swDrawing == null)
-            {
-                Logger.Error("Drawing is not opened. Cannot draw sketch rectangle.");
-                return;
-            }
-
-            // Get sheet size
-            Sheet currentSheet = (SolidWorks.Interop.sldworks.Sheet)_swDrawing.GetCurrentSheet();
-            double sheetWidth = 0.0;
-            double sheetHeight = 0.0;
-            currentSheet.GetSize(ref sheetWidth, ref sheetHeight);
-
-            Logger.Info($"Sheet size: {sheetWidth * 39.3701:F3} in × {sheetHeight * 39.3701:F3} in");
-
-            // Convert inches → meters
-            double rectWidth = rectWidthInInches * 0.0254;
-            double rectHeight = rectHeightInInches * 0.0254;
-
-            // Center point of the sheet
-            double centerX = sheetWidth / 2.0;
-            double centerY = sheetHeight / 2.0;
-
-            // Calculate corner point
-            double cornerX = centerX + (rectWidth / 2.0);
-            double cornerY = centerY + (rectHeight / 2.0);
-
-            // Start sketch
-            ModelDoc2 model = (ModelDoc2)_swDrawing;
-            SketchManager sketchMgr = model.SketchManager;
-            sketchMgr.InsertSketch(true); // Start sketch mode
-
-            // Create centered rectangle
-            sketchMgr.CreateCenterRectangle(centerX, centerY, 0, cornerX, cornerY, 0);
-
-            sketchMgr.InsertSketch(true); // Exit sketch mode
-
-            Logger.Success($"Sketch rectangle created: {rectWidthInInches}\" x {rectHeightInInches}\" centered on sheet.");
-        }
-        catch (Exception ex)
-        {
-            Logger.Error($"Error while drawing sketch rectangle: {ex.Message}");
-        }
-    }
     public void DrawCenteredSquareOnSheet(double sideLengthInInches)
     {
         if (_swDrawing == null || _swModel == null)
@@ -375,51 +327,4 @@ public class DrawingService : IDrawingService
             Logger.Error($"Exception while drawing centered square: {ex.Message}");
         }
     }
-
-    public void DrawPointAtSheetOrigin()
-    {
-        if (_swDrawing == null || _swModel == null)
-        {
-            Logger.Warn("Cannot draw point. Drawing is not open.");
-            return;
-        }
-
-        try
-        {
-            // Get the active sheet
-            Sheet currentSheet = (SolidWorks.Interop.sldworks.Sheet)_swDrawing.GetCurrentSheet();
-            if (currentSheet == null)
-            {
-                Logger.Warn("Cannot get current sheet.");
-                return;
-            }
-
-            // Select the sheet (needed before creating sketch)
-            bool sheetSelected = _swDrawing.ActivateSheet(currentSheet.GetName());
-            if (!sheetSelected)
-            {
-                Logger.Warn("Failed to activate sheet.");
-                return;
-            }
-
-            // Enter sketch mode on the sheet
-            var sketchMgr = _swModel.SketchManager;
-            sketchMgr.InsertSketch(true);
-
-            // Draw point at (0,0)
-            sketchMgr.CreatePoint(0.0, 0.0, 0.0);
-
-            Logger.Success("Point drawn at sheet origin (0,0).");
-
-            // Exit sketch mode
-            sketchMgr.InsertSketch(true);
-
-            _swModel.ForceRebuild3(false);
-        }
-        catch (Exception ex)
-        {
-            Logger.Error($"Error while drawing point at sheet origin: {ex.Message}");
-        }
-    }
-
 }

@@ -61,6 +61,7 @@ public static class DimensionRules
                     var front = drawing.ViewPositions[Constants.FrontView].GetValues(Unit.Millimeter);
                     var TD = wedge.Dimensions["TD"].GetValue(Unit.Millimeter);
                     var fsv = drawing.ViewScales[Constants.FrontView].GetValue(Unit.Millimeter);
+                    var TL = wedge.Dimensions["TL"].GetValue(Unit.Millimeter);
                     return new[] { front[0] - fsv * TD / 2 - 8, front[1] - 75 };
                 }
             },
@@ -169,7 +170,7 @@ public static class DimensionRules
                     var lowerPartLength = drawing.BreaklineData["Detail_viewLowerPartLength"].GetValue(Unit.Millimeter);
                     var breakline = drawing.BreaklineData["Detail_viewBreaklineGap"].GetValue(Unit.Millimeter);
                     var y = detail[1] - (breakline + lowerPartLength) / 2;
-                    return new[] { detail[0] - dsv * W / 2 - 10, y + dsv * GD / 2 };
+                    return new[] { detail[0] - dsv * W / 2 - 15, y + dsv * GD / 2 };
                 }
             },
             ["GR"] = new DimensionLayoutRule
@@ -388,13 +389,13 @@ public static class DimensionRules
             ["ISA"] = new DimensionLayoutRule
             {
                 BasedOnView = Constants.OverlayDetailView,
-                CalculatePosition = (wedge, drawing) => new[] { 45.0, 20.0 }
+                CalculatePosition = (wedge, drawing) => new[] { 400.0, 160.0 }
             },
 
-            ["VR"] = new()
+            ["GA"] = new()
             {
-                BasedOnView = Constants.FrontView,
-                CalculatePosition = (wedge, drawing) => new[] { 40.0, 40.0 } // Replace with actual logic
+                BasedOnView = Constants.OverlayDetailView,
+                CalculatePosition = (wedge, drawing) => new[] { 250.0, 160.0 } // Replace with actual logic
             },
             ["VW"] = new()
             {

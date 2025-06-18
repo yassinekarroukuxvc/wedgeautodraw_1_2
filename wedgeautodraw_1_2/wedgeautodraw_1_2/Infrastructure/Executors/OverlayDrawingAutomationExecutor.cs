@@ -24,15 +24,23 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
             string outputTiffPath)
         {
             Logger.Info("=== Starting Overlay Drawing Automation ===");
+            
 
             var drawingService = InitializeDrawing(swApp, partPath, drawingPath, modPartPath, modDrawingPath);
-            UpdateViewScalesAndPositions(drawingService, drawingData, wedgeData);
-            var tableService = new TableService(swApp, drawingService.GetModel());
+            UpdateViewScalesAndPositions(swApp, drawingService, drawingData, wedgeData);
+            var noteService = new NoteService(swApp,drawingService.GetModel());
 
-            tableService.CreateDimensionNote(drawingData.TablePositions[Constants.DimensionTable], drawingData.DimensionKeysInTable, "DIMENSIONS:", drawingData, wedgeData.Dimensions);
-
-            FinalizeDrawing(drawingService, partService, outputPdfPath, outputTiffPath);
+            // Insert dimension note as an alternative or supplement
+            noteService.InsertDimensionNote(
+                drawingData.TablePositions[Constants.DimensionTable],
+                drawingData.DimensionKeysInTable,
+                "DIMENSIONS:",
+                drawingData,
+                wedgeData.Dimensions
+            );
             
+
+            FinalizeDrawing(drawingService, partService, outputPdfPath, outputTiffPath,wedgeData,noteService);
 
             Logger.Success("Overlay drawing automation completed.");
         }
@@ -53,12 +61,11 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
             return drawingService;
         }
 
-        private static void UpdateViewScalesAndPositions(IDrawingService drawingService, DrawingData drawData, WedgeData wedgeData)
+        private static void UpdateViewScalesAndPositions(SldWorks swApp, IDrawingService drawingService, DrawingData drawData, WedgeData wedgeData)
         {
             var model = drawingService.GetModel();
             string[] viewNames = new[]
             {
-                Constants.OverlayFrontView,
                 Constants.OverlaySideView,
                 Constants.OverlayTopView,
                 Constants.OverlayDetailView,
@@ -86,7 +93,6 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
                     }
 
                     view.CreateCenterline(wedgeData.Dimensions, drawData);
-                    // view.SetViewPosition(drawData.ViewPositions[Constants.SideView]);
                 }
 
                 if (viewName == Constants.OverlayTopView)
@@ -101,60 +107,38 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
                 if (viewName == Constants.OverlaySectionView)
                 {
                     view.SetOverlayBreaklinePosition(wedgeData.Dimensions, drawData);
-                    /*var centerPosition = view.GetVerticalSheetCenterPosition(drawData);
-                    if (centerPosition != null)
-                    {
-                        double[] values = centerPosition.GetValues(Unit.Millimeter);
-                        Logger.Warn($"Center Position: X = {values[0]:F4} mm, Y = {values[1]:F4} mm");
-
-                        view.SetViewPosition(centerPosition);
-                        Logger.Info($"Section view vertically centered using calculated position.");
-                    }
-                    else
-                    {
-                        Logger.Warn("Failed to calculate vertical center position for section view.");
-                    }*/
                     view.CenterViewVertically();
                     view.SetViewX(140);
                     view.CenterSectionViewVisuallyVertically(wedgeData.Dimensions);
-                    //view.AlignViewHorizontally(isDetailView: false);
-                    //view.AlignViewRightEdgeToTarget(alignToSheetCenter: true);
-
-
                 }
 
                 if (viewName == Constants.OverlayDetailView)
                 {
-                    view.SetOverlayBreaklinePosition(wedgeData.Dimensions,drawData);
+                    view.SetOverlayBreaklinePosition(wedgeData.Dimensions, drawData);
                     view.CenterViewVertically();
-                    //view.AlignViewHorizontally(isDetailView: true);
-                    //view.AlignViewRightEdgeToTarget(alignToSheetCenter: false);
                     view.SetViewX(339);
-                    
-                    //view.ShiftViewRightWithClamping(0.002);
-                    /*view.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, new()
+                    view.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, new()
                     {
                         { "ISA", "SelectByName" },
-                    });*/
+                        { "GA", "SelectByName" },
+                    });
                 }
 
-                // ====== CRITICAL: Force ViewService cleanup ======
                 view = null;
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
-                // ===============================================
             }
         }
 
-        private static void FinalizeDrawing(IDrawingService drawingService, IPartService partService, string outputPdfPath, string outputTiffPath)
+        private static void FinalizeDrawing(IDrawingService drawingService, IPartService partService, string outputPdfPath, string outputTiffPath,WedgeData wedgedata,INoteService noteService)
         {
             var model = drawingService.GetModel();
 
             model.GraphicsRedraw2();
             drawingService.ZoomToSheet();
-            drawingService.DrawCenteredSquareOnSheet(4.5);
-
-            // Optional saves
+            double overlay_calibration = (double.Parse(wedgedata.OverlayCalibration) / 25400) * wedgedata.OverlayScaling ;
+            drawingService.DrawCenteredSquareOnSheet(overlay_calibration);
+            noteService.InsertOverlayCalibrationNote(wedgedata.OverlayCalibration,overlay_calibration);
             drawingService.SaveAsTiff(outputTiffPath);
             drawingService.SaveAsPdf(outputPdfPath);
 

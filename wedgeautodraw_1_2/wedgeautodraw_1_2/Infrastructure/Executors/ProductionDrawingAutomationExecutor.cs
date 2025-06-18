@@ -155,11 +155,10 @@ public class ProductionDrawingAutomationExecutor : IDrawingAutomationExecutor
     private static void CreateFrontView(ModelDoc2 model, DrawingData drawData, WedgeData wedgeData)
     {
         double scale = drawData.ViewScales[Constants.FrontView].GetValue(Unit.Millimeter);
-        if(wedgeData.Dimensions["TL"].GetValue(Unit.Millimeter) < 40)
-        {
+       
             var viewFactory = new StandardViewFactory(model);
             var front = viewFactory.CreateView(Constants.FrontView);
-            drawData.ViewScales[Constants.FrontView] = new DataStorage(6);
+            drawData.ViewScales[Constants.FrontView] = new DataStorage(scale);
             front.SetViewScale(drawData.ViewScales[Constants.FrontView].GetValue(Unit.Millimeter));
             front.SetViewPosition(drawData.ViewPositions[Constants.FrontView]);
             front.SetBreaklinePosition(wedgeData.Dimensions, drawData);
@@ -172,32 +171,9 @@ public class ProductionDrawingAutomationExecutor : IDrawingAutomationExecutor
                 { "TL", "SelectByName" },
                 { "EngravingStart", "SelectByName" },
                 { "D2", "SelectByName" },
-            });
-            front.DeleteAnnotationsByName(new[] { "GR" });
-           
-
-        }
-        else 
-        {
-            var viewFactory = new StandardViewFactory(model);
-            var front = viewFactory.CreateView(Constants.FrontView);
-            front.SetViewScale(drawData.ViewScales[Constants.FrontView].GetValue(Unit.Millimeter));
-            front.SetViewPosition(drawData.ViewPositions[Constants.FrontView]);
-            front.SetBreaklinePosition(wedgeData.Dimensions, drawData);
-            front.CreateCenterline(wedgeData.Dimensions, drawData);
-            front.SetBreakLineGap(drawData.BreaklineData["Front_viewBreaklineGap"].GetValue(Unit.Meter));
-            //front.InsertModelDimensioning();
-
-            front.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, new()
-            {
-                { "TL", "SelectByName" },
-                { "EngravingStart", "SelectByName" },
-                { "D2", "SelectByName" },
                 { "VW", "SelectByName" },
             });
             front.DeleteAnnotationsByName(new[] { "GR" });
-        }
-
            
     }
 
@@ -217,18 +193,6 @@ public class ProductionDrawingAutomationExecutor : IDrawingAutomationExecutor
             /*{ "E", "SelectByName" },*/
             /*{ "FX", "SelectByName" }*/
         };
-
-        /*foreach (var key in new[] { "FA", "BA" })
-        {
-            if (wedgeData.Dimensions.TryGet(key, out var dim))
-            {
-                if (dim.GetValue(Unit.Degree) < 6)
-                {
-                    dimensionKeys.Remove(key);
-                    Logger.Info($"Skipped dimension style for {key} because value = {dim.GetValue(Unit.Degree):F2}° < 6°");
-                }
-            }
-        }*/
 
         side.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, dimensionKeys);
     }
@@ -259,7 +223,7 @@ public class ProductionDrawingAutomationExecutor : IDrawingAutomationExecutor
         detail.SetBreakLineGap(drawData.BreaklineData["Detail_viewBreaklineGap"].GetValue(Unit.Meter));
         detail.CreateCenterline(wedgeData.Dimensions, drawData);
         detail.PlaceGeometricToleranceFrame(wedgeData.Dimensions, drawData.DimensionStyles, Constants.DatumFeatureLabel);
-        detail.InsertModelDimensioning();
+        //detail.InsertModelDimensioning();
         detail.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, new()
         {
             { "ISA", "SelectByName" },

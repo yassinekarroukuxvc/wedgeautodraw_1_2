@@ -33,6 +33,7 @@ class Program
         string equationPath = Path.Combine(resourcePath, "equations.txt");
         string configurationPath = Path.Combine(resourcePath, "drawing_config.json");
         string excelPath = Path.Combine(resourcePath, "CKVD_DATA_10_Parts.xlsx");
+        string rulePath = Path.Combine(resourcePath, "drawing_rules.json");
 
         ISolidWorksService swService = new SolidWorksService();
         SldWorks swApp = swService.GetApplication();
@@ -46,7 +47,7 @@ class Program
                 ? wedge.Metadata["drawing_number"].ToString()
                 : $"Wedge_{Guid.NewGuid()}";
 
-            DrawingType selectedType = DrawingType.Overlay;
+            DrawingType selectedType = DrawingType.Production;
 
             string outputDir = Path.Combine(resourcePath, "Generated", wedgeId);
             Directory.CreateDirectory(outputDir);
@@ -54,7 +55,7 @@ class Program
             string templatePartPath = selectedType == DrawingType.Production ? prodPartTemplate : overlayPartTemplate;
             string templateDrawingPath = selectedType == DrawingType.Production ? prodDrawingTemplate : overlayDrawingTemplate;
 
-            string modEquationPath = Path.Combine(outputDir, "equations.txt"); // Always the same
+            string modEquationPath = Path.Combine(outputDir, "equations.txt");
 
             string modPartPath;
             string modDrawingPath;
@@ -83,6 +84,9 @@ class Program
 
             IDrawingDataLoader dataLoader = new DrawingDataLoader(modEquationPath);
             var fullDrawingData = dataLoader.LoadDrawingData(wedge, configurationPath, selectedType);
+            var ruleEngine = new DrawingRuleEngine(rulePath);
+            ruleEngine.Apply(fullDrawingData, wedge);
+            DynamicDimensionStyler.ApplyDynamicStyles(fullDrawingData, wedge);
             var partService = PartAutomationExecutor.Run(swApp, modEquationPath, modPartPath, wedge);
 
             DrawingAutomationExecutor.Run(swApp,

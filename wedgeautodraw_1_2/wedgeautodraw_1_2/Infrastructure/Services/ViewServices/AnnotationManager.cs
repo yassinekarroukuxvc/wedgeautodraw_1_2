@@ -1,10 +1,6 @@
 ﻿using SolidWorks.Interop.sldworks;
 using SolidWorks.Interop.swconst;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using wedgeautodraw_1_2.Core.Enums;
 using wedgeautodraw_1_2.Core.Models;
 using wedgeautodraw_1_2.Infrastructure.Helpers;
@@ -24,21 +20,48 @@ public class AnnotationManager
     {
         try
         {
-            DatumTag datumTag = _swView.GetFirstDatumTag() as DatumTag;
-            if (datumTag == null) return false;
+            if (_swView?.GetFirstDatumTag() is not DatumTag datumTag)
+            {
+                Logger.Warn("No DatumTag found in view.");
+                return false;
+            }
 
-            var ann = datumTag.GetAnnotation() as Annotation;
-            double val = wedgeDimensions["SymmetryTolerance"].GetValue(Unit.Millimeter);
+            if (datumTag.GetAnnotation() is not Annotation ann)
+            {
+                Logger.Warn("DatumTag annotation is null.");
+                return false;
+            }
+
+            if (!wedgeDimensions.TryGet("SymmetryTolerance", out var tolStorage))
+            {
+                Logger.Warn("SymmetryTolerance not found.");
+                ann.Visible = (int)swAnnotationVisibilityState_e.swAnnotationHidden;
+                return false;
+            }
+
+            double val = tolStorage.GetValue(Unit.Millimeter);
 
             if (val == 0.0 || double.IsNaN(val))
             {
                 ann.Visible = (int)swAnnotationVisibilityState_e.swAnnotationHidden;
+                Logger.Info("Datum annotation hidden due to zero tolerance.");
             }
             else
             {
                 datumTag.SetLabel(label);
-                var pos = drawDimensions["DatumFeature"].Position;
-                ann.SetPosition2(pos.GetValues(Unit.Meter)[0], pos.GetValues(Unit.Meter)[1], 0.0);
+
+                if (drawDimensions.TryGet("DatumFeature", out var dimAnn) && dimAnn.Position != null)
+                {
+                    var coords = dimAnn.Position.GetValues(Unit.Meter);
+                    ann.SetPosition2(coords[0], coords[1], 0.0);
+                    ann.Visible = (int)swAnnotationVisibilityState_e.swAnnotationVisible;
+                    Logger.Success("Datum feature label placed.");
+                }
+                else
+                {
+                    Logger.Warn("DatumFeature position not found.");
+                    return false;
+                }
             }
 
             return true;
@@ -54,29 +77,54 @@ public class AnnotationManager
     {
         try
         {
-            Gtol gtol = _swView.GetFirstGTOL() as Gtol;
-            if (gtol == null) return false;
+            if (_swView?.GetFirstGTOL() is not Gtol gtol)
+            {
+                Logger.Warn("No GTOL found in view.");
+                return false;
+            }
 
-            double symTol = wedgeDimensions["SymmetryTolerance"].GetValue(Unit.Millimeter);
-            var ann = gtol.GetAnnotation() as Annotation;
+            if (gtol.GetAnnotation() is not Annotation ann)
+            {
+                Logger.Warn("GTOL annotation is null.");
+                return false;
+            }
+
+            if (!wedgeDimensions.TryGet("SymmetryTolerance", out var tolStorage))
+            {
+                Logger.Warn("SymmetryTolerance not found.");
+                ann.Visible = (int)swAnnotationVisibilityState_e.swAnnotationHidden;
+                return false;
+            }
+
+            double symTol = tolStorage.GetValue(Unit.Millimeter);
 
             if (symTol == 0.0 || double.IsNaN(symTol))
             {
                 ann.Visible = (int)swAnnotationVisibilityState_e.swAnnotationHidden;
+                Logger.Info("GTOL annotation hidden due to zero tolerance.");
+                return true;
             }
-            else
+
+            if (!drawDimensions.TryGet("GeometricTolerance", out var dimAnn) || dimAnn.Position == null)
             {
-                var pos = drawDimensions["GeometricTolerance"].Position;
-                gtol.SetPosition(pos.GetValues(Unit.Meter)[0], pos.GetValues(Unit.Meter)[1], 0.0);
-
-                string tolInInch = Math.Round(symTol, 4).ToString("0.0000");
-                string tolInMm = "[" + symTol.ToString("0.###") + "]";
-
-                bool result = gtol.SetFrameValues2(1, tolInInch, "", tolInMm, label, "");
-                return result;
+                Logger.Warn("GeometricTolerance position not found.");
+                return false;
             }
 
-            return true;
+            var coords = dimAnn.Position.GetValues(Unit.Meter);
+            gtol.SetPosition(coords[0], coords[1], 0.0);
+
+            string tolInInch = Math.Round(symTol, 4).ToString("0.0000");
+            string tolInMm = "[" + symTol.ToString("0.###") + "]";
+
+            bool result = gtol.SetFrameValues2(1, tolInInch, "", tolInMm, label, "");
+
+            if (result)
+                Logger.Success("GTOL frame set successfully.");
+            else
+                Logger.Warn("GTOL frame setup failed.");
+
+            return result;
         }
         catch (Exception ex)
         {

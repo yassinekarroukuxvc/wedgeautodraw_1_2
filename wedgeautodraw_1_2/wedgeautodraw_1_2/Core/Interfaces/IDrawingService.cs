@@ -19,7 +19,5 @@ public interface IDrawingService
     void Reopen();
     void Unlock();
     public void SaveAsTiff(string outputPath, int dpi = 300, int widthPx = 640, int heightPx = 480);
-    public void DrawCenteredRectangleOnSheet(double rectWidthInInches, double rectHeightInInches);
     public void DrawCenteredSquareOnSheet(double sideLengthInInches);
-    public void DrawPointAtSheetOrigin();
 }

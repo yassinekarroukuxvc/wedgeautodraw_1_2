@@ -35,11 +35,11 @@ public class DrawingDataLoader : IDrawingDataLoader
         }
 
         double defaultScale = Get("scaling_dsv");
-        double W_value = wedgeData.Dimensions.ContainsKey("W") ? wedgeData.Dimensions["W"].GetValue(Unit.Millimeter) : 10.0;
+        /*double W_value = wedgeData.Dimensions.ContainsKey("W") ? wedgeData.Dimensions["W"].GetValue(Unit.Millimeter) : 10.0;
         double adjustedScale = W_value >= 0.7 ? Math.Max(defaultScale * (1.0 / W_value), 0.2) : defaultScale;
-        adjustedScale = Math.Round(adjustedScale, 3);
-        drawingData.ViewScales["Detail_view"] = new DataStorage(adjustedScale);
-        drawingData.ViewScales["Section_view"] = new DataStorage(adjustedScale);
+        adjustedScale = Math.Round(adjustedScale, 3);*/
+        drawingData.ViewScales["Detail_view"] = new DataStorage(defaultScale);
+        drawingData.ViewScales["Section_view"] = new DataStorage(defaultScale);
 
         // === View Positions ===
         if (Has("front_view_posX") && Has("front_view_posY"))
@@ -139,7 +139,7 @@ public class DrawingDataLoader : IDrawingDataLoader
             drawingData.DimensionKeysInTable = dimKeys.Split(',');
 
         drawingData.DrawingType = drawingType;
-        DynamicDimensionStyler.ApplyDynamicStyles(drawingData, wedgeData);
+        //DynamicDimensionStyler.ApplyDynamicStyles(drawingData, wedgeData);
         return drawingData;
 
         // === Helper for Tables ===
