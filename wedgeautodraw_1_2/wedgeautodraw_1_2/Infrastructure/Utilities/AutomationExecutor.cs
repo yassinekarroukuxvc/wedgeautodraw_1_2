@@ -120,14 +120,14 @@ public static class AutomationExecutor
         var sectionView = new ViewService(sectionViewName, ref model);
         sectionView.ReactivateView(ref model);
         sectionView.SetViewScale(drawingData.ViewScales[Constants.SectionView].GetValue(Unit.Millimeter));
-        sectionView.InsertModelDimensioning();
+        sectionView.InsertModelDimensioning(drawingData.DrawingType);
         sectionView.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawingData.DimensionStyles, new()
         {
             { "F", "SelectByName" },
             { "FL", "SelectByName" },
             { "FR", "SelectByName" },
             { "BR", "SelectByName" }
-        });
+        }, drawingData.DrawingType);
 
         partService.ToggleSketchVisibility(Constants.SketchGrooveDimensions, false);
         partService.Save(close: true);
@@ -182,7 +182,7 @@ public static class AutomationExecutor
         {
             { "TL", "SelectByName" },
             { "EngravingStart", "SelectByName" }
-        });
+        }, drawData.DrawingType);
     }
 
     private static void CreateSideView(ModelDoc2 model, DrawingData drawData, WedgeData wedgeData)
@@ -199,7 +199,7 @@ public static class AutomationExecutor
             { "BA", "SelectByName" },
             { "E", "SelectByName" },
             { "FX", "SelectByName" }
-        });
+        }, drawData.DrawingType);
     }
 
     private static void CreateTopView(ModelDoc2 model, DrawingData drawData, WedgeData wedgeData)
@@ -212,7 +212,7 @@ public static class AutomationExecutor
         {
             { "TDF", "SelectByName" },
             { "TD", "SelectByName" }
-        });
+        }, drawData.DrawingType);
         top.PlaceDatumFeatureLabel(wedgeData.Dimensions, drawData.DimensionStyles, "A");
     }
 
@@ -234,7 +234,7 @@ public static class AutomationExecutor
             { "W", "SelectByName" },
             { "GD", "SelectByName" },
             { "GR", "SelectByName" }
-        });
+        }, drawData.DrawingType);
     }
    
 

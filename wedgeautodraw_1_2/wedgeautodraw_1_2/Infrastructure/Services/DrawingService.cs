@@ -57,7 +57,7 @@ public class DrawingService : IDrawingService
             Logger.Error("Casting to DrawingDoc failed.");
             throw new InvalidCastException("Failed to cast ModelDoc2 to DrawingDoc.");
         }
-
+        
         _swModelExt = _swModel.Extension;
         _swModel.Lock();
     }
@@ -191,85 +191,80 @@ public class DrawingService : IDrawingService
             Logger.Warn("Unable to Unlock the Drawing");
         }
     }
-    public void SaveAsTiff(string outputPath, int dpi = 72, int widthPx = 640, int heightPx = 480)
+    public void Lock()
     {
         try
         {
-            // --- Convert pixels to meters based on DPI ---
-            double widthM = (widthPx * 25.4 / dpi) / 1000.0;
-            double heightM = (heightPx * 25.4 / dpi) / 1000.0;
-
-            Logger.Info($"Exporting TIFF: {widthPx}x{heightPx} px @ {dpi} DPI " +
-                        $"-> {widthM:F4}m x {heightM:F4}m");
-
-            // === Set User Preferences ===
-
-            _swApp.SetUserPreferenceIntegerValue(
-                (int)swUserPreferenceIntegerValue_e.swTiffScreenOrPrintCapture,
-                1 // 1 = Print capture
-            );
-
-            _swApp.SetUserPreferenceIntegerValue(
-                (int)swUserPreferenceIntegerValue_e.swTiffPrintDPI,
-                dpi
-            );
-
-            _swApp.SetUserPreferenceIntegerValue(
-                (int)swUserPreferenceIntegerValue_e.swTiffPrintPaperSize,
-                0 // 0 = User-defined
-            );
-
-            _swApp.SetUserPreferenceDoubleValue(
-                (int)swUserPreferenceDoubleValue_e.swTiffPrintDrawingPaperWidth,
-                widthM
-            );
-
-            _swApp.SetUserPreferenceDoubleValue(
-                (int)swUserPreferenceDoubleValue_e.swTiffPrintDrawingPaperHeight,
-                heightM
-            );
-
-            _swApp.SetUserPreferenceToggle(
-                (int)swUserPreferenceToggle_e.swTiffPrintUseSheetSize,
-                false // Don’t use sheet size
-            );
-
-            /*_swApp.SetUserPreferenceToggle(
-                (int)swUserPreferenceToggle_e.swTiffPrintScaleToFit,
-                true // Scale drawing to fit
-            );*/
-
-            _swApp.SetUserPreferenceIntegerValue(
-                (int)swUserPreferenceIntegerValue_e.swTiffCompressionScheme,
-                1 // 1 = LZW compression
-            );
-
-            _swApp.SetUserPreferenceToggle(
-                (int)swUserPreferenceToggle_e.swTiffPrintPadText,
-                true
-            );
-
-            // === Perform SaveAs ===
-
-            bool success = _swModelExt.SaveAs(
-                outputPath,
-                (int)swSaveAsVersion_e.swSaveAsCurrentVersion,
-                (int)swSaveAsOptions_e.swSaveAsOptions_Silent,
-                null,
-                ref _error,
-                ref _warning
-            );
-
-            if (success)
-                Logger.Success($"TIFF saved: {outputPath} [{widthPx}x{heightPx} px @ {dpi} DPI]");
-            else
-                Logger.Error($"Failed to save TIFF. Error={_error}, Warning={_warning}");
+            _swModel.Lock();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Logger.Error($"TIFF export exception: {ex.Message}");
+            Logger.Warn("Unable to Unlock the Drawing");
         }
     }
+    public void SaveAsTiff(string outputPath, int dpi = 72, int widthPx = 640, int heightPx = 480)
+{
+    try
+    {
+        // Convert pixel dimensions to meters
+        double widthM = (widthPx * 25.4 / dpi) / 1000.0;
+        double heightM = (heightPx * 25.4 / dpi) / 1000.0;
+
+        Logger.Info($"Exporting TIFF: {widthPx}x{heightPx} px @ {dpi} DPI → {widthM:F4}m x {heightM:F4}m");
+
+        /*// Set preferences (these mostly affect Print Capture, but may still influence SaveAs)
+        _swApp.SetUserPreferenceIntegerValue(
+            (int)swUserPreferenceIntegerValue_e.swTiffScreenOrPrintCapture, 1);
+
+        _swApp.SetUserPreferenceIntegerValue(
+            (int)swUserPreferenceIntegerValue_e.swTiffPrintDPI, dpi);
+
+        _swApp.SetUserPreferenceIntegerValue(
+            (int)swUserPreferenceIntegerValue_e.swTiffImageType,
+            (int)swTiffImageType_e.swTiffImageRGB);
+
+        _swApp.SetUserPreferenceIntegerValue(
+            (int)swUserPreferenceIntegerValue_e.swTiffCompressionScheme,
+            (int)swTiffCompressionScheme_e.swTiffPackbitsCompression);
+
+        _swApp.SetUserPreferenceIntegerValue(
+            (int)swUserPreferenceIntegerValue_e.swTiffPrintPaperSize,
+            0); // 0 = User Defined
+
+        _swApp.SetUserPreferenceDoubleValue(
+            (int)swUserPreferenceDoubleValue_e.swTiffPrintDrawingPaperWidth, widthM);
+
+        _swApp.SetUserPreferenceDoubleValue(
+            (int)swUserPreferenceDoubleValue_e.swTiffPrintDrawingPaperHeight, heightM);
+
+        _swApp.SetUserPreferenceToggle(
+            (int)swUserPreferenceToggle_e.swTiffPrintUseSheetSize, false); // Use custom size
+
+        _swApp.SetUserPreferenceToggle(
+            (int)swUserPreferenceToggle_e.swTiffPrintPadText, true);*/
+
+        // SaveAs to TIFF
+        bool success = _swModelExt.SaveAs(
+            outputPath,
+            (int)swSaveAsVersion_e.swSaveAsCurrentVersion,
+            (int)swSaveAsOptions_e.swSaveAsOptions_Silent,
+            null,
+            ref _error,
+            ref _warning
+        );
+
+            if (success)
+            Logger.Success($"TIFF saved: {outputPath} [{widthPx}x{heightPx} px @ {dpi} DPI]");
+        else
+            Logger.Error($"TIFF save failed. Error={_error}, Warning={_warning}");
+    }
+    catch (Exception ex)
+    {
+        Logger.Error($"TIFF export failed: {ex.Message}");
+    }
+}
+
+
     public void DrawCenteredSquareOnSheet(double sideLengthInInches)
     {
         if (_swDrawing == null || _swModel == null)
@@ -327,4 +322,90 @@ public class DrawingService : IDrawingService
             Logger.Error($"Exception while drawing centered square: {ex.Message}");
         }
     }
+    public bool SetStandaloneDrawingDimensionValues(Dictionary<string, double> dimensionUpdates)
+    {
+        if (_swDrawing == null || _swModel == null)
+        {
+            Logger.Warn("Cannot update drawing dimensions. Drawing or model is null.");
+            return false;
+        }
+
+        try
+        {
+            int updatedCount = 0;
+            View view = (View)_swDrawing.GetFirstView();
+
+            while (view != null)
+            {
+                DisplayDimension dispDim = view.GetFirstDisplayDimension5();
+
+                while (dispDim != null)
+                {
+                    Dimension swDim = dispDim.GetDimension2(0);
+                    if (swDim != null)
+                    {
+                        string dimName = swDim.FullName; // e.g., "D3@Sketch447"
+
+                        if (dimensionUpdates.TryGetValue(dimName, out double newValue))
+                        {
+                            swDim.SystemValue = newValue; // Must be in meters
+
+                            Logger.Info($"Updated {dimName} = {newValue}");
+                            updatedCount++;
+                        }
+                    }
+
+                    dispDim = (DisplayDimension)dispDim.GetNext3();
+                }
+
+                view = (View)view.GetNextView();
+            }
+
+            if (updatedCount > 0)
+            {
+                _swModel.EditRebuild3();
+                Logger.Success($"Updated {updatedCount} drawing dimensions.");
+                return true;
+            }
+
+            Logger.Warn("No matching dimension names found in drawing.");
+            return false;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Exception while updating dimensions: {ex.Message}");
+            return false;
+        }
+    }
+
+    public void LogAllDrawingDimensionNames()
+    {
+        if (_swDrawing == null)
+        {
+            Logger.Warn("DrawingDoc is null.");
+            return;
+        }
+
+        View view = (View)_swDrawing.GetFirstView();
+        while (view != null)
+        {
+            Logger.Info($"→ View: {view.GetName2()}");
+
+            DisplayDimension dispDim = view.GetFirstDisplayDimension5();
+            while (dispDim != null)
+            {
+                var dim = dispDim.GetDimension2(0);
+                if (dim != null)
+                {
+                    Logger.Info($"   ↳ {dim.Name}");
+                }
+
+                dispDim = (DisplayDimension)dispDim.GetNext3();
+            }
+
+            view = (View)view.GetNextView();
+        }
+    }
+
+
 }

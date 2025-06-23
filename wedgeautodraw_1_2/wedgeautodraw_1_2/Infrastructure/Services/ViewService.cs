@@ -83,14 +83,14 @@ public class ViewService : IViewService
         DrawingData drawData)
         => _sectionViewCreator.Create(position, sketchSegment, wedgeDimensions, drawData);
 
-    public bool InsertModelDimensioning()
-    => _dimensionStyler.Insert(_swView);
+    public bool InsertModelDimensioning(DrawingType drawingType)
+    => _dimensionStyler.Insert(_swView, drawingType);
 
     public bool ApplyDimensionPositionsAndNames(
         NamedDimensionValues wedgeDimensions,
         NamedDimensionAnnotations drawDimensions,
-        Dictionary<string, string> dimensionTypes)
-        => _dimensionStyler.Apply(_swView, wedgeDimensions, drawDimensions, dimensionTypes);
+        Dictionary<string, string> dimensionTypes, DrawingType drawingType)
+        => _dimensionStyler.Apply(_swView, wedgeDimensions, drawDimensions, dimensionTypes, drawingType);
 
     public bool PlaceDatumFeatureLabel(NamedDimensionValues wedgeDimensions, NamedDimensionAnnotations drawDimensions, string label)
         => _annotationManager.PlaceDatumFeatureLabel(wedgeDimensions, drawDimensions, label);
@@ -202,9 +202,60 @@ public class ViewService : IViewService
         => _breaklineHandler.SetOverlayBreaklinePosition(wedgeDimensions, drawData);
     public void CenterViewVertically()
     => _viewPositionManager.CenterViewVertically();
+
+    public void AlignViewHorizontally(bool isDetailView)
+        => _viewPositionManager.CenterViewHorizontally(isDetailView);
     public bool SetViewX(double x_mm)
     => _viewPositionManager.SetViewX(x_mm);
     public bool CenterSectionViewVisuallyVertically(NamedDimensionValues wedgeDimensions)
     => _viewPositionManager.CenterSectionViewVisuallyVertically(wedgeDimensions);
+
+    public void CenterViewHorizontally2()
+        => _viewPositionManager.CenterViewHorizontally2();
+    public void SetSketchDimensionValue(string dimensionName, double value)
+    {
+        try
+        {
+            // Example: "D1@Sketch100"            // Example: "D1@Sketch100"
+            bool selected = _model.Extension.SelectByID2(
+                dimensionName,
+                "DIMENSION",
+                0, 0, 0,
+                false, 0, null, 0
+            );
+
+            if (!selected)
+            {
+                Logger.Warn($"Failed to select dimension: {dimensionName}");
+                return;
+            }
+
+            // Get selected DisplayDimension
+            var selectionMgr = (ISelectionMgr)_model.SelectionManager;
+            var dispDim = selectionMgr.GetSelectedObject6(1, -1) as DisplayDimension;
+
+            if (dispDim == null)
+            {
+                Logger.Warn($"Selected object is not a DisplayDimension: {dimensionName}");
+                return;
+            }
+
+            var dim = dispDim.GetDimension2(0);
+            if (dim == null)
+            {
+                Logger.Warn($"Failed to get Dimension2 from DisplayDimension: {dimensionName}");
+                return;
+            }
+
+            // Set the value (in METERS)
+            dim.SystemValue = value; // value in meters!
+
+            Logger.Success($"Set dimension '{dimensionName}' to {value} meters.");
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Exception while setting dimension '{dimensionName}': {ex.Message}");
+        }
+    }
 
 }

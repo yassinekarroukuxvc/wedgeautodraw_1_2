@@ -113,6 +113,7 @@ public class NoteService : INoteService
             }
 
             annotation.SetPosition2(pos[0], pos[1], 0.0);
+            annotation.Layer = "Annotaion";
 
             // Customize text format
             TextFormat format = (TextFormat)note.GetTextFormat();

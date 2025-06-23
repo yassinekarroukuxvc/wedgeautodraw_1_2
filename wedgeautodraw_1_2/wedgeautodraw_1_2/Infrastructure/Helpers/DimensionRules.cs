@@ -59,10 +59,15 @@ public static class DimensionRules
                 CalculatePosition = (wedge, drawing) =>
                 {
                     var front = drawing.ViewPositions[Constants.FrontView].GetValues(Unit.Millimeter);
+                    var lowerPartLength = drawing.BreaklineData["Front_viewLowerPartLength"].GetValue(Unit.Millimeter);
+                    var upperPartLength = drawing.BreaklineData["Front_viewUpperPartLength"].GetValue(Unit.Millimeter);
+                    var breakline = drawing.BreaklineData["Front_viewBreaklineGap"].GetValue(Unit.Millimeter);
+                    var half = (lowerPartLength + breakline + upperPartLength)/2;
+                    
                     var TD = wedge.Dimensions["TD"].GetValue(Unit.Millimeter);
                     var fsv = drawing.ViewScales[Constants.FrontView].GetValue(Unit.Millimeter);
                     var TL = wedge.Dimensions["TL"].GetValue(Unit.Millimeter);
-                    return new[] { front[0] - fsv * TD / 2 - 8, front[1] - 75 };
+                    return new[] { front[0] - fsv * TD / 2 - 8, front[1] - half - 8 };
                 }
             },
             ["TDF"] = new DimensionLayoutRule
@@ -166,11 +171,28 @@ public static class DimensionRules
                     var detail = drawing.ViewPositions[Constants.DetailView].GetValues(Unit.Millimeter);
                     var W = wedge.Dimensions["W"].GetValue(Unit.Millimeter);
                     var GD = wedge.Dimensions["GD"].GetValue(Unit.Millimeter);
+                    var td = wedge.Dimensions["TD"].GetValue(Unit.Millimeter);
                     var dsv = drawing.ViewScales[Constants.DetailView].GetValue(Unit.Millimeter);
                     var lowerPartLength = drawing.BreaklineData["Detail_viewLowerPartLength"].GetValue(Unit.Millimeter);
                     var breakline = drawing.BreaklineData["Detail_viewBreaklineGap"].GetValue(Unit.Millimeter);
                     var y = detail[1] - (breakline + lowerPartLength) / 2;
-                    return new[] { detail[0] - dsv * W / 2 - 15, y + dsv * GD / 2 };
+                    return new[] { detail[0] - dsv * (td / 2) - 15, y + dsv * GD / 2 };
+                }
+            },
+            ["D1"] = new DimensionLayoutRule
+            {
+                BasedOnView = Constants.DetailView,
+                CalculatePosition = (wedge, drawing) =>
+                {
+                    var detail = drawing.ViewPositions[Constants.DetailView].GetValues(Unit.Millimeter);
+                    var W = wedge.Dimensions["W"].GetValue(Unit.Millimeter);
+                    var GD = wedge.Dimensions["GD"].GetValue(Unit.Millimeter);
+                    var td = wedge.Dimensions["TD"].GetValue(Unit.Millimeter);
+                    var dsv = drawing.ViewScales[Constants.DetailView].GetValue(Unit.Millimeter);
+                    var lowerPartLength = drawing.BreaklineData["Detail_viewLowerPartLength"].GetValue(Unit.Millimeter);
+                    var breakline = drawing.BreaklineData["Detail_viewBreaklineGap"].GetValue(Unit.Millimeter);
+                    var y = detail[1] - (breakline + lowerPartLength) / 2;
+                    return new[] { detail[0] - (W/2 *dsv) - 20, y + dsv * GD / 2 };
                 }
             },
             ["GR"] = new DimensionLayoutRule
@@ -389,13 +411,13 @@ public static class DimensionRules
             ["ISA"] = new DimensionLayoutRule
             {
                 BasedOnView = Constants.OverlayDetailView,
-                CalculatePosition = (wedge, drawing) => new[] { 400.0, 160.0 }
+                CalculatePosition = (wedge, drawing) => new[] { 318.77, 148.33 }
             },
 
             ["GA"] = new()
             {
                 BasedOnView = Constants.OverlayDetailView,
-                CalculatePosition = (wedge, drawing) => new[] { 250.0, 160.0 } // Replace with actual logic
+                CalculatePosition = (wedge, drawing) => new[] { 245.18, 148.33 } // Replace with actual logic
             },
             ["VW"] = new()
             {

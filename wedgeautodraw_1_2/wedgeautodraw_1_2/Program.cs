@@ -9,6 +9,7 @@ using wedgeautodraw_1_2.Infrastructure.Helpers;
 using wedgeautodraw_1_2.Core.Enums;
 using wedgeautodraw_1_2.Infrastructure.Executors;
 using wedgeautodraw_1_2.Core.Models;
+using SolidWorks.Interop.swconst;
 
 namespace wedgeautodraw_1_2;
 
@@ -27,7 +28,7 @@ class Program
         string prodPartTemplate = Path.Combine(resourcePath, "wedge.SLDPRT");
         string prodDrawingTemplate = Path.Combine(resourcePath, "wedge.SLDDRW");
         string overlayPartTemplate = "C:\\Users\\mounir\\Desktop\\Oussama_test\\overlay_wedgev2.SLDPRT";
-        //string overlayDrawingTemplate = "C:\\Users\\mounir\\Desktop\\Oussama_test\\overlay_wedgev4.SLDDRW";
+        //string overlayDrawingTemplate = "C:\\Users\\mounir\\Desktop\\Oussama_test\\overlay_wedgev5.SLDDRW";
         string overlayDrawingTemplate = "C:\\Users\\mounir\\Desktop\\overlay_wedgev4.SLDDRW";
 
         string equationPath = Path.Combine(resourcePath, "equations.txt");
@@ -40,14 +41,14 @@ class Program
 
         var excelLoader = new ExcelWedgeDataLoader(excelPath);
         var allEntries = excelLoader.LoadAllEntries();
-
+      
         foreach (var (wedge, drawing) in allEntries)
         {
             string wedgeId = wedge.Metadata.ContainsKey("drawing_number")
                 ? wedge.Metadata["drawing_number"].ToString()
                 : $"Wedge_{Guid.NewGuid()}";
 
-            DrawingType selectedType = DrawingType.Production;
+            DrawingType selectedType = DrawingType.Overlay;
 
             string outputDir = Path.Combine(resourcePath, "Generated", wedgeId);
             Directory.CreateDirectory(outputDir);

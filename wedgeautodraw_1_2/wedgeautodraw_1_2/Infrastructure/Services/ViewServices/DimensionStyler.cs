@@ -16,7 +16,7 @@ public class DimensionStyler
     {
         _model = model;
     }
-    public bool Insert(View swView)
+    public bool Insert(View swView,DrawingType drawingType)
     {
         if (swView == null || _model == null)
         {
@@ -75,7 +75,7 @@ public class DimensionStyler
         }
     }
 
-    public bool Apply(View swView, NamedDimensionValues wedgeDimensions, NamedDimensionAnnotations drawDimensions, Dictionary<string, string> dimensionTypes)
+    public bool Apply(View swView, NamedDimensionValues wedgeDimensions, NamedDimensionAnnotations drawDimensions, Dictionary<string, string> dimensionTypes, DrawingType drawingType)
     {
         if (swView == null)
         {
@@ -103,7 +103,7 @@ public class DimensionStyler
                     if (selector == "SelectByName" && swDim.Name == dimKey)
                     {
                         TryUpdateAnnotation(swAnn, dimKey, drawDimensions);
-                        Style(swDispDim, dimKey, wedgeDimensions, drawDimensions);
+                        Style(swDispDim, dimKey, wedgeDimensions, drawDimensions,drawingType);
                         break;
                     }
                     else if (selector == "SelectByValue" && wedgeDimensions.TryGet(dimKey, out var modelValue))
@@ -114,7 +114,7 @@ public class DimensionStyler
                         if (Math.Abs(modelVal - dimVal) < 1e-4)
                         {
                             TryUpdateAnnotation(swAnn, dimKey, drawDimensions);
-                            Style(swDispDim, dimKey, wedgeDimensions, drawDimensions);
+                            Style(swDispDim, dimKey, wedgeDimensions, drawDimensions, drawingType);
                             break;
                         }
                     }
@@ -161,8 +161,10 @@ public class DimensionStyler
         }
     }
 
-    private void Style(DisplayDimension swDispDim, string dimKey, NamedDimensionValues wedgeDimensions, NamedDimensionAnnotations drawDimensions)
+    private void Style(DisplayDimension swDispDim, string dimKey, NamedDimensionValues wedgeDimensions, NamedDimensionAnnotations drawDimensions,DrawingType drawingType)
     {
+        if (drawingType != DrawingType.Production)
+            return;
         try
         {
             // Default: center text
@@ -197,7 +199,7 @@ public class DimensionStyler
                     if (wedgeDimensions.TryGet("E", out var eVal) && eVal.GetValue(Unit.Millimeter) < 0.8)
                     {
                         swDispDim.OffsetText = true;
-                        TryOffsetUpdate(swDispDim, "E", drawDimensions, 0.010); // 10mm offset
+                        TryOffsetUpdate(swDispDim, "E", drawDimensions, 0.010);
                     }
                     break;
 

@@ -1,5 +1,6 @@
 ﻿using ClosedXML.Excel;
 using SolidWorks.Interop.sldworks;
+using System.Transactions;
 using wedgeautodraw_1_2.Core.Enums;
 using wedgeautodraw_1_2.Core.Interfaces;
 using wedgeautodraw_1_2.Core.Models;
@@ -55,6 +56,13 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
             var drawingService = new DrawingService(swApp);
             drawingService.ReplaceReferencedModel(modDrawingPath, partPath, modPartPath);
             drawingService.OpenDrawing(modDrawingPath);
+            drawingService.Unlock();
+            swApp.Visible = true;
+            var conf = new TiffExportSettings(swApp);
+            //conf.RunSolidWorksMacro(swApp, "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Resources\\Templates\\Macro.swp");
+            conf.SetTiffExportSettings();
+            //System.Threading.Thread.Sleep(3000);
+            drawingService.Lock();
             drawingService.Rebuild();
 
             Logger.Info("Drawing initialized and rebuilt.");
@@ -64,6 +72,15 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
         private static void UpdateViewScalesAndPositions(SldWorks swApp, IDrawingService drawingService, DrawingData drawData, WedgeData wedgeData)
         {
             var model = drawingService.GetModel();
+            double W_lowerTol = wedgeData.Dimensions["W"].GetTolerance(Unit.Meter, "-");
+            double W_upperTol = wedgeData.Dimensions["W"].GetTolerance(Unit.Meter, "+");
+
+            double FL_lowerTol = wedgeData.Dimensions["FL"].GetTolerance(Unit.Meter, "-");
+            double FL_upperTol = wedgeData.Dimensions["FL"].GetTolerance(Unit.Meter, "+");
+            double b= wedgeData.Dimensions["B"].GetTolerance(Unit.Meter, "+");
+            Logger.Info($"Tolerances for W: -{W_lowerTol:F4} / +{W_upperTol:F4}");
+            Logger.Info($"Tolerances for FL: -{FL_lowerTol:F4} / +{FL_upperTol:F4}");
+            Logger.Info($"Tolerance for B (Upper only): +{b:F4}");
             string[] viewNames = new[]
             {
                 Constants.OverlaySideView,
@@ -108,20 +125,27 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
                 {
                     view.SetOverlayBreaklinePosition(wedgeData.Dimensions, drawData);
                     view.CenterViewVertically();
-                    view.SetViewX(140);
+                    view.SetBreakLineGap(0.000025);
+                    view.AlignViewHorizontally(false);
                     view.CenterSectionViewVisuallyVertically(wedgeData.Dimensions);
+                    view.SetSketchDimensionValue("D1@Sketch474", W_upperTol);
+                    view.SetSketchDimensionValue("D3@Sketch474", W_lowerTol);
                 }
 
                 if (viewName == Constants.OverlayDetailView)
                 {
                     view.SetOverlayBreaklinePosition(wedgeData.Dimensions, drawData);
                     view.CenterViewVertically();
-                    view.SetViewX(339);
+                    view.SetBreakLineGap(0.000025);
+                    view.AlignViewHorizontally(true);
                     view.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, new()
                     {
                         { "ISA", "SelectByName" },
                         { "GA", "SelectByName" },
-                    });
+                    },drawData.DrawingType);
+                    view.SetSketchDimensionValue("D1@Sketch447", FL_upperTol);
+                    view.SetSketchDimensionValue("D2@Sketch447", FL_lowerTol);
+                    view.SetSketchDimensionValue("D3@Sketch447", b);
                 }
 
                 view = null;
