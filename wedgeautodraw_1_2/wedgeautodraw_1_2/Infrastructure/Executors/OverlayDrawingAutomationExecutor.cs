@@ -4,6 +4,7 @@ using System.Transactions;
 using wedgeautodraw_1_2.Core.Enums;
 using wedgeautodraw_1_2.Core.Interfaces;
 using wedgeautodraw_1_2.Core.Models;
+using wedgeautodraw_1_2.Infrastructure.Factories;
 using wedgeautodraw_1_2.Infrastructure.Helpers;
 using wedgeautodraw_1_2.Infrastructure.Services;
 
@@ -93,7 +94,9 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
             {
                 Logger.Info($"Processing view: {viewName}");
 
-                var view = new ViewService(viewName, ref model);
+                //var view = new ViewService(viewName, ref model);
+                var viewFactory = new StandardViewFactory(model);
+                var view = viewFactory.CreateView(viewName);
 
                 if (viewName == Constants.OverlayDetailView || viewName == Constants.OverlaySectionView)
                 {

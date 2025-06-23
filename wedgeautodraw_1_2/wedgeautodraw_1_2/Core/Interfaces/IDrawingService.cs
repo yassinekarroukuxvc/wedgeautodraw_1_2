@@ -21,6 +21,4 @@ public interface IDrawingService
     void Lock();
     public void SaveAsTiff(string outputPath, int dpi = 300, int widthPx = 640, int heightPx = 480);
     public void DrawCenteredSquareOnSheet(double sideLengthInInches);
-    public bool SetStandaloneDrawingDimensionValues(Dictionary<string, double> dimensionUpdates);
-    public void LogAllDrawingDimensionNames();
 }

@@ -61,19 +61,15 @@ public class DrawingService : IDrawingService
         _swModelExt = _swModel.Extension;
         _swModel.Lock();
     }
-
-
     public void SaveDrawing()
     {
         _swModel.Save3((int)swSaveAsOptions_e.swSaveAsOptions_Silent, ref _error, ref _warning);
     }
-
     public void SaveAndCloseDrawing()
     {
         SaveDrawing();
         _swApp.CloseDoc(_drawingPath);
     }
-
     public void SaveAsPdf(string outputPath)
     {
         var pdfData = (ExportPdfData)_swApp.GetExportFileData((int)swExportDataFileType_e.swExportPdfData);
@@ -107,7 +103,6 @@ public class DrawingService : IDrawingService
             ref _warning
         );
     }
-
     public void SetSummaryInformation(DrawingData drawingData)
     {
         string title = drawingData.TitleInfo["number"] + " - " + drawingData.DrawingType + " Copy";
@@ -120,7 +115,6 @@ public class DrawingService : IDrawingService
         _swModel.SummaryInfo[(int)swSummInfoField_e.swSumInfoAuthor] = "Autodraw System";
         _swModel.SummaryInfo[(int)swSummInfoField_e.swSumInfoComment] = title + " created by Autodraw Service";
     }
-
     public void SetCustomProperties(DrawingData drawingData)
     {
         _swCustProps = _swModel.Extension.get_CustomPropertyManager("");
@@ -130,12 +124,10 @@ public class DrawingService : IDrawingService
             _swCustProps.Set2(kvp.Key, kvp.Value);
         }
     }
-
     public void Rebuild()
     {
         _swModel.EditRebuild3();
     }
-
     public void ZoomToFit()
     {
         _swModel.ViewZoomtofit2();
@@ -158,7 +150,6 @@ public class DrawingService : IDrawingService
             Logger.Error($"Exception during ZoomToSheet: {ex.Message}");
         }
     }
-
     public ModelDoc2 GetModel() => _swModel;
     public void ReplaceReferencedModel(string drawingPath, string oldModelPath, string newModelPath)
     {
@@ -263,8 +254,6 @@ public class DrawingService : IDrawingService
         Logger.Error($"TIFF export failed: {ex.Message}");
     }
 }
-
-
     public void DrawCenteredSquareOnSheet(double sideLengthInInches)
     {
         if (_swDrawing == null || _swModel == null)
@@ -322,90 +311,5 @@ public class DrawingService : IDrawingService
             Logger.Error($"Exception while drawing centered square: {ex.Message}");
         }
     }
-    public bool SetStandaloneDrawingDimensionValues(Dictionary<string, double> dimensionUpdates)
-    {
-        if (_swDrawing == null || _swModel == null)
-        {
-            Logger.Warn("Cannot update drawing dimensions. Drawing or model is null.");
-            return false;
-        }
-
-        try
-        {
-            int updatedCount = 0;
-            View view = (View)_swDrawing.GetFirstView();
-
-            while (view != null)
-            {
-                DisplayDimension dispDim = view.GetFirstDisplayDimension5();
-
-                while (dispDim != null)
-                {
-                    Dimension swDim = dispDim.GetDimension2(0);
-                    if (swDim != null)
-                    {
-                        string dimName = swDim.FullName; // e.g., "D3@Sketch447"
-
-                        if (dimensionUpdates.TryGetValue(dimName, out double newValue))
-                        {
-                            swDim.SystemValue = newValue; // Must be in meters
-
-                            Logger.Info($"Updated {dimName} = {newValue}");
-                            updatedCount++;
-                        }
-                    }
-
-                    dispDim = (DisplayDimension)dispDim.GetNext3();
-                }
-
-                view = (View)view.GetNextView();
-            }
-
-            if (updatedCount > 0)
-            {
-                _swModel.EditRebuild3();
-                Logger.Success($"Updated {updatedCount} drawing dimensions.");
-                return true;
-            }
-
-            Logger.Warn("No matching dimension names found in drawing.");
-            return false;
-        }
-        catch (Exception ex)
-        {
-            Logger.Error($"Exception while updating dimensions: {ex.Message}");
-            return false;
-        }
-    }
-
-    public void LogAllDrawingDimensionNames()
-    {
-        if (_swDrawing == null)
-        {
-            Logger.Warn("DrawingDoc is null.");
-            return;
-        }
-
-        View view = (View)_swDrawing.GetFirstView();
-        while (view != null)
-        {
-            Logger.Info($"→ View: {view.GetName2()}");
-
-            DisplayDimension dispDim = view.GetFirstDisplayDimension5();
-            while (dispDim != null)
-            {
-                var dim = dispDim.GetDimension2(0);
-                if (dim != null)
-                {
-                    Logger.Info($"   ↳ {dim.Name}");
-                }
-
-                dispDim = (DisplayDimension)dispDim.GetNext3();
-            }
-
-            view = (View)view.GetNextView();
-        }
-    }
-
 
 }

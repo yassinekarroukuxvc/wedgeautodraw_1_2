@@ -117,7 +117,7 @@ public class NoteService : INoteService
 
             // Customize text format
             TextFormat format = (TextFormat)note.GetTextFormat();
-            format.CharHeight = 0.003; // 0.5 mm
+            format.CharHeight = 0.003;
             format.TypeFaceName = "Arial";
             format.Bold = false;
             format.Italic = false;
@@ -176,8 +176,8 @@ public class NoteService : INoteService
             double centerX = sheetWidth / 2.0;
             double centerY = sheetHeight / 2.0;
 
-            double posX = centerX + sideM / 2.0 - 0.007; // shift slightly inside
-            double posY = centerY - sideM / 2.0 + 0.005; // shift slightly up
+            double posX = centerX + sideM / 2.0 - 0.007;
+            double posY = centerY - sideM / 2.0 + 0.005;
 
             string noteText = $"{calibrationValueMicrons}µm";
 
@@ -198,7 +198,7 @@ public class NoteService : INoteService
             annotation.SetPosition2(posX, posY, 0.0);
 
             TextFormat format = (TextFormat)note.GetTextFormat();
-            format.CharHeight = 0.0025; // 0.5 mm
+            format.CharHeight = 0.0025;
             format.TypeFaceName = "Arial";
             format.Bold = false;
             format.Italic = false;

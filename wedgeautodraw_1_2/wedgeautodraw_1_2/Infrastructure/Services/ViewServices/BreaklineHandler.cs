@@ -149,8 +149,6 @@ public class BreaklineHandler
         }
     }
 
-    // === Helper Methods ===
-
     private BreakLine GetBreaklineObject()
     {
         if (_swView == null)

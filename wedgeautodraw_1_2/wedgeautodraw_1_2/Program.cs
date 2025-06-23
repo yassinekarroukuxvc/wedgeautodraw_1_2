@@ -38,7 +38,7 @@ class Program
 
         ISolidWorksService swService = new SolidWorksService();
         SldWorks swApp = swService.GetApplication();
-
+        
         var excelLoader = new ExcelWedgeDataLoader(excelPath);
         var allEntries = excelLoader.LoadAllEntries();
       
@@ -48,7 +48,7 @@ class Program
                 ? wedge.Metadata["drawing_number"].ToString()
                 : $"Wedge_{Guid.NewGuid()}";
 
-            DrawingType selectedType = DrawingType.Overlay;
+            DrawingType selectedType = DrawingType.Production;
 
             string outputDir = Path.Combine(resourcePath, "Generated", wedgeId);
             Directory.CreateDirectory(outputDir);

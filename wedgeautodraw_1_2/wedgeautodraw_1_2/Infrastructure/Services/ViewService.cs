@@ -205,13 +205,8 @@ public class ViewService : IViewService
 
     public void AlignViewHorizontally(bool isDetailView)
         => _viewPositionManager.CenterViewHorizontally(isDetailView);
-    public bool SetViewX(double x_mm)
-    => _viewPositionManager.SetViewX(x_mm);
     public bool CenterSectionViewVisuallyVertically(NamedDimensionValues wedgeDimensions)
     => _viewPositionManager.CenterSectionViewVisuallyVertically(wedgeDimensions);
-
-    public void CenterViewHorizontally2()
-        => _viewPositionManager.CenterViewHorizontally2();
     public void SetSketchDimensionValue(string dimensionName, double value)
     {
         try

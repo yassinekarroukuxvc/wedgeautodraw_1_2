@@ -21,4 +21,7 @@ public interface IViewService
     bool DeleteAnnotationsByName(string[] annotationNames);
     public bool SetOverlayBreaklinePosition(NamedDimensionValues wedgeDimensions, DrawingData drawData);
     public bool CenterSectionViewVisuallyVertically(NamedDimensionValues wedgeDimensions);
+    public void AlignViewHorizontally(bool isDetailView);
+    public void SetSketchDimensionValue(string dimensionName, double value);
+    public void CenterViewVertically();
 }

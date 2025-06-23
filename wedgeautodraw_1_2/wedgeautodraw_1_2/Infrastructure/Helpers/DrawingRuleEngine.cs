@@ -106,7 +106,22 @@ public class DrawingRuleEngine
                 {
                     drawingData.ViewScales[kvp.Key] = new DataStorage(kvp.Value);
                 }
+
+                // 👇 Automatically update TitleBlockInfo for Front/Side/Top scale
+                var frontKeys = new[] { "Front_view", "Side_view", "Top_view" };
+                bool hasFST = rule.Update.ViewScales.Keys.Any(k => frontKeys.Contains(k));
+
+                if (hasFST)
+                {
+                    // Use Front_view as representative (assumes they share same scale)
+                    if (drawingData.ViewScales.TryGet("Front_view", out var scaleData))
+                    {
+                        double scaleVal = scaleData.GetValue(Unit.Millimeter); // or Unit.None if applicable
+                        drawingData.TitleBlockInfo["SCALING_FRONT_SIDE_TOP_VIEW"] = scaleVal.ToString("0.###");
+                    }
+                }
             }
+
 
             if (rule.Update.ViewPositions != null)
             {
