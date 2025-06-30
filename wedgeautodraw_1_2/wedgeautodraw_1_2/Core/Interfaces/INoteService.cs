@@ -11,5 +11,6 @@ public interface INoteService
 {
     public bool InsertDimensionNote(DataStorage position, string[] wedgeKeys, string header, DrawingData drawingData, NamedDimensionValues wedgeDimensions);
     public bool InsertOverlayCalibrationNote(string calibrationValueMicrons, double squareSideInInches);
-
+    public bool InsertCustomNoteAtPosition(string noteText, DataStorage position);
+    public bool InsertCustomNoteAsTable(string noteText, DataStorage position);
 }

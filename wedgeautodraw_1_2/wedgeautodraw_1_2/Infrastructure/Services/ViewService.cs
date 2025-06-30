@@ -57,7 +57,10 @@ public class ViewService : IViewService
         _viewPositionManager = new ViewPositionManager(_swView, _model,_drawingDoc);
         _centerMarkLineManager = new CenterMarkLineManager(_swView, _model);
     }
-
+    public IView GetRawView()
+    {
+        return _swView;
+    }
     public bool SetViewScale(double scale) => _scaler.SetScale(scale);
 
     public bool SetViewPosition(DataStorage position)
@@ -203,8 +206,8 @@ public class ViewService : IViewService
     public void CenterViewVertically()
     => _viewPositionManager.CenterViewVertically();
 
-    public void AlignViewHorizontally(bool isDetailView)
-        => _viewPositionManager.CenterViewHorizontally(isDetailView);
+    public void AlignViewHorizontally(bool isDetailView, double tlInMeters = 0)
+        => _viewPositionManager.CenterViewHorizontally(isDetailView, tlInMeters);
     public bool CenterSectionViewVisuallyVertically(NamedDimensionValues wedgeDimensions)
     => _viewPositionManager.CenterSectionViewVisuallyVertically(wedgeDimensions);
     public void SetSketchDimensionValue(string dimensionName, double value)
@@ -253,4 +256,52 @@ public class ViewService : IViewService
         }
     }
 
+    public double GetSketchDimensionValue(string dimensionName)
+    {
+        try
+        {
+            bool selected = _model.Extension.SelectByID2(
+                dimensionName,
+                "DIMENSION",
+                0, 0, 0,
+                false, 0, null, 0
+            );
+
+            if (!selected)
+            {
+                Logger.Warn($"Failed to select dimension: {dimensionName}");
+                return double.NaN;
+            }
+
+            var selectionMgr = (ISelectionMgr)_model.SelectionManager;
+            var dispDim = selectionMgr.GetSelectedObject6(1, -1) as DisplayDimension;
+
+            if (dispDim == null)
+            {
+                Logger.Warn($"Selected object is not a DisplayDimension: {dimensionName}");
+                return double.NaN;
+            }
+
+            var dim = dispDim.GetDimension2(0);
+            if (dim == null)
+            {
+                Logger.Warn($"Failed to get Dimension2 from DisplayDimension: {dimensionName}");
+                return double.NaN;
+            }
+
+            return dim.SystemValue;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Exception while getting dimension '{dimensionName}': {ex.Message}");
+            return double.NaN;
+        }
+    }
+
+    public void PositionSideViewHorizontally(double tlInMeters)
+        => _viewPositionManager.PositionSideViewHorizontally(tlInMeters);
+    public bool CreateCenterlineAtViewCenter(bool isVertical = true, double lengthMm = 100.0)
+        => _centerMarkLineManager.CreateCenterlineAtViewCenter(isVertical, lengthMm);
+    public void AlignTopViewNextToSideView(IView sideView, IView topView, double offsetMm = 30.0)
+        => _viewPositionManager.AlignTopViewNextToSideView(sideView, topView, offsetMm);
 }

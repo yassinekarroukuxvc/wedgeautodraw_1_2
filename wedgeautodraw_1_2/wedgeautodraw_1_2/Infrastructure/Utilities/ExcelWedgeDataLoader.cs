@@ -73,6 +73,7 @@ public class ExcelWedgeDataLoader
         wedge.OverlayScaling = 1.0; // default if parsing fails
 
         string rawOverlay = GetCell(row, map, "overlay_calibration");
+        wedge.Coining = GetCell(row, map, "coining").Replace("¶", " ");
 
         if (!string.IsNullOrWhiteSpace(rawOverlay))
         {

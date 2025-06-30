@@ -1,10 +1,5 @@
 ﻿using SolidWorks.Interop.sldworks;
 using SolidWorks.Interop.swconst;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using wedgeautodraw_1_2.Core.Enums;
 using wedgeautodraw_1_2.Core.Interfaces;
 using wedgeautodraw_1_2.Core.Models;
@@ -49,32 +44,21 @@ public class NoteService : INoteService
                     double upperTolInch = dataStorage.GetTolerance(Unit.Inch, "+");
                     double lowerTolInch = dataStorage.GetTolerance(Unit.Inch, "-");
 
-                    double valueMm = dataStorage.GetValue(Unit.Millimeter);
-                    double upperTolMm = dataStorage.GetTolerance(Unit.Millimeter, "+");
-                    double lowerTolMm = dataStorage.GetTolerance(Unit.Millimeter, "-");
-
                     if (!double.IsNaN(valueInch))
                     {
+                        string inchStr = TrimLeadingZero(valueInch.ToString("F4"));
                         bool isRef = IsRef(upperTolInch, lowerTolInch);
+                        string line;
 
-                        string tolStrInch = (!double.IsNaN(upperTolInch) && !double.IsNaN(lowerTolInch) && !isRef)
-                            ? FormatTolerance(upperTolInch, lowerTolInch, 4, true)
-                            : "";
-
-                        string tolStrMm = (!double.IsNaN(upperTolMm) && !double.IsNaN(lowerTolMm) && !isRef)
-                            ? FormatTolerance(upperTolMm, lowerTolMm, 4, false)
-                            : "";
-
-                        string inchStr = !double.IsNaN(valueInch) ? TrimLeadingZero(valueInch.ToString("F4")) : "";
-                        string mmStr = !double.IsNaN(valueMm) ? valueMm.ToString("F3") : "";
-
-                        string line = $"{key} = {inchStr} {tolStrInch}".Trim();
-
-                        if (!string.IsNullOrWhiteSpace(mmStr))
-                            line += $" [{mmStr} {tolStrMm}]";
-
-                        if (isRef)
-                            line += " (REF)";
+                        if (!isRef)
+                        {
+                            string tolStrInch = FormatTolerance(upperTolInch, lowerTolInch, 4, true);
+                            line = $"{key} = {inchStr}{tolStrInch}";
+                        }
+                        else
+                        {
+                            line = $"{key} = {inchStr} (REF)";
+                        }
 
                         validLines.Add(line.Trim());
                     }
@@ -104,7 +88,6 @@ public class NoteService : INoteService
                 return false;
             }
 
-            // Set position
             Annotation annotation = (Annotation)note.GetAnnotation();
             if (annotation == null)
             {
@@ -115,11 +98,10 @@ public class NoteService : INoteService
             annotation.SetPosition2(pos[0], pos[1], 0.0);
             annotation.Layer = "Annotaion";
 
-            // Customize text format
             TextFormat format = (TextFormat)note.GetTextFormat();
-            format.CharHeight = 0.003;
+            format.CharHeight = 0.0040;
             format.TypeFaceName = "Arial";
-            format.Bold = false;
+            format.Bold = true;
             format.Italic = false;
             format.Underline = false;
 
@@ -148,7 +130,7 @@ public class NoteService : INoteService
 
     private static bool IsRef(double upper, double lower)
     {
-        return upper == 0 && lower == 0;
+        return (upper == 0 && lower == 0) || (double.IsNaN(upper) && double.IsNaN(lower));
     }
 
     private static string FormatTolerance(double upper, double lower, int precision, bool inch)
@@ -156,6 +138,7 @@ public class NoteService : INoteService
         string fmt = inch ? "F" + precision : "F3";
         return $"±{upper.ToString(fmt)}";
     }
+
 
     public bool InsertOverlayCalibrationNote(string calibrationValueMicrons, double squareSideInInches)
     {
@@ -216,4 +199,125 @@ public class NoteService : INoteService
             return false;
         }
     }
+    public bool InsertCustomNoteAtPosition(string noteText, DataStorage position)
+    {
+        if (_swModel == null)
+        {
+            Logger.Warn("ModelDoc2 is null. Cannot insert custom note.");
+            return false;
+        }
+
+        try
+        {
+            double[] pos = position.GetValues(Unit.Meter);
+
+            object noteObj = _swModel.InsertNote(noteText);
+            if (noteObj is not Note note)
+            {
+                Logger.Warn("InsertNote returned null or failed to cast.");
+                return false;
+            }
+
+            Annotation annotation = (Annotation)note.GetAnnotation();
+            if (annotation == null)
+            {
+                Logger.Warn("Failed to get annotation from note.");
+                return false;
+            }
+
+            annotation.SetPosition2(pos[0], pos[1], 0.0);
+            annotation.Layer = "Annotaion";
+            note.SetBalloon(
+            (int)swBalloonStyle_e.swBS_Square,  // Style: rectangle
+            8                                       // Size: 2 = medium
+        );
+            
+
+            TextFormat format = (TextFormat)note.GetTextFormat(); // <-- Explicit cast
+            format.CharHeight = 0.0035;
+            format.TypeFaceName = "Arial";
+            format.Bold = false;
+            format.Italic = false;
+            format.Underline = false;
+            
+
+            bool applied = annotation.SetTextFormat(0, false, format);
+            if (!applied)
+            {
+                Logger.Warn("SetTextFormat failed.");
+            }
+
+            note.SetTextJustification((int)swTextJustification_e.swTextJustificationCenter);
+
+            Logger.Info($"Custom note inserted successfully: \"{noteText}\"");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Exception during custom note insertion: {ex.Message}");
+            return false;
+        }
+    }
+    public bool InsertCustomNoteAsTable(string noteText, DataStorage position)
+    {
+        if (_swModel == null || _swDrawing == null)
+        {
+            Logger.Warn("ModelDoc2 or DrawingDoc is null. Cannot insert table.");
+            return false;
+        }
+
+        try
+        {
+            double[] pos = position.GetValues(Unit.Meter);
+            int rows = 1;
+
+            // Insert a 1-row, 1-column generic table
+            TableAnnotation table = _swDrawing.InsertTableAnnotation2(
+                false,
+                position.GetValues(Unit.Meter)[0],
+                position.GetValues(Unit.Meter)[1],
+                1,
+                "",
+                rows,
+                1);
+
+            if (table == null)
+            {
+                Logger.Warn("Failed to insert table.");
+                return false;
+            }
+
+            // Set text content
+            table.Text[0, 0] = noteText;
+            
+
+            // Set size with default options
+            table.SetColumnWidth(0, 0.08, (int)swTableRowColSizeChangeBehavior_e.swTableRowColChange_TableSizeCanChange);
+            table.GridLineWeight = (int)swLineWeights_e.swLW_NONE;
+
+            // Apply layer and position
+            Annotation annotation = (Annotation)table.GetAnnotation();
+            if (annotation != null)
+            {
+                annotation.Layer = "Annotaion";
+                annotation.SetPosition2(pos[0], pos[1], 0.0);
+            }
+            TextFormat format = (TextFormat)table.GetTextFormat();
+            format.CharHeight = 0.008;
+            format.TypeFaceName = "Arial";
+            format.Bold = false;
+            format.Italic = false;
+            format.Underline = false;
+
+            table.SetTextFormat(false, format);
+            Logger.Info($"Custom text table inserted as note: \"{noteText}\"");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Exception inserting custom table: {ex.Message}");
+            return false;
+        }
+    }
+
 }

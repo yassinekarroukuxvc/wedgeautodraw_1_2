@@ -264,7 +264,7 @@ public class DrawingService : IDrawingService
 
         try
         {
-            string layerName = "Layer 5";
+            string layerName = "square";
             // Convert side length to meters
             double sideLength = sideLengthInInches * 0.0254;
 

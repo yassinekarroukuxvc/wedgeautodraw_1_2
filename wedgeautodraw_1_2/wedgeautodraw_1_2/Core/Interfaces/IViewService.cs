@@ -6,6 +6,7 @@ namespace wedgeautodraw_1_2.Core.Interfaces;
 
 public interface IViewService
 {
+    IView GetRawView();
     bool SetViewScale(double scale);
     bool SetViewPosition(DataStorage position);
     bool CreateCenterline(NamedDimensionValues wedgeDimensions, DrawingData drawData);
@@ -21,7 +22,11 @@ public interface IViewService
     bool DeleteAnnotationsByName(string[] annotationNames);
     public bool SetOverlayBreaklinePosition(NamedDimensionValues wedgeDimensions, DrawingData drawData);
     public bool CenterSectionViewVisuallyVertically(NamedDimensionValues wedgeDimensions);
-    public void AlignViewHorizontally(bool isDetailView);
+    public void AlignViewHorizontally(bool isDetailView, double tlInMeters = 0);
     public void SetSketchDimensionValue(string dimensionName, double value);
     public void CenterViewVertically();
+    public void PositionSideViewHorizontally(double tlInMeters);
+    public bool CreateCenterlineAtViewCenter(bool isVertical = true, double lengthMm = 100.0);
+    public void AlignTopViewNextToSideView(IView sideView, IView topView, double offsetMm = 30.0);
+    public double GetSketchDimensionValue(string dimensionName);
 }

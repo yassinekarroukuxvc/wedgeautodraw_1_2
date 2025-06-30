@@ -1,5 +1,6 @@
 ﻿using ClosedXML.Excel;
 using SolidWorks.Interop.sldworks;
+using SolidWorks.Interop.swdocumentmgr;
 using System.Transactions;
 using wedgeautodraw_1_2.Core.Enums;
 using wedgeautodraw_1_2.Core.Interfaces;
@@ -7,6 +8,7 @@ using wedgeautodraw_1_2.Core.Models;
 using wedgeautodraw_1_2.Infrastructure.Factories;
 using wedgeautodraw_1_2.Infrastructure.Helpers;
 using wedgeautodraw_1_2.Infrastructure.Services;
+
 
 namespace wedgeautodraw_1_2.Infrastructure.Executors
 {
@@ -40,9 +42,11 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
                 drawingData,
                 wedgeData.Dimensions
             );
-            
+            noteService.InsertCustomNoteAsTable(wedgeData.Coining, drawingData.TablePositions[Constants.CoiningNote]);
 
-            FinalizeDrawing(drawingService, partService, outputPdfPath, outputTiffPath,wedgeData,noteService);
+
+
+            FinalizeDrawing(swApp,drawingService, partService, outputPdfPath, outputTiffPath,wedgeData,noteService);
 
             Logger.Success("Overlay drawing automation completed.");
         }
@@ -61,7 +65,7 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
             swApp.Visible = true;
             var conf = new TiffExportSettings(swApp);
             //conf.RunSolidWorksMacro(swApp, "C:\\Users\\mounir\\Desktop\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\wedgeautodraw_1_2\\Resources\\Templates\\Macro.swp");
-            conf.SetTiffExportSettings();
+            //conf.SetTiffExportSettings();
             //System.Threading.Thread.Sleep(3000);
             drawingService.Lock();
             drawingService.Rebuild();
@@ -73,55 +77,73 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
         private static void UpdateViewScalesAndPositions(SldWorks swApp, IDrawingService drawingService, DrawingData drawData, WedgeData wedgeData)
         {
             var model = drawingService.GetModel();
+
             double W_lowerTol = wedgeData.Dimensions["W"].GetTolerance(Unit.Meter, "-");
             double W_upperTol = wedgeData.Dimensions["W"].GetTolerance(Unit.Meter, "+");
-
             double FL_lowerTol = wedgeData.Dimensions["FL"].GetTolerance(Unit.Meter, "-");
             double FL_upperTol = wedgeData.Dimensions["FL"].GetTolerance(Unit.Meter, "+");
-            double b= wedgeData.Dimensions["B"].GetTolerance(Unit.Meter, "+");
+            double b = wedgeData.Dimensions["B"].GetTolerance(Unit.Meter, "+");
+            double tl = wedgeData.Dimensions["TL"].GetValue(Unit.Meter);
+            double TopSideScale = drawData.ViewScales[Constants.SideView].GetValue(Unit.Millimeter);
             Logger.Info($"Tolerances for W: -{W_lowerTol:F4} / +{W_upperTol:F4}");
             Logger.Info($"Tolerances for FL: -{FL_lowerTol:F4} / +{FL_upperTol:F4}");
             Logger.Info($"Tolerance for B (Upper only): +{b:F4}");
+
             string[] viewNames = new[]
             {
-                Constants.OverlaySideView,
-                Constants.OverlayTopView,
-                Constants.OverlayDetailView,
-                Constants.OverlaySectionView
-            };
+        Constants.OverlaySideView,
+        Constants.OverlayTopView,
+        Constants.OverlayDetailView,
+        Constants.OverlaySectionView
+    };
+
+            IViewService sideView = null;
+            IViewService topView = null;
 
             foreach (var viewName in viewNames)
             {
                 Logger.Info($"Processing view: {viewName}");
 
-                //var view = new ViewService(viewName, ref model);
                 var viewFactory = new StandardViewFactory(model);
                 var view = viewFactory.CreateView(viewName);
 
                 if (viewName == Constants.OverlayDetailView || viewName == Constants.OverlaySectionView)
                 {
-                    double fl = wedgeData.Dimensions["FL"].GetValue(Unit.Millimeter);
                     double scale = wedgeData.OverlayScaling;
                     view.SetViewScale(scale);
                 }
 
                 if (viewName == Constants.OverlaySideView)
                 {
-                    if (wedgeData.Dimensions["TL"].GetValue(Unit.Millimeter) < 40)
+                    sideView = view;
+                    view.SetViewScale(drawData.ViewScales[Constants.SideView].GetValue(Unit.Millimeter));
+                    view.AlignViewHorizontally(false, tlInMeters: wedgeData.Dimensions["TL"].GetValue(Unit.Meter));
+                    view.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, new()
                     {
-                        view.SetViewScale(4);
-                    }
-
-                    view.CreateCenterline(wedgeData.Dimensions, drawData);
+                        { "FX", "SelectByName" },
+                         { "D3", "SelectByName" },
+                         { "FA", "SelectByName" },
+                         { "BA", "SelectByName" },
+                         { "E", "SelectByName" },
+                    }, drawData.DrawingType);
+                    view.SetSketchDimensionValue("D1@Sketch33", 0.19 / TopSideScale);
                 }
+
 
                 if (viewName == Constants.OverlayTopView)
                 {
-                    if (wedgeData.Dimensions["TL"].GetValue(Unit.Millimeter) < 40)
+                    topView = view;
+                    view.SetViewScale(drawData.ViewScales[Constants.TopView].GetValue(Unit.Millimeter));
+                    //view.CreateCentermark(wedgeData.Dimensions, drawData);
+                    view.SetViewPosition(drawData.ViewPositions["Top_view"]);
+                    view.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, new()
                     {
-                        view.SetViewScale(4);
-                    }
-                    view.CreateCentermark(wedgeData.Dimensions, drawData);
+                        { "TDF", "SelectByName" },
+                    }, drawData.DrawingType);
+                    view.SetSketchDimensionValue("D2@Sketch33", 0.006/ TopSideScale);
+                    view.SetSketchDimensionValue("D3@Sketch33", 0.015/TopSideScale);
+                    double d3 = view.GetSketchDimensionValue("D3@Sketch33");
+                    view.SetSketchDimensionValue("D4@Sketch33",d3 /2);
                 }
 
                 if (viewName == Constants.OverlaySectionView)
@@ -129,7 +151,7 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
                     view.SetOverlayBreaklinePosition(wedgeData.Dimensions, drawData);
                     view.CenterViewVertically();
                     view.SetBreakLineGap(0.000025);
-                    view.AlignViewHorizontally(false);
+                    view.AlignViewHorizontally(false, tlInMeters: 0);
                     view.CenterSectionViewVisuallyVertically(wedgeData.Dimensions);
                     view.SetSketchDimensionValue("D1@Sketch474", W_upperTol);
                     view.SetSketchDimensionValue("D3@Sketch474", W_lowerTol);
@@ -140,12 +162,12 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
                     view.SetOverlayBreaklinePosition(wedgeData.Dimensions, drawData);
                     view.CenterViewVertically();
                     view.SetBreakLineGap(0.000025);
-                    view.AlignViewHorizontally(true);
+                    view.AlignViewHorizontally(true, tlInMeters: 0);
                     view.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, new()
                     {
                         { "ISA", "SelectByName" },
                         { "GA", "SelectByName" },
-                    },drawData.DrawingType);
+                    }, drawData.DrawingType);
                     view.SetSketchDimensionValue("D1@Sketch447", FL_upperTol);
                     view.SetSketchDimensionValue("D2@Sketch447", FL_lowerTol);
                     view.SetSketchDimensionValue("D3@Sketch447", b);
@@ -155,24 +177,48 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
             }
+
+           /* // 🔁 Align top view relative to side view AFTER all views are created
+            if (sideView != null && topView != null)
+            {
+                topView.AlignTopViewNextToSideView(
+                    sideView.GetRawView(),
+                    topView.GetRawView(),
+                    offsetMm: 10.0
+                );
+            }
+            else
+            {
+                Logger.Error("Top view and/or side view were not found for alignment.");
+            }*/
         }
 
-        private static void FinalizeDrawing(IDrawingService drawingService, IPartService partService, string outputPdfPath, string outputTiffPath,WedgeData wedgedata,INoteService noteService)
+
+        private static void FinalizeDrawing(SldWorks swApp, IDrawingService drawingService, IPartService partService, string outputPdfPath, string outputTiffPath, WedgeData wedgedata, INoteService noteService)
         {
             var model = drawingService.GetModel();
-
+            var conf = new TiffExportSettings(swApp);
             model.GraphicsRedraw2();
             drawingService.ZoomToSheet();
-            double overlay_calibration = (double.Parse(wedgedata.OverlayCalibration) / 25400) * wedgedata.OverlayScaling ;
+            double overlay_calibration = (double.Parse(wedgedata.OverlayCalibration) / 25400) * wedgedata.OverlayScaling;
             drawingService.DrawCenteredSquareOnSheet(overlay_calibration);
-            noteService.InsertOverlayCalibrationNote(wedgedata.OverlayCalibration,overlay_calibration);
+            noteService.InsertOverlayCalibrationNote(wedgedata.OverlayCalibration, overlay_calibration);
             drawingService.SaveAsTiff(outputTiffPath);
             drawingService.SaveAsPdf(outputPdfPath);
+            Thread.Sleep(300);
 
+            // Build new resized tiff file name
+            string resizedTiff = Path.Combine(
+                Path.GetDirectoryName(outputTiffPath),
+                Path.GetFileNameWithoutExtension(outputTiffPath) + "_640_480.tif"
+            );
+
+            conf.ResizeImageSharpHighQuality(outputTiffPath, resizedTiff);
             drawingService.Unlock();
             drawingService.SaveAndCloseDrawing();
 
             partService.Save(close: true);
         }
+
     }
 }

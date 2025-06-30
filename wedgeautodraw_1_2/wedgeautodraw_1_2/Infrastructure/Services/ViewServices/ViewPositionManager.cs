@@ -80,7 +80,78 @@ public class ViewPositionManager
             Logger.Error($"Failed to center view vertically: {ex.Message}");
         }
     }
-    public void CenterViewHorizontally(bool isDetailView)
+    public void CenterViewHorizontally(bool isDetailView, double tlInMeters = 0)
+    {
+        if (_drawingDoc == null || _swView == null)
+        {
+            Logger.Warn("Cannot center view horizontally. View or drawing is null.");
+            return;
+        }
+
+        try
+        {
+            Sheet sheet = (Sheet)_drawingDoc.GetCurrentSheet();
+            double sheetWidth = 0, sheetHeight = 0;
+            sheet.GetSize(ref sheetWidth, ref sheetHeight);
+            double scale = _swView.ScaleDecimal;
+
+            if (tlInMeters != 0)
+            {
+                double tlScaled = tlInMeters * scale;
+
+                // Get current view bounding box and position
+                double[] box = (double[])_swView.GetOutline(); // [left, bottom, right, top]
+                double viewCenterX = (box[0] + box[2]) / 2.0;
+                double viewWidth = (box[2] - box[0]);
+                double[] currentPos = (double[])_swView.Position;
+
+                // Compute current left edge in model space
+                double currentLeft = viewCenterX - (tlScaled / 2.0);
+
+                // Compute target left edge (we want to align it with sheet center)
+                double targetLeft = sheetWidth / 2.0;
+
+                // Determine how much to shift the view
+                double shift = targetLeft - currentLeft;
+
+                // Apply new position
+                double[] newPos = new[] { currentPos[0] + shift+0.01, currentPos[1] };
+                _swView.Position = newPos;
+
+                Logger.Success($"Side view aligned: left edge aligned with sheet center (shifted by {shift * 1000:F2} mm).");
+                Logger.Error("DEEZ NUts");
+            }
+            else
+            {
+                // --- DETAIL / SECTION VIEW LOGIC ---
+                double targetCenterX = isDetailView ? sheetWidth - 0.005 : sheetWidth / 2.0;
+
+                const double safetyMargin = 0.065;
+                double visibleLength_m = (sheetWidth / 2.0 - safetyMargin) / scale;
+                visibleLength_m += 0.000025;
+                double shiftLeft = visibleLength_m / 2.0 * scale;
+
+                double[] box = (double[])_swView.GetOutline(); // [left, bottom, right, top]
+                double viewCenterX = (box[0] + box[2]) / 2.0;
+                double[] currentPos = (double[])_swView.Position;
+
+                double shiftToTargetCenter = targetCenterX - viewCenterX;
+                double[] centeredPos = new[] { currentPos[0] + shiftToTargetCenter, currentPos[1] };
+                _swView.Position = centeredPos;
+
+                double[] finalPos = new[] { centeredPos[0] - shiftLeft, centeredPos[1] };
+                _swView.Position = finalPos;
+
+                Logger.Success($"{(isDetailView ? "Detail" : "Section")} view centered then shifted left by {shiftLeft * 1000:F2} mm.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Failed to center view: {ex.Message}");
+        }
+    }
+
+    public void CenterViewHorizontally2(bool isDetailView)
     {
         if (_drawingDoc == null || _swView == null)
         {
@@ -94,7 +165,7 @@ public class ViewPositionManager
             var sheet = (Sheet)_drawingDoc.GetCurrentSheet();
             double sheetWidth = 0, sheetHeight = 0;
             sheet.GetSize(ref sheetWidth, ref sheetHeight);
-            double targetCenterX = isDetailView ? sheetWidth- 0.0127 : sheetWidth / 2.0;
+            double targetCenterX = isDetailView ? sheetWidth - 0.005 : sheetWidth / 2.0;
 
             // 2. Compute visible model length
             const double safetyMargin = 0.065;
@@ -122,52 +193,6 @@ public class ViewPositionManager
         catch (Exception ex)
         {
             Logger.Error($"Failed to center and shift view: {ex.Message}");
-        }
-    }
-    public void CenterViewHorizontally2()
-    {
-        if (_drawingDoc == null || _swView == null)
-        {
-            Logger.Warn("Cannot center view horizontally. View or drawing is null.");
-            return;
-        }
-
-        try
-        {
-            // 1. Get sheet size
-            var sheet = (Sheet)_drawingDoc.GetCurrentSheet();
-            double sheetWidth = 0, sheetHeight = 0;
-            sheet.GetSize(ref sheetWidth, ref sheetHeight);
-            double sheetCenterX = sheetWidth / 2.0;
-
-            // 2. Get view outline (in meters)
-            double[] box = (double[])_swView.GetOutline(); // [left, bottom, right, top]
-            double viewCenterX = (box[0] + box[2]) / 2.0;
-            double viewRightX = box[2];
-
-            // 3. Get current position
-            double[] pos = (double[])_swView.Position;
-
-            // 4. Center the view
-            double shiftToCenter = sheetCenterX - viewCenterX;
-            double[] newPos = new[] { pos[0] + shiftToCenter, pos[1] };
-            _swView.Position = newPos;
-
-            // 5. Compute new view right edge after centering
-            box = (double[])_swView.GetOutline(); // [left, bottom, right, top]
-            viewCenterX = (box[0] + box[2]) / 2.0;
-            viewRightX = box[2];
-            double correctedViewRightX = viewRightX;
-
-            // 6. Shift left by (viewRightX - sheetCenterX)
-            double shiftLeft = correctedViewRightX - sheetCenterX;
-            _swView.Position = new[] { newPos[0] + viewCenterX, newPos[1] };
-
-            Logger.Success($"View '{_swView.Name}' centered, then shifted left by {shiftLeft * 1000:F2} mm so its RIGHT edge aligns with sheet center.");
-        }
-        catch (Exception ex)
-        {
-            Logger.Error($"Failed to center and shift view horizontally: {ex.Message}");
         }
     }
     public bool SetViewX(double x_mm)
@@ -232,4 +257,86 @@ public class ViewPositionManager
             return false;
         }
     }
+    public void PositionSideViewHorizontally(double tlInMeters)
+    {
+        if (_drawingDoc == null || _swView == null)
+        {
+            Logger.Warn("Cannot position side view. View or drawing is null.");
+            return;
+        }
+
+        try
+        {
+            Sheet sheet = (Sheet)_drawingDoc.GetCurrentSheet();
+            double sheetWidth = 0, sheetHeight = 0;
+            sheet.GetSize(ref sheetWidth, ref sheetHeight);
+
+            double scale = _swView.ScaleDecimal;
+            double tlScaled = tlInMeters * scale;
+
+            // Get current view bounding box and position
+            double[] box = (double[])_swView.GetOutline(); // [left, bottom, right, top]
+            double viewCenterX = (box[0] + box[2]) / 2.0;
+            double viewWidth = (box[2] - box[0]);
+            double[] currentPos = (double[])_swView.Position;
+
+            // Compute current left edge in model space
+            double currentLeft = viewCenterX - (viewWidth / 2.0);
+
+            // Compute target left edge (we want to align it with sheet center)
+            double targetLeft = sheetWidth / 2.0;
+
+            // Determine how much to shift the view
+            double shift = targetLeft - currentLeft;
+
+            // Apply new position
+            double[] newPos = new[] { currentPos[0] + shift, currentPos[1] };
+            _swView.Position = newPos;
+
+            Logger.Success($"Side view aligned: left edge aligned with sheet center (shifted by {shift * 1000:F2} mm).");
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Failed to position side view horizontally: {ex.Message}");
+        }
+    }
+    public void AlignTopViewNextToSideView(IView sideView, IView topView, double offsetMm = 30.0)
+    {
+        if (sideView == null || topView == null)
+        {
+            Logger.Warn("Cannot align top view. One or both views are null.");
+            return;
+        }
+
+        try
+        {
+            // Get the position of Drawing View 1 (side view)
+            double[] sidePos = (double[])sideView.Position;
+            if (sidePos == null || sidePos.Length < 2)
+            {
+                Logger.Warn("Side view position is invalid.");
+                return;
+            }
+
+            // Get width of side view from its outline
+            double[] sideOutline = (double[])sideView.GetOutline(); // [left, bottom, right, top]
+            double sideWidth = sideOutline[2] - sideOutline[0];     // right - left
+
+            // Calculate new position for top view
+            double offset = offsetMm / 1000.0; // convert mm to meters
+            double topX = sidePos[0] + sideWidth + offset;
+            double topY = sidePos[1]; // same Y as side view
+
+            // Apply position
+            topView.Position = new double[] { topX, topY };
+
+            Logger.Error($"Top view aligned next to side view: X={topX * 1000:F2} mm, Y={topY * 1000:F2} mm.");
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Failed to align top view: {ex.Message}");
+        }
+    }
+
+
 }

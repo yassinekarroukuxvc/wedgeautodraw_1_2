@@ -161,65 +161,75 @@ public class DimensionStyler
         }
     }
 
-    private void Style(DisplayDimension swDispDim, string dimKey, NamedDimensionValues wedgeDimensions, NamedDimensionAnnotations drawDimensions,DrawingType drawingType)
+    private void Style(DisplayDimension swDispDim, string dimKey, NamedDimensionValues wedgeDimensions, NamedDimensionAnnotations drawDimensions, DrawingType drawingType)
     {
-        if (drawingType != DrawingType.Production)
-            return;
         try
         {
-            // Default: center text
+            // Default: center text if not ISA
             if (dimKey != "ISA")
                 swDispDim.CenterText = true;
 
-            switch (dimKey)
+            if (drawingType == DrawingType.Production)
             {
-                case "VW":
-                    swDispDim.CenterText = true;
-                    Logger.Success("VW is centered.");
-                    break;
-
-                case "FL":
-                    swDispDim.ArrowSide = 0;
-                    swDispDim.WitnessVisibility = 0;
-                    Logger.Success("FL has arrow outside.");
-                    break;
-
-                case "GA":
-                    swDispDim.ArrowSide = 0;
-                    if (wedgeDimensions.TryGet("W", out var wVal) && wVal.GetValue(Unit.Millimeter) < 0.3)
-                    {
-                        swDispDim.OffsetText = true;
+                switch (dimKey)
+                {
+                    case "VW":
                         swDispDim.CenterText = true;
-                        TryOffsetUpdate(swDispDim, "GA", drawDimensions, 0.005); // 5mm offset
-                    }
-                    break;
+                        Logger.Success("VW is centered.");
+                        break;
 
-                case "E":
+                    case "FL":
+                        swDispDim.ArrowSide = 0;
+                        swDispDim.WitnessVisibility = 0;
+                        Logger.Success("FL has arrow outside.");
+                        break;
+
+                    case "GA":
+                        swDispDim.ArrowSide = 0;
+                        if (wedgeDimensions.TryGet("W", out var wVal) && wVal.GetValue(Unit.Millimeter) < 0.3)
+                        {
+                            swDispDim.OffsetText = true;
+                            swDispDim.CenterText = true;
+                            TryOffsetUpdate(swDispDim, "GA", drawDimensions, 0.005); // 5 mm offset
+                        }
+                        break;
+
+                    case "E":
+                        swDispDim.CenterText = true;
+                        if (wedgeDimensions.TryGet("E", out var eVal) && eVal.GetValue(Unit.Millimeter) < 0.8)
+                        {
+                            swDispDim.OffsetText = true;
+                            TryOffsetUpdate(swDispDim, "E", drawDimensions, 0.010);
+                        }
+                        break;
+
+                    case "GD":
+                        swDispDim.WitnessVisibility = 0;
+                        break;
+
+                    case "FA":
+                    case "BA":
+                        swDispDim.CenterText = true;
+                        break;
+
+                    case "FR":
+                    case "BR":
+                        swDispDim.ArrowSide = 2;
+                        swDispDim.WitnessVisibility = 2;
+                        swDispDim.ExtensionLineExtendsFromCenterOfSet = false;
+                        swDispDim.MaxWitnessLineLength = 0;
+                        swDispDim.SetExtensionLineAsCenterline(1, false);
+                        break;
+                }
+            }
+            else if (drawingType == DrawingType.Overlay)
+            {
+                // Only FA and BA should be centered in overlay
+                if (dimKey == "FA" || dimKey == "BA")
+                {
                     swDispDim.CenterText = true;
-                    if (wedgeDimensions.TryGet("E", out var eVal) && eVal.GetValue(Unit.Millimeter) < 0.8)
-                    {
-                        swDispDim.OffsetText = true;
-                        TryOffsetUpdate(swDispDim, "E", drawDimensions, 0.010);
-                    }
-                    break;
-
-                case "GD":
-                    swDispDim.WitnessVisibility = 0;
-                    break;
-
-                case "FA":
-                case "BA":
-                    swDispDim.CenterText = true;
-                    break;
-
-                case "FR":
-                case "BR":
-                    swDispDim.ArrowSide = 2;
-                    swDispDim.WitnessVisibility = 2;
-                    swDispDim.ExtensionLineExtendsFromCenterOfSet = false;
-                    swDispDim.MaxWitnessLineLength = 0;
-                    swDispDim.SetExtensionLineAsCenterline(1, false);
-                    break;
+                    Logger.Success($"{dimKey} is centered in Overlay drawing.");
+                }
             }
 
             _model.GraphicsRedraw2();
@@ -230,6 +240,7 @@ public class DimensionStyler
             Logger.Warn($"Failed to style '{dimKey}': {ex.Message}");
         }
     }
+
 
     private void TryOffsetUpdate(DisplayDimension swDispDim, string dimKey, NamedDimensionAnnotations drawDimensions, double offsetMeters)
     {

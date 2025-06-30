@@ -9,6 +9,8 @@ public class WedgeData
     public string EngravedText { get; set; } = string.Empty;
     public string OverlayCalibration { get; set; } = string.Empty;
     public double OverlayScaling { get; set; } = 1.0;
+    public string Coining { get; set; } = string.Empty;
+
     public override string ToString()
     {
         var result = new System.Text.StringBuilder();
@@ -32,6 +34,7 @@ public class WedgeData
         result.AppendLine($"\nEngravedText: {EngravedText}");
         result.AppendLine($"\nOverlay Calibration: {OverlayCalibration}");
         result.AppendLine($"\nOverlay Scaling: {OverlayScaling}");
+        result.AppendLine($"\nCoining: {Coining}");
         return result.ToString();
     }
 

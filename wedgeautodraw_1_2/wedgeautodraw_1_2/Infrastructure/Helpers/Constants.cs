@@ -32,7 +32,7 @@ public static class Constants
     public const string HowToOrderTable = "how_to_order";
     public const string LabelAsTable = "label_as";
     public const string PolishTable = "polish";
-
+    public const string CoiningNote = "coining_note";
     // Misc
     public const string DatumFeatureLabel = "A";
 }

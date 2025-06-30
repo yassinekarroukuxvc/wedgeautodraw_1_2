@@ -49,14 +49,30 @@ public class DrawingDataLoader : IDrawingDataLoader
 
         if (Has("side_view_dX") && drawingData.ViewPositions.ContainsKey("Front_view"))
         {
-            var basePos = drawingData.ViewPositions["Front_view"].GetValues(Unit.Millimeter);
-            drawingData.ViewPositions["Side_view"] = new DataStorage(new[] { basePos[0] + Get("side_view_dX"), basePos[1] });
+            
+            if(drawingType == DrawingType.Production)
+            {
+                var basePos = drawingData.ViewPositions["Front_view"].GetValues(Unit.Millimeter);
+                drawingData.ViewPositions["Side_view"] = new DataStorage(new[] { basePos[0] + Get("side_view_dX"), basePos[1] });
+            }
+            else
+            {
+                drawingData.ViewPositions["Side_view"] = new DataStorage(new[] {Get("side_view_dX"), Get("side_view_dY") });
+            }
         }
 
         if (Has("top_view_dY") && drawingData.ViewPositions.ContainsKey("Side_view"))
         {
-            var basePos = drawingData.ViewPositions["Side_view"].GetValues(Unit.Millimeter);
-            drawingData.ViewPositions["Top_view"] = new DataStorage(new[] { basePos[0], basePos[1] + Get("top_view_dY") });
+            
+            if (drawingType == DrawingType.Production)
+            {
+                var basePos = drawingData.ViewPositions["Side_view"].GetValues(Unit.Millimeter);
+                drawingData.ViewPositions["Top_view"] = new DataStorage(new[] { basePos[0], basePos[1] + Get("top_view_dY") });
+            }
+            else
+            {
+                drawingData.ViewPositions["Top_view"] = new DataStorage(new[] { Get("top_view_dX") , Get("top_view_dY") });
+            }
         }
 
         if (Has("detail_view_posX") && Has("detail_view_posY"))
@@ -85,6 +101,7 @@ public class DrawingDataLoader : IDrawingDataLoader
         TrySetTable("how_to_order", "how_to_order_posX", "how_to_order_posY", "how_to_order_width");
         TrySetTable("label_as", "label_as_posX", "label_as_posY", "label_as_width");
         TrySetTable("polish", "polish_posX", "polish_posY", "polish_width");
+        TrySetTable("coining_note", "coining_note_posX", "coining_note_posY", "coining_note_width");
 
         // === Breakline Data ===
         void SetBreakline(string view, string suffix, bool setUpper = true)
