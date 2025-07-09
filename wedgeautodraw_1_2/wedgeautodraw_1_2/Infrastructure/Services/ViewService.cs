@@ -52,7 +52,7 @@ public class ViewService : IViewService
         _scaler = new ViewScaler(_swView);
         _breaklineHandler = new BreaklineHandler(_swView, _model);
         _dimensionStyler = new DimensionStyler(_model);
-        _annotationManager = new AnnotationManager(_swView);
+        _annotationManager = new AnnotationManager(_swView,_model);
         _sectionViewCreator = new SectionViewCreator(_model);
         _viewPositionManager = new ViewPositionManager(_swView, _model,_drawingDoc);
         _centerMarkLineManager = new CenterMarkLineManager(_swView, _model);
@@ -304,4 +304,9 @@ public class ViewService : IViewService
         => _centerMarkLineManager.CreateCenterlineAtViewCenter(isVertical, lengthMm);
     public void AlignTopViewNextToSideView(IView sideView, IView topView, double offsetMm = 30.0)
         => _viewPositionManager.AlignTopViewNextToSideView(sideView, topView, offsetMm);
+
+    public bool SetDetailViewDynamicBreakline(NamedDimensionValues wedgeDimensions)
+        => _breaklineHandler.SetDetailViewDynamicBreakline(wedgeDimensions);
+    public bool SetFrontSideViewBreakline(NamedDimensionValues wedgeDimensions)
+        => _breaklineHandler.SetFrontSideViewBreakline(wedgeDimensions);
 }

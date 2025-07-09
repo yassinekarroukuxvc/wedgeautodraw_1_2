@@ -1,6 +1,5 @@
 ﻿using SolidWorks.Interop.sldworks;
 using SolidWorks.Interop.swconst;
-using System;
 using wedgeautodraw_1_2.Core.Enums;
 using wedgeautodraw_1_2.Core.Models;
 using wedgeautodraw_1_2.Infrastructure.Helpers;
@@ -203,4 +202,92 @@ public class BreaklineHandler
 
         return true;
     }
+
+    public bool SetDetailViewDynamicBreakline(NamedDimensionValues wedgeDimensions)
+    {
+        if (_swView == null)
+        {
+            Logger.Warn("Cannot set detail breakline. View is null.");
+            return false;
+        }
+
+        try
+        {
+            var breakLine = GetBreaklineObject();
+            if (breakLine == null) return false;
+
+            double tl = wedgeDimensions["TL"].GetValue(Unit.Meter);
+            double e = wedgeDimensions["E"].GetValue(Unit.Meter);
+            double scale = _swView.ScaleDecimal;
+            double td = wedgeDimensions["TD"].GetValue(Unit.Meter);
+            double gd = wedgeDimensions["GD"].GetValue(Unit.Meter);
+            Logger.Warn($"E = {e}");
+            double start = tl - e;
+            double end = tl/2;
+
+            double[] pos = new[]
+            {
+                -tl/2 * scale + 0.04,
+                scale * end
+            };
+
+            bool result = breakLine.SetPosition(pos[0], pos[1]);
+
+            //_swView.BreakLineGap = 0.0;
+            Logger.Info("Breakline gap set to 0.");
+
+            Logger.Info($"Detail breakline using E set → Start: {pos[0]:F4}, End: {pos[1]:F4}");
+
+            _model.Extension.SelectByID2("TL@Detail_View", "DIMENSION", 0, 0, 0, false, 0, null, 0);
+            _model.Extension.DeleteSelection2((int)swDeleteSelectionOptions_e.swDelete_Advanced);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Error in SetDetailViewDynamicBreaklineUsingE: {ex.Message}");
+            return false;
+        }
+    }
+    public bool SetFrontSideViewBreakline(NamedDimensionValues wedgeDimensions)
+    {
+        if (_swView == null)
+        {
+            Logger.Warn("Cannot set breakline. View is null.");
+            return false;
+        }
+
+        try
+        {
+            var breakLine = GetBreaklineObject();
+            if (breakLine == null) return false;
+
+            double tl = wedgeDimensions["TL"].GetValue(Unit.Meter);
+            double engravingStart = tl * 0.45;
+            double scale = _swView.ScaleDecimal;
+
+            double lower = tl - engravingStart;
+            double upper = 0.05 * tl;
+            //double HalfTL_EngravingStart = tl / 2 - engravingStart;
+            double HalfTL_EngravingStart = 0.02 * tl; ;
+            double[] pos = new[]
+            {
+                tl * scale / 2 - engravingStart*scale + HalfTL_EngravingStart*scale ,
+                tl * scale / 2-upper 
+            };
+
+            bool result = breakLine.SetPosition(pos[0], pos[1]);
+
+
+            Logger.Info($"Front/Side breakline set using EngravingStart distance → Lower: {lower:F4}, Upper: {upper:F4},TL :{tl:F4} , Pos[0]: {pos[0]:F4}, Pos[1]: {pos[1]:F4}");
+            Logger.Error($"Engraving Start {engravingStart}");
+            return result;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Error in SetFrontSideViewBreakline: {ex.Message}");
+            return false;
+        }
+    }
+
 }

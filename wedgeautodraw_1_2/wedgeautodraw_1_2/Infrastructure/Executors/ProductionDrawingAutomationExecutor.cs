@@ -159,7 +159,8 @@ public class ProductionDrawingAutomationExecutor : IDrawingAutomationExecutor
         var viewFactory = new StandardViewFactory(model);
         var front = viewFactory.CreateView(Constants.FrontView);
         front.SetViewPosition(drawData.ViewPositions[Constants.FrontView]);
-        front.SetBreaklinePosition(wedgeData.Dimensions, drawData);
+        //front.SetBreaklinePosition(wedgeData.Dimensions, drawData);
+        front.SetFrontSideViewBreakline(wedgeData.Dimensions);
         front.CreateCenterline(wedgeData.Dimensions, drawData);
         front.SetBreakLineGap(drawData.BreaklineData["Front_viewBreaklineGap"].GetValue(Unit.Meter));
         drawData.ViewScales[Constants.FrontView] = new DataStorage(scale);
@@ -172,7 +173,7 @@ public class ProductionDrawingAutomationExecutor : IDrawingAutomationExecutor
                 { "VW", "SelectByName" },
             },drawData.DrawingType);
         front.DeleteAnnotationsByName(new[] { "GR" });
-
+     
     }
 
     private static void CreateSideView(ModelDoc2 model, DrawingData drawData, WedgeData wedgeData)
@@ -180,7 +181,8 @@ public class ProductionDrawingAutomationExecutor : IDrawingAutomationExecutor
         var viewFactory = new StandardViewFactory(model);
         var side = viewFactory.CreateView(Constants.SideView);
         side.SetViewPosition(drawData.ViewPositions[Constants.SideView]);
-        side.SetBreaklinePosition(wedgeData.Dimensions, drawData);
+        //side.SetBreaklinePosition(wedgeData.Dimensions, drawData);
+        side.SetFrontSideViewBreakline(wedgeData.Dimensions);
         side.SetBreakLineGap(drawData.BreaklineData["Side_viewBreaklineGap"].GetValue(Unit.Meter));
         side.CreateCenterline(wedgeData.Dimensions, drawData);
 
@@ -189,7 +191,7 @@ public class ProductionDrawingAutomationExecutor : IDrawingAutomationExecutor
             { "FA", "SelectByName" },
             { "BA", "SelectByName" },
             /*{ "E", "SelectByName" },*/
-            /*{ "FX", "SelectByName" }*/
+            { "FX", "SelectByName" }
         };
 
         side.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, dimensionKeys,drawData.DrawingType);
@@ -217,8 +219,9 @@ public class ProductionDrawingAutomationExecutor : IDrawingAutomationExecutor
         var detail = viewFactory.CreateView(Constants.DetailView);
         detail.SetViewScale(drawData.ViewScales[Constants.DetailView].GetValue(Unit.Millimeter));
         detail.SetViewPosition(drawData.ViewPositions[Constants.DetailView]);
-        detail.SetBreaklinePosition(wedgeData.Dimensions, drawData);
+        //detail.SetBreaklinePosition(wedgeData.Dimensions, drawData);
         detail.SetBreakLineGap(drawData.BreaklineData["Detail_viewBreaklineGap"].GetValue(Unit.Meter));
+        detail.SetDetailViewDynamicBreakline(wedgeData.Dimensions);
         detail.CreateCenterline(wedgeData.Dimensions, drawData);
         detail.PlaceGeometricToleranceFrame(wedgeData.Dimensions, drawData.DimensionStyles, Constants.DatumFeatureLabel);
         detail.InsertModelDimensioning(drawData.DrawingType);
@@ -228,7 +231,7 @@ public class ProductionDrawingAutomationExecutor : IDrawingAutomationExecutor
             { "GA", "SelectByName" },
             { "B", "SelectByName" },
             { "W", "SelectByName" },
-            { "D1", "SelectByName" },
+            { "GD", "SelectByName" },
             { "GR", "SelectByName" }
         }, drawData.DrawingType);
     }

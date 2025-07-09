@@ -29,4 +29,6 @@ public interface IViewService
     public bool CreateCenterlineAtViewCenter(bool isVertical = true, double lengthMm = 100.0);
     public void AlignTopViewNextToSideView(IView sideView, IView topView, double offsetMm = 30.0);
     public double GetSketchDimensionValue(string dimensionName);
+    public bool SetDetailViewDynamicBreakline(NamedDimensionValues wedgeDimensions);
+    public bool SetFrontSideViewBreakline(NamedDimensionValues wedgeDimensions);
 }

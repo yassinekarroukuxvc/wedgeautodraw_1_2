@@ -1,4 +1,5 @@
-﻿using wedgeautodraw_1_2.Core.Enums;
+﻿using DocumentFormat.OpenXml.Office2019.Drawing.Model3D;
+using wedgeautodraw_1_2.Core.Enums;
 using wedgeautodraw_1_2.Core.Models;
 
 namespace wedgeautodraw_1_2.Infrastructure.Helpers;
@@ -39,7 +40,8 @@ public static class DimensionRules
                     var TD = wedge.Dimensions["TD"].GetValue(Unit.Millimeter);
                     var TL = wedge.Dimensions["TL"].GetValue(Unit.Millimeter);
                     var fsv = drawing.ViewScales[Constants.FrontView].GetValue(Unit.Millimeter);
-                    return new[] { front[0] + fsv * TD / 2 + 10, front[1] + 40 };
+                    var engraving = TL * 0.45;
+                    return new[] { front[0] + fsv * TD / 2 + 10, front[1] + engraving };
                 }
             },
             ["D2"] = new DimensionLayoutRule
@@ -59,15 +61,18 @@ public static class DimensionRules
                 CalculatePosition = (wedge, drawing) =>
                 {
                     var front = drawing.ViewPositions[Constants.FrontView].GetValues(Unit.Millimeter);
-                    var lowerPartLength = drawing.BreaklineData["Front_viewLowerPartLength"].GetValue(Unit.Millimeter);
-                    var upperPartLength = drawing.BreaklineData["Front_viewUpperPartLength"].GetValue(Unit.Millimeter);
                     var breakline = drawing.BreaklineData["Front_viewBreaklineGap"].GetValue(Unit.Millimeter);
-                    var half = (lowerPartLength + breakline + upperPartLength)/2;
-                    
                     var TD = wedge.Dimensions["TD"].GetValue(Unit.Millimeter);
                     var fsv = drawing.ViewScales[Constants.FrontView].GetValue(Unit.Millimeter);
                     var TL = wedge.Dimensions["TL"].GetValue(Unit.Millimeter);
-                    return new[] { front[0] - fsv * TD / 2 - 8, front[1] - half - 8 };
+                    double engravingStart = TL * 0.45;
+                    breakline = TL * 0.03;
+                    //double HalfTL_EngravingStart = TL / 2 - engravingStart;
+                    double HalfTL_EngravingStart = 0.02*TL;
+                    double leftover = TL * 0.55;
+                    double y = leftover * fsv + breakline * fsv + HalfTL_EngravingStart * fsv + 5 /*+ 0.10 * TL * fsv*/;
+                   
+                    return new[] { front[0] - fsv * TD / 2 - 8, front[1] - y/2 };
                 }
             },
             ["TDF"] = new DimensionLayoutRule
@@ -103,7 +108,7 @@ public static class DimensionRules
                     var TDF = wedge.Dimensions["TDF"].GetValue(Unit.Millimeter);
                     var TD = wedge.Dimensions["TD"].GetValue(Unit.Millimeter);
                     var tsv = drawing.ViewScales[Constants.TopView].GetValue(Unit.Millimeter);
-                    return new[] { top[0] - tsv * TDF / 2 - 20, top[1] - tsv * TD / 2 - 1 };
+                    return new[] { top[0] - tsv * TDF / 2 - 5, top[1] - tsv * TD / 2 - 1 };
                 }
             },
             ["ISA"] = new DimensionLayoutRule
@@ -114,8 +119,11 @@ public static class DimensionRules
                     var detail = drawing.ViewPositions[Constants.DetailView].GetValues(Unit.Millimeter);
                     var lowerPartLength = drawing.BreaklineData["Detail_viewLowerPartLength"].GetValue(Unit.Millimeter);
                     var breakline = drawing.BreaklineData["Detail_viewBreaklineGap"].GetValue(Unit.Millimeter);
+                    var TL = wedge.Dimensions["TL"].GetValue(Unit.Millimeter);
+                    var E = wedge.Dimensions["E"].GetValue(Unit.Millimeter);
+                    var start = TL - E;
                     var y = detail[1] - (breakline + lowerPartLength) / 2;
-                    return new[] { detail[0] + 3.5, y + lowerPartLength -2 };
+                    return new[] { detail[0] + 3.5, detail[1] };
                 }
             },
             ["GA"] = new DimensionLayoutRule
@@ -176,7 +184,7 @@ public static class DimensionRules
                     var lowerPartLength = drawing.BreaklineData["Detail_viewLowerPartLength"].GetValue(Unit.Millimeter);
                     var breakline = drawing.BreaklineData["Detail_viewBreaklineGap"].GetValue(Unit.Millimeter);
                     var y = detail[1] - (breakline + lowerPartLength) / 2;
-                    return new[] { detail[0] - dsv * (td / 2) - 15, y + dsv * GD / 2 };
+                    return new[] { detail[0] - (W / 2 * dsv) - 20, y + dsv * GD / 2 };
                 }
             },
             ["D1"] = new DimensionLayoutRule
@@ -260,8 +268,19 @@ public static class DimensionRules
                 {
                     var side = drawing.ViewPositions[Constants.SideView].GetValues(Unit.Millimeter);
                     var TD = wedge.Dimensions["TD"].GetValue(Unit.Millimeter);
+                    var breakline = drawing.BreaklineData["Front_viewBreaklineGap"].GetValue(Unit.Millimeter);
+                    var fsv = drawing.ViewScales[Constants.FrontView].GetValue(Unit.Millimeter);
+                    var TL = wedge.Dimensions["TL"].GetValue(Unit.Millimeter);
+                    double engravingStart = TL * 0.45;
+                    //double HalfTL_EngravingStart = TL / 2 - engravingStart;
+                    double HalfTL_EngravingStart = 0.02 * TL;
+                    double leftover = TL * 0.55;
+                    breakline = TL * 0.03;
+                    double y = leftover * fsv + breakline * fsv + HalfTL_EngravingStart * fsv+ 5 /*+ 0.10 * TL * fsv*/;
+
+
                     var ssv = drawing.ViewScales[Constants.SideView].GetValue(Unit.Millimeter);
-                    return new[] { side[0] - ssv * TD / 2 - 10, side[1] - 81.5 };
+                    return new[] { side[0] - ssv * TD / 2 - 10, side[1] - y/2};
                 }
             },
             ["F"] = new DimensionLayoutRule

@@ -303,7 +303,7 @@ public class NoteService : INoteService
                 annotation.SetPosition2(pos[0], pos[1], 0.0);
             }
             TextFormat format = (TextFormat)table.GetTextFormat();
-            format.CharHeight = 0.008;
+            format.CharHeight = 0.005;
             format.TypeFaceName = "Arial";
             format.Bold = false;
             format.Italic = false;
