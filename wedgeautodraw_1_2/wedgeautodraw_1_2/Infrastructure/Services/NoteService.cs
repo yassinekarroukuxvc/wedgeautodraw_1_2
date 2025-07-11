@@ -46,20 +46,10 @@ public class NoteService : INoteService
 
                     if (!double.IsNaN(valueInch))
                     {
-                        string inchStr = TrimLeadingZero(valueInch.ToString("F4"));
-                        bool isRef = IsRef(upperTolInch, lowerTolInch);
-                        string line;
+                        string inchStr = TrimLeadingZero(valueInch.ToString("F5"));
+                        string tolStrInch = FormatTolerance(upperTolInch, lowerTolInch, 4, true);
 
-                        if (!isRef)
-                        {
-                            string tolStrInch = FormatTolerance(upperTolInch, lowerTolInch, 4, true);
-                            line = $"{key} = {inchStr}{tolStrInch}";
-                        }
-                        else
-                        {
-                            line = $"{key} = {inchStr} (REF)";
-                        }
-
+                        string line = $"{key} = {inchStr}{tolStrInch}";
                         validLines.Add(line.Trim());
                     }
                 }
@@ -128,15 +118,26 @@ public class NoteService : INoteService
         return input.StartsWith("0.") ? input.Substring(1) : input;
     }
 
-    private static bool IsRef(double upper, double lower)
-    {
-        return (upper == 0 && lower == 0) || (double.IsNaN(upper) && double.IsNaN(lower));
-    }
-
     private static string FormatTolerance(double upper, double lower, int precision, bool inch)
     {
         string fmt = inch ? "F" + precision : "F3";
-        return $"±{upper.ToString(fmt)}";
+
+        if ((upper == 0 && lower == 0) ||
+            double.IsNaN(upper) || double.IsNaN(lower))
+        {
+            return " (REF)";
+        }
+
+        if (lower == 0)
+            return $"+{upper.ToString(fmt)}";
+
+        if (upper == 0)
+            return $"-{lower.ToString(fmt)}";
+
+        if (upper == lower)
+            return $"±{upper.ToString(fmt)}";
+
+        return $"+{upper.ToString(fmt)} -{lower.ToString(fmt)}";
     }
 
 
@@ -274,8 +275,8 @@ public class NoteService : INoteService
             // Insert a 1-row, 1-column generic table
             TableAnnotation table = _swDrawing.InsertTableAnnotation2(
                 false,
-                position.GetValues(Unit.Meter)[0],
-                position.GetValues(Unit.Meter)[1],
+                pos[0],
+                pos[1],
                 1,
                 "",
                 rows,
@@ -289,10 +290,14 @@ public class NoteService : INoteService
 
             // Set text content
             table.Text[0, 0] = noteText;
-            
 
-            // Set size with default options
-            table.SetColumnWidth(0, 0.08, (int)swTableRowColSizeChangeBehavior_e.swTableRowColChange_TableSizeCanChange);
+            // Set column width (e.g., 80 mm)
+            table.SetColumnWidth(0, 0.10, (int)swTableRowColSizeChangeBehavior_e.swTableRowColChange_TableSizeCanChange);
+
+            // Set row height (e.g., 20 mm)
+            table.SetRowHeight(0, 0.02, (int)swTableRowColSizeChangeBehavior_e.swTableRowColChange_TableSizeCanChange);
+
+            // Remove grid lines
             table.GridLineWeight = (int)swLineWeights_e.swLW_NONE;
 
             // Apply layer and position
@@ -302,6 +307,8 @@ public class NoteService : INoteService
                 annotation.Layer = "Annotaion";
                 annotation.SetPosition2(pos[0], pos[1], 0.0);
             }
+
+            // Text formatting
             TextFormat format = (TextFormat)table.GetTextFormat();
             format.CharHeight = 0.005;
             format.TypeFaceName = "Arial";
@@ -319,5 +326,6 @@ public class NoteService : INoteService
             return false;
         }
     }
+
 
 }

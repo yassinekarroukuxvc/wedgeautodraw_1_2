@@ -88,13 +88,44 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
             Logger.Info($"Tolerances for W: -{W_lowerTol:F4} / +{W_upperTol:F4}");
             Logger.Info($"Tolerances for FL: -{FL_lowerTol:F4} / +{FL_upperTol:F4}");
             Logger.Info($"Tolerance for B (Upper only): +{b:F4}");
+            string wedgeId = wedgeData.Metadata.ContainsKey("drawing_number")
+                ? wedgeData.Metadata["drawing_number"].ToString()
+                : $"Wedge_{Guid.NewGuid()}";
+
+            var specialWedgeIds = new HashSet<string> { "2026582", "2026989", "2030604" };
+
+            if (specialWedgeIds.Contains(wedgeId))
+            {
+                Logger.Info($"Wedge ID {wedgeId} matches special IDs — hiding Layer 8.");
+
+                var layerMgr = (ILayerMgr)model.GetLayerManager();
+                var layerObj = layerMgr.GetLayer("Layer8");
+
+                if (layerObj != null)
+                {
+                    var layer = (ILayer)layerObj;
+                    layer.Visible = false;
+
+                    Logger.Success("Layer 8 successfully hidden.");
+                }
+                else
+                {
+                    Logger.Warn("Layer 8 not found; cannot hide.");
+                }
+            }
+            else
+            {
+                Logger.Info($"Wedge ID {wedgeId} does not require hiding Layer 8.");
+            }
+
 
             string[] viewNames = new[]
             {
         Constants.OverlaySideView,
         Constants.OverlayTopView,
         Constants.OverlayDetailView,
-        Constants.OverlaySectionView
+        Constants.OverlaySectionView,
+        Constants.OverlaySideView2
     };
 
             IViewService sideView = null;
@@ -106,6 +137,15 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
 
                 var viewFactory = new StandardViewFactory(model);
                 var view = viewFactory.CreateView(viewName);
+                if (viewName == Constants.OverlaySideView2)
+                {
+                    view.DeleteOverlaySideView2(wedgeData.Dimensions);
+                    view.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, new()
+                    {
+                         { "VR", "SelectByName" },
+                         { "VW", "SelectByName" },
+                    }, drawData.DrawingType);
+                }
 
                 if (viewName == Constants.OverlayDetailView || viewName == Constants.OverlaySectionView)
                 {
@@ -120,11 +160,12 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
                     view.AlignViewHorizontally(false, tlInMeters: wedgeData.Dimensions["TL"].GetValue(Unit.Meter));
                     view.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, new()
                     {
-                        { "FX", "SelectByName" },
+                         { "FX", "SelectByName" },
                          { "D3", "SelectByName" },
                          { "FA", "SelectByName" },
                          { "BA", "SelectByName" },
                          { "E", "SelectByName" },
+                         { "X", "SelectByName" },
                     }, drawData.DrawingType);
                     view.SetSketchDimensionValue("D1@Sketch33", 0.19 / TopSideScale);
                 }
@@ -153,8 +194,8 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
                     view.SetBreakLineGap(0.000025);
                     view.AlignViewHorizontally(false, tlInMeters: 0);
                     view.CenterSectionViewVisuallyVertically(wedgeData.Dimensions);
-                    view.SetSketchDimensionValue("D1@Sketch474", W_upperTol);
-                    view.SetSketchDimensionValue("D3@Sketch474", W_lowerTol);
+                    view.SetSketchDimensionValue("D1@Sketch474", FL_upperTol);
+                    view.SetSketchDimensionValue("D3@Sketch474", FL_lowerTol);
                 }
 
                 if (viewName == Constants.OverlayDetailView)
@@ -168,8 +209,8 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
                         { "ISA", "SelectByName" },
                         { "GA", "SelectByName" },
                     }, drawData.DrawingType);
-                    view.SetSketchDimensionValue("D1@Sketch447", FL_upperTol);
-                    view.SetSketchDimensionValue("D2@Sketch447", FL_lowerTol);
+                    view.SetSketchDimensionValue("D1@Sketch447", W_upperTol);
+                    view.SetSketchDimensionValue("D2@Sketch447", W_lowerTol);
                     view.SetSketchDimensionValue("D3@Sketch447", b);
                 }
 
@@ -210,7 +251,7 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
             // Build new resized tiff file name
             string resizedTiff = Path.Combine(
                 Path.GetDirectoryName(outputTiffPath),
-                Path.GetFileNameWithoutExtension(outputTiffPath) + "_640_480.tif"
+                Path.GetFileNameWithoutExtension(outputTiffPath) + "_1280_1024.tif"
             );
 
             conf.ResizeImageSharpHighQuality(outputTiffPath, resizedTiff);

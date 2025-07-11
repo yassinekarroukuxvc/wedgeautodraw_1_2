@@ -1,11 +1,14 @@
 ﻿using System.Globalization;
-using System.Text.RegularExpressions;
 using System.Text;
+using System.Text.RegularExpressions;
 using wedgeautodraw_1_2.Core.Enums;
 using wedgeautodraw_1_2.Core.Models;
 using wedgeautodraw_1_2.Infrastructure.Helpers;
 using SolidWorks.Interop.sldworks;
 using SolidWorks.Interop.swconst;
+using System.IO;
+using System.Linq;
+using System.Collections.Generic;
 
 public static class EquationFileUpdater
 {
@@ -26,6 +29,8 @@ public static class EquationFileUpdater
 
         var dimensionRegex = new Regex("^\"(?<key>[^\"]+)\"\\s*=.*$", RegexOptions.Compiled);
 
+        bool overlayCalibrationUpdated = false;
+
         foreach (var line in originalLines)
         {
             var match = dimensionRegex.Match(line);
@@ -37,6 +42,14 @@ public static class EquationFileUpdater
                 {
                     outputLines.Add("\"EngravingStart\" = \"TL\" * 0.45");
                     updatedKeys.Add("EngravingStart");
+                    continue;
+                }
+
+                if (key == "overlay_calibration1")
+                {
+                    string overlayStr = wedge.OverlayScaling.ToString("0.#####", CultureInfo.InvariantCulture);
+                    outputLines.Add($"\"overlay_calibration1\" = {overlayStr}");
+                    overlayCalibrationUpdated = true;
                     continue;
                 }
 
@@ -60,7 +73,6 @@ public static class EquationFileUpdater
             .Select(kvp => kvp.Key)
             .ToList();
 
-        // Add spacing before/after new entries
         if (missingKeys.Count > 0)
         {
             outputLines.Add(""); // one empty line before
@@ -73,6 +85,12 @@ public static class EquationFileUpdater
                 outputLines.Add($"\"{key}\"={valueStr}{unitStr}");
                 outputLines.Add(""); // one empty line after
             }
+        }
+
+        if (!overlayCalibrationUpdated)
+        {
+            string overlayStr = wedge.OverlayScaling.ToString("0.#####", CultureInfo.InvariantCulture);
+            outputLines.Add($"\"overlay_calibration1\" = {overlayStr}");
         }
 
         try
@@ -100,6 +118,7 @@ public static class EquationFileUpdater
         }
         return reader.CurrentEncoding;
     }
+
     public static void EnsureAllEquationsExist(ModelDoc2 model, WedgeData wedge)
     {
         var mgr = (EquationMgr)model.GetEquationMgr();
@@ -113,7 +132,6 @@ public static class EquationFileUpdater
             existingKeys.Add(key);
         }
 
-        // Clear selection and force rebuild before adding
         model.ClearSelection2(true);
         model.EditRebuild3();
 
@@ -124,7 +142,6 @@ public static class EquationFileUpdater
 
             double value = kvp.Value.GetValue(Unit.Millimeter);
 
-            // Use unit only for known angle types — otherwise omit to prevent Add3 failures
             string equation = key switch
             {
                 "ISA" or "FA" or "BA" or "GA" or "FL_groove_angle" =>
@@ -134,11 +151,11 @@ public static class EquationFileUpdater
             };
 
             int idx = mgr.Add3(
-                -1,                            // Append at end
-                equation,                      // Full equation string
-                true,                          // Solve immediately
+                -1,
+                equation,
+                true,
                 (int)swInConfigurationOpts_e.swThisConfiguration,
-                null                           // Current configuration
+                null
             );
 
             if (idx >= 0)
@@ -147,8 +164,6 @@ public static class EquationFileUpdater
                 Logger.Warn($"[EquationMgr] Add3 failed for: {equation} (key: {key})");
         }
 
-        model.EditRebuild3(); // Final rebuild to apply changes
+        model.EditRebuild3();
     }
-
-
 }

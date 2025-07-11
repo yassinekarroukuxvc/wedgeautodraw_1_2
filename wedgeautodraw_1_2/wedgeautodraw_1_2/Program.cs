@@ -19,7 +19,7 @@ namespace wedgeautodraw_1_2
     {
         // === CONFIGURATION ===
         private const bool UseSections = false; // If true, run only one section; if false, run all
-        private const int SectionToRun = 3;     // 1, 2, or 3 when UseSections is true
+        private const int SectionToRun = 1;     // 1, 2, or 3 when UseSections is true
 
         static void Main(string[] args)
         {
@@ -55,11 +55,14 @@ namespace wedgeautodraw_1_2
                 "2029055","2029057","2029063","2029269","2028243","2028242","2029737","2029606","2029739","2029738",
                 "2028715","2028717","2030607","2024887","2026989","2031630"
             };*/
+            /* List<string> selectedWedgeIds = new List<string> {
+                 "22000175","22000113","2032088",
+                 "2031500","2032444","2028343","2028245","2032277","2033252",
+                 "2033624","2028342","2028343","2028245","2031499","2036477",
+                 "2036482","2025257"
+             };*/
             List<string> selectedWedgeIds = new List<string> {
-                "22000175","22000113","2032088",
-                "2031500","2032444","2028343","2028245","2032277","2033252",
-                "2033624","2028342","2028343","2028245","2031499","2036477",
-                "2036482","2025257"
+                "22000175","2022599","2026582","2026989","2030604","2026989",
             };
             var excelLoader = new ExcelWedgeDataLoader(excelPath);
             var allEntries = excelLoader.LoadAllEntries();
@@ -108,7 +111,7 @@ namespace wedgeautodraw_1_2
                     ? wedge.Metadata["drawing_number"].ToString()
                     : $"Wedge_{Guid.NewGuid()}";
 
-                DrawingType selectedType = DrawingType.Production;
+                DrawingType selectedType = DrawingType.Overlay;
 
                 string baseOutputDir = @"D:\Generated";
                 string outputDir = Path.Combine(baseOutputDir, wedgeId);

@@ -126,7 +126,7 @@ public class ViewPositionManager
                 // --- DETAIL / SECTION VIEW LOGIC ---
                 double targetCenterX = isDetailView ? sheetWidth - 0.005 : sheetWidth / 2.0;
 
-                const double safetyMargin = 0.065;
+                const double safetyMargin = 0.140;
                 double visibleLength_m = (sheetWidth / 2.0 - safetyMargin) / scale;
                 visibleLength_m += 0.000025;
                 double shiftLeft = visibleLength_m / 2.0 * scale;

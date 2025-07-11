@@ -31,4 +31,6 @@ public interface IViewService
     public double GetSketchDimensionValue(string dimensionName);
     public bool SetDetailViewDynamicBreakline(NamedDimensionValues wedgeDimensions);
     public bool SetFrontSideViewBreakline(NamedDimensionValues wedgeDimensions);
+    public bool HideLayer(string layerName);
+    public void DeleteOverlaySideView2(NamedDimensionValues wedgeDimensions);
 }

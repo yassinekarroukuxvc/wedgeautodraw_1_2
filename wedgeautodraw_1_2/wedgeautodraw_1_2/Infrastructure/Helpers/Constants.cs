@@ -15,6 +15,7 @@ public static class Constants
     public const string OverlaySideView = "Drawing View1";
     public const string OverlayTopView = "Drawing View3";
     public const string OverlayFrontView = "Drawing View2";
+    public const string OverlaySideView2 = "Drawing View7";
     //public const string OverlayDetailView2 = "Detail View P (100 : 1)";
     /// </summary>
     // Sketch names

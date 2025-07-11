@@ -430,38 +430,43 @@ public static class DimensionRules
             ["ISA"] = new DimensionLayoutRule
             {
                 BasedOnView = Constants.OverlayDetailView,
-                CalculatePosition = (wedge, drawing) => new[] { 310.77, 148.33 }
+                CalculatePosition = (wedge, drawing) => new[] { 393.7, 148.33 }
             },
 
             ["GA"] = new()
             {
                 BasedOnView = Constants.OverlayDetailView,
-                CalculatePosition = (wedge, drawing) => new[] { 262.58, 148.33 } // Replace with actual logic
+                CalculatePosition = (wedge, drawing) => new[] { 337.82, 148.33 } // Replace with actual logic
             },
             ["VW"] = new()
             {
-                BasedOnView = Constants.FrontView,
-                CalculatePosition = (wedge, drawing) => new[] { 50.0, 50.0 } // Replace with actual logic
+                BasedOnView = Constants.OverlaySideView2,
+                CalculatePosition = (wedge, drawing) => new[] { 196.2244, 75.9968 } // Replace with actual logic
+            },
+            ["VR"] = new()
+            {
+                BasedOnView = Constants.OverlaySideView2,
+                CalculatePosition = (wedge, drawing) => new[] { 247.0912, 54.2798 } // Replace with actual logic
             },
             ["E"] = new()
             {
-                BasedOnView = Constants.SideView,
-                CalculatePosition = (wedge, drawing) => new[] { 60.0, 60.0 } // Replace with actual logic
+                BasedOnView = Constants.OverlaySideView,
+                CalculatePosition = (wedge, drawing) => new[] { 232.9086, 24.3078 } // Replace with actual logic
             },
             ["X"] = new()
             {
-                BasedOnView = Constants.SideView,
-                CalculatePosition = (wedge, drawing) => new[] { 70.0, 70.0 } // Replace with actual logic
+                BasedOnView = Constants.OverlaySideView,
+                CalculatePosition = (wedge, drawing) => new[] { 189.8048, 16.9926 } // Replace with actual logic
             },
             ["TDF"] = new()
             {
                 BasedOnView = Constants.OverlayTopView,
-                CalculatePosition = (wedge, drawing) => new[] { 408.0, 18.5 } // Replace with actual logic
+                CalculatePosition = (wedge, drawing) => new[] { 408.0, 12.5062 } // Replace with actual logic
             },
             ["FX"] = new()
             {
                 BasedOnView = Constants.OverlaySideView,
-                CalculatePosition = (wedge, drawing) => new[] { 172.0, 22.0} // Replace with actual logic
+                CalculatePosition = (wedge, drawing) => new[] { 200.9902, 48.514 } // Replace with actual logic
             },
             ["D3"] = new()
             {
@@ -471,17 +476,12 @@ public static class DimensionRules
             ["FA"] = new()
             {
                 BasedOnView = Constants.OverlaySideView,
-                CalculatePosition = (wedge, drawing) => new[] { 370.332, 60.0 } // Replace with actual logic
+                CalculatePosition = (wedge, drawing) => new[] { 324.2818, 43.307 } // Replace with actual logic
             },
             ["BA"] = new()
             {
                 BasedOnView = Constants.OverlaySideView,
-                CalculatePosition = (wedge, drawing) => new[] { 345.0, 26.41 } // Replace with actual logic
-            },
-            ["E"] = new()
-            {
-                BasedOnView = Constants.OverlaySideView,
-                CalculatePosition = (wedge, drawing) => new[] { 177.8, 49.21 } // Replace with actual logic
+                CalculatePosition = (wedge, drawing) => new[] { 329.438, 23.7998 } // Replace with actual logic
             },
         };
     }

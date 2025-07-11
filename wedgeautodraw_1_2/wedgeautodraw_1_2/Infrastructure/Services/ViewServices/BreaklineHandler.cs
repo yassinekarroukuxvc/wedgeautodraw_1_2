@@ -116,13 +116,13 @@ public class BreaklineHandler
 
             double scale = _swView.ScaleDecimal;
             double tl = wedgeDimensions["TL"].GetValue(Unit.Meter);
-
+            double e = wedgeDimensions["E"].GetValue(Unit.Meter);
             var sheet = (Sheet)drawingDoc.GetCurrentSheet();
             double sheetWidth = 0, sheetHeight = 0;
             sheet.GetSize(ref sheetWidth, ref sheetHeight);
 
 
-            double safetyMargin = 0.065;
+            double safetyMargin = 0.140;
             double visibleLength_m = (sheetWidth / 2.0 - safetyMargin) / scale;
 
             double lower = visibleLength_m * scale;
@@ -132,6 +132,10 @@ public class BreaklineHandler
                 lower - scale * tl / 2,
                 upper - scale * tl / 2
             };
+            /*double[] pos = {
+                -tl/2 * scale,
+                -tl/2 * scale
+            };*/
 
             bool result = breakLine.SetPosition(pos[0], pos[1]);
 

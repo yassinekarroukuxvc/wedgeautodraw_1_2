@@ -309,4 +309,93 @@ public class ViewService : IViewService
         => _breaklineHandler.SetDetailViewDynamicBreakline(wedgeDimensions);
     public bool SetFrontSideViewBreakline(NamedDimensionValues wedgeDimensions)
         => _breaklineHandler.SetFrontSideViewBreakline(wedgeDimensions);
+
+    public bool HideLayer(string layerName)
+    {
+        if (_model == null)
+        {
+            Logger.Warn("Cannot hide layer. Model is null.");
+            return false;
+        }
+
+        try
+        {
+            var layerMgrObj = _model.GetLayerManager();
+            if (layerMgrObj == null)
+            {
+                Logger.Warn("Layer manager not available in this document.");
+                return false;
+            }
+
+            var layerMgr = (ILayerMgr)layerMgrObj;
+            var layerObj = layerMgr.GetLayer(layerName);
+
+            if (layerObj == null)
+            {
+                Logger.Warn($"Layer '{layerName}' not found.");
+                return false;
+            }
+
+            var layer = (ILayer)layerObj;
+
+            // Set layer visibility to false
+            layer.Visible = false;
+
+            Logger.Success($"Layer '{layerName}' was successfully hidden.");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Exception while hiding layer '{layerName}': {ex.Message}");
+            return false;
+        }
+    }
+
+    public void DeleteOverlaySideView2(NamedDimensionValues wedgeDimensions)
+    {
+        if (_model == null || _drawingDoc == null)
+        {
+            Logger.Warn("Cannot delete view. Model or DrawingDoc is null.");
+            return;
+        }
+
+        try
+        {
+            double vw = wedgeDimensions["VW"].GetValue(Unit.Meter);
+            double td = wedgeDimensions["TD"].GetValue(Unit.Meter);
+            
+            string sideViewName = Constants.OverlaySideView2;
+
+            if (vw == 0)
+            {
+                // Select the view to delete
+                bool selected = _model.Extension.SelectByID2(sideViewName, "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
+                if (!selected)
+                {
+                    Logger.Warn($"Failed to select view for deletion: {sideViewName}");
+                    return;
+                }
+
+                // Delete the view
+                bool deleted = _model.Extension.DeleteSelection2((int)swDeleteSelectionOptions_e.swDelete_Absorbed);
+                if (deleted)
+                {
+                    Logger.Success($"Deleted view '{sideViewName}' because VW >= TD (VW = {vw}, TD = {td}).");
+                }
+                else
+                {
+                    Logger.Warn($"Failed to delete view '{sideViewName}'.");
+                }
+            }
+            else
+            {
+                Logger.Info($"Condition not met. View '{sideViewName}' kept (VW = {vw}, TD = {td}).");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Exception while deleting view: {ex.Message}");
+        }
+    }
+
 }

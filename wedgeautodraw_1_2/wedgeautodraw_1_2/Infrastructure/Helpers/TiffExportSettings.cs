@@ -318,8 +318,8 @@ public class TiffExportSettings
         {
             using (var image = SixLabors.ImageSharp.Image.Load<Rgba32>(inputPath))
             {
-                const int targetWidth = 640;
-                const int targetHeight = 480;
+                const int targetWidth = 1280;
+                const int targetHeight = 1024;
                 const int dpi = 300;
 
                 image.Mutate(ctx =>
@@ -361,7 +361,6 @@ public class TiffExportSettings
             Logger.Error($"[ImageSharp] Resize failed: {ex.Message}");
         }
     }
-
 
     public void ResizeTiffUsingTiffLibrary(string inputPath, string outputPath)
     {
