@@ -69,4 +69,8 @@ public class ConfigLoader
 
         return false;
     }
+    public bool HasKey(string key)
+    {
+        return _config.ContainsKey(key);
+    }
 }

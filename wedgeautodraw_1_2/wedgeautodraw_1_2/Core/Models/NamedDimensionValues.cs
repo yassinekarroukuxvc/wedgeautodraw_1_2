@@ -20,5 +20,9 @@ public class NamedDimensionValues
     {
         return _data.TryGetValue(key, out value);
     }
+    public DataStorage GetOrDefault(string key)
+    {
+        return _data.ContainsKey(key) ? _data[key] : null;
+    }
 
 }

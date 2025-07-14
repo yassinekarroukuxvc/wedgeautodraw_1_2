@@ -7,148 +7,150 @@ using System.Text.Json.Serialization;
 using wedgeautodraw_1_2.Core.Models;
 using wedgeautodraw_1_2.Core.Enums;
 
-namespace wedgeautodraw_1_2.Infrastructure.Helpers;
-
-public class DrawingRuleEngine
+namespace wedgeautodraw_1_2.Infrastructure.Helpers
 {
-    private class RuleSet
+    public class DrawingRuleEngine
     {
-        [JsonPropertyName("conditions")]
-        public List<RuleCondition> Conditions { get; set; } = new();
-    }
-
-    private class RuleCondition
-    {
-        [JsonPropertyName("name")]
-        public string Name { get; set; }
-
-        [JsonPropertyName("description")]
-        public string Description { get; set; }
-
-        [JsonPropertyName("if")]
-        public ConditionBlock If { get; set; }
-
-        [JsonPropertyName("update")]
-        public UpdateBlock Update { get; set; }
-    }
-
-    private class ConditionBlock
-    {
-        [JsonPropertyName("dimension")]
-        public string Dimension { get; set; }
-
-        [JsonPropertyName("operator")]
-        public string Operator { get; set; }
-
-        [JsonPropertyName("value")]
-        public double Value { get; set; }
-
-        [JsonPropertyName("unit")]
-        public string Unit { get; set; }
-    }
-
-    private class UpdateBlock
-    {
-        [JsonPropertyName("view_scales")]
-        public Dictionary<string, double> ViewScales { get; set; }
-
-        [JsonPropertyName("view_positions")]
-        public Dictionary<string, OffsetUpdate> ViewPositions { get; set; }
-    }
-
-    private class OffsetUpdate
-    {
-        [JsonPropertyName("dx")]
-        public double Dx { get; set; }
-
-        [JsonPropertyName("dy")]
-        public double Dy { get; set; }
-    }
-
-    private readonly RuleSet _rules;
-
-    public DrawingRuleEngine(string jsonRuleFilePath)
-    {
-        if (!File.Exists(jsonRuleFilePath))
-            throw new FileNotFoundException("Rules file not found", jsonRuleFilePath);
-
-        var json = File.ReadAllText(jsonRuleFilePath);
-        _rules = JsonSerializer.Deserialize<RuleSet>(json, new JsonSerializerOptions
+        private class RuleSet
         {
-            PropertyNameCaseInsensitive = true
-        });
-    }
+            [JsonPropertyName("conditions")]
+            public List<RuleCondition> Conditions { get; set; } = new();
+        }
 
-    public void Apply(DrawingData drawingData, WedgeData wedgeData)
-    {
-        foreach (var rule in _rules.Conditions)
+        private class RuleCondition
         {
-            if (!wedgeData.Dimensions.TryGet(rule.If.Dimension, out var dim)) continue;
+            [JsonPropertyName("name")]
+            public string Name { get; set; }
 
-            double actual = dim.GetValue(ParseUnit(rule.If.Unit));
-            double expected = rule.If.Value;
+            [JsonPropertyName("description")]
+            public string Description { get; set; }
 
-            bool conditionMet = rule.If.Operator switch
+            [JsonPropertyName("drawing_type")]
+            public string DrawingType { get; set; }
+
+            [JsonPropertyName("if")]
+            public ConditionBlock If { get; set; }
+
+            [JsonPropertyName("update")]
+            public UpdateBlock Update { get; set; }
+        }
+
+        private class ConditionBlock
+        {
+            [JsonPropertyName("dimension")]
+            public string Dimension { get; set; }
+
+            [JsonPropertyName("operator")]
+            public string Operator { get; set; }
+
+            [JsonPropertyName("value")]
+            public double Value { get; set; }
+
+            [JsonPropertyName("unit")]
+            public string Unit { get; set; }
+        }
+
+        private class UpdateBlock
+        {
+            [JsonPropertyName("view_scales")]
+            public Dictionary<string, double> ViewScales { get; set; }
+
+            [JsonPropertyName("view_positions")]
+            public Dictionary<string, OffsetUpdate> ViewPositions { get; set; }
+        }
+
+        private class OffsetUpdate
+        {
+            [JsonPropertyName("dx")]
+            public double Dx { get; set; }
+
+            [JsonPropertyName("dy")]
+            public double Dy { get; set; }
+        }
+
+        private readonly RuleSet _rules;
+
+        public DrawingRuleEngine(string jsonRuleFilePath)
+        {
+            if (!File.Exists(jsonRuleFilePath))
+                throw new FileNotFoundException("Rules file not found", jsonRuleFilePath);
+
+            var json = File.ReadAllText(jsonRuleFilePath);
+            _rules = JsonSerializer.Deserialize<RuleSet>(json, new JsonSerializerOptions
             {
-                "<" => actual < expected,
-                ">" => actual > expected,
-                "<=" => actual <= expected,
-                ">=" => actual >= expected,
-                "==" => Math.Abs(actual - expected) < 0.0001,
-                _ => false
-            };
+                PropertyNameCaseInsensitive = true
+            });
+        }
 
-            if (!conditionMet) continue;
-
-            if (rule.Update.ViewScales != null)
+        public void Apply(DrawingData drawingData, WedgeData wedgeData, DrawingType drawingType)
+        {
+            foreach (var rule in _rules.Conditions)
             {
-                foreach (var kvp in rule.Update.ViewScales)
-                {
-                    drawingData.ViewScales[kvp.Key] = new DataStorage(kvp.Value);
-                }
+                if (!string.Equals(rule.DrawingType, drawingType.ToString(), StringComparison.OrdinalIgnoreCase))
+                    continue;
 
-                // 👇 Automatically update TitleBlockInfo for Front/Side/Top scale
-                var frontKeys = new[] { "Front_view", "Side_view", "Top_view" };
-                bool hasFST = rule.Update.ViewScales.Keys.Any(k => frontKeys.Contains(k));
+                if (!wedgeData.Dimensions.TryGet(rule.If.Dimension, out var dim))
+                    continue;
 
-                if (hasFST)
+                double actual = dim.GetValue(ParseUnit(rule.If.Unit));
+                double expected = rule.If.Value;
+
+                bool conditionMet = rule.If.Operator switch
                 {
-                    // Use Front_view as representative (assumes they share same scale)
-                    if (drawingData.ViewScales.TryGet("Front_view", out var scaleData))
+                    "<" => actual < expected,
+                    ">" => actual > expected,
+                    "<=" => actual <= expected,
+                    ">=" => actual >= expected,
+                    "==" => Math.Abs(actual - expected) < 0.0001,
+                    _ => false
+                };
+
+                if (!conditionMet) continue;
+
+                if (rule.Update.ViewScales != null)
+                {
+                    foreach (var kvp in rule.Update.ViewScales)
                     {
-                        double scaleVal = scaleData.GetValue(Unit.Millimeter); // or Unit.None if applicable
+                        drawingData.ViewScales[kvp.Key] = new DataStorage(kvp.Value);
+                    }
+
+                    var frontKeys = new[] { "Front_view", "Side_view", "Top_view" };
+                    bool hasFST = rule.Update.ViewScales.Keys.Any(k => frontKeys.Contains(k));
+
+                    if (hasFST && drawingData.ViewScales.TryGet("Front_view", out var scaleData))
+                    {
+                        double scaleVal = scaleData.GetValue(Unit.Millimeter);
                         drawingData.TitleBlockInfo["SCALING_FRONT_SIDE_TOP_VIEW"] = scaleVal.ToString("0.###");
                     }
                 }
-            }
 
-
-            if (rule.Update.ViewPositions != null)
-            {
-                foreach (var kvp in rule.Update.ViewPositions)
+                if (rule.Update.ViewPositions != null)
                 {
-                    var current = drawingData.ViewPositions.ContainsKey(kvp.Key)
-                        ? drawingData.ViewPositions[kvp.Key].GetValues(Unit.Millimeter)
-                        : new[] { 0.0, 0.0 };
-
-                    drawingData.ViewPositions[kvp.Key] = new DataStorage(new[]
+                    foreach (var kvp in rule.Update.ViewPositions)
                     {
-                        current[0] + kvp.Value.Dx,
-                        current[1] + kvp.Value.Dy
-                    });
+                        var current = drawingData.ViewPositions.ContainsKey(kvp.Key)
+                            ? drawingData.ViewPositions[kvp.Key].GetValues(Unit.Millimeter)
+                            : new[] { 0.0, 0.0 };
+
+                        drawingData.ViewPositions[kvp.Key] = new DataStorage(new[]
+                        {
+                            current[0] + kvp.Value.Dx,
+                            current[1] + kvp.Value.Dy
+                        });
+                    }
                 }
             }
         }
-    }
 
-    private static Unit ParseUnit(string unit)
-    {
-        return unit.ToLowerInvariant() switch
+        private static Unit ParseUnit(string unit)
         {
-            "mm" or "millimeter" => Unit.Millimeter,
-            "m" or "meter" => Unit.Meter,
-            "deg" or "degree" => Unit.Degree,
-            _ => Unit.Millimeter
-        };
+            return unit.ToLowerInvariant() switch
+            {
+                "mm" or "millimeter" => Unit.Millimeter,
+                "m" or "meter" => Unit.Meter,
+                "deg" or "degree" => Unit.Degree,
+                _ => Unit.Millimeter
+            };
+        }
     }
 }

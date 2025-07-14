@@ -80,22 +80,13 @@ public class AnnotationManager
     {
         try
         {
-            if (_swView?.GetFirstGTOL() is not Gtol gtol)
-            {
-                Logger.Warn("No GTOL found in view.");
-                return false;
-            }
-
-            if (gtol.GetAnnotation() is not Annotation ann)
-            {
-                Logger.Warn("GTOL annotation is null.");
-                return false;
-            }
+            Gtol gtol = _swView?.GetFirstGTOL() as Gtol;
 
             if (!wedgeDimensions.TryGet("SymmetryTolerance", out var tolStorage))
             {
                 Logger.Warn("SymmetryTolerance not found.");
-                ann.Visible = (int)swAnnotationVisibilityState_e.swAnnotationHidden;
+                if (gtol != null && gtol.GetAnnotation() is Annotation annExisting)
+                    annExisting.Visible = (int)swAnnotationVisibilityState_e.swAnnotationHidden;
                 return false;
             }
 
@@ -103,7 +94,9 @@ public class AnnotationManager
 
             if (symTol == 0.0 || double.IsNaN(symTol))
             {
-                ann.Visible = (int)swAnnotationVisibilityState_e.swAnnotationHidden;
+                if (gtol != null && gtol.GetAnnotation() is Annotation annHide)
+                    annHide.Visible = (int)swAnnotationVisibilityState_e.swAnnotationHidden;
+
                 Logger.Info("GTOL annotation hidden due to zero tolerance.");
                 return true;
             }
@@ -115,7 +108,33 @@ public class AnnotationManager
             }
 
             var coords = dimAnn.Position.GetValues(Unit.Meter);
-            gtol.SetPosition(coords[0], coords[1], 0.0);
+
+            // If GTOL does not exist, create a new one
+            if (gtol == null)
+            {
+                /*Logger.Warn("No GTOL found in view. Creating new one.");
+                gtol = (Gtol)_model.InsertGtol();
+
+                if (gtol == null)
+                {
+                    Logger.Error("Failed to create new GTOL.");
+                    return false;
+                }
+
+                Annotation newAnn = (Annotation)gtol.GetAnnotation();
+                if (newAnn != null)
+                {
+                    newAnn.SetPosition(coords[0], coords[1], 0.0);
+                }*/
+            }
+            else
+            {
+                Annotation existingAnn = (Annotation)gtol.GetAnnotation();
+                if (existingAnn != null)
+                {
+                    existingAnn.SetPosition(coords[0], coords[1], 0.0);
+                }
+            }
 
             string tolInInch = Math.Round(symTol, 4).ToString("0.0000");
             string tolInMm = "[" + symTol.ToString("0.###") + "]";
