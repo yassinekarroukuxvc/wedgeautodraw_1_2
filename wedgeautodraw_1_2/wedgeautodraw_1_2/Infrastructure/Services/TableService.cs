@@ -70,18 +70,23 @@ public class TableService : ITableService
                 double upperTolMm = dataStorage.GetTolerance(Unit.Millimeter, "+");
                 double lowerTolMm = dataStorage.GetTolerance(Unit.Millimeter, "-");
 
-                if (!double.IsNaN(valueInch))
+                if (!double.IsNaN(valueInch) && Math.Abs(valueInch) > 1e-6) // <-- Exclude if value == 0
                 {
+                    string inchStr = TrimLeadingZero(valueInch.ToString("F4"));
+                    string mmStr = valueMm.ToString("F3");
+
+                    string tolStrInch = FormatTolerance(upperTolInch, lowerTolInch, 4, true);
+                    string tolStrMm = FormatTolerance(upperTolMm, lowerTolMm, 3, false);
+
                     bool isRef = IsRef(upperTolInch, lowerTolInch);
 
-                    string tolStrInch = isRef ? "" : FormatTolerance(upperTolInch, lowerTolInch, 4, true);
-                    string tolStrMm = isRef ? "" : FormatTolerance(upperTolMm, lowerTolMm, 4, false);
+                    if (isRef)
+                    {
+                        tolStrInch = "";
+                        tolStrMm = "";
+                    }
 
-                    // Format inch value without leading 0
-                    string inchStr = TrimLeadingZero(valueInch.ToString("F4"));
-
-                    string valStr = $"{key} = {inchStr} {tolStrInch} [{valueMm:F3} {tolStrMm}]";
-
+                    string valStr = $"{key}={inchStr}{tolStrInch} [{mmStr}{tolStrMm}]";
                     if (isRef)
                         valStr += " (REF)";
 
@@ -112,38 +117,35 @@ public class TableService : ITableService
 
     private string FormatTolerance(double upper, double lower, int precision, bool removeLeadingZero)
     {
-        bool upperValid = !double.IsNaN(upper);
-        bool lowerValid = !double.IsNaN(lower);
+        string fmt = "F" + precision;
 
-        string Format(double val) =>
-            Math.Abs(val) < 1e-6 ? "0" :
-            removeLeadingZero ? TrimLeadingZero(val.ToString($"F{precision}")) :
-            val.ToString($"F{precision}");
-
-        if (!upperValid && !lowerValid)
+        if (IsRef(upper, lower))
             return "";
 
-        bool upperZero = Math.Abs(upper) < 1e-6;
-        bool lowerZero = Math.Abs(lower) < 1e-6;
+        if (lower == 0 && upper > 0)
+            return $"±{FormatVal(upper, fmt, removeLeadingZero)}";
 
-        if (!upperZero && !lowerZero && Math.Abs(upper - lower) < 1e-6)
-            return $"±{Format(upper)}";
+        if (upper == 0 && lower > 0)
+            return $"±{FormatVal(lower, fmt, removeLeadingZero)}";
 
-        if (!upperZero && lowerZero)
-            return $"+{Format(upper)}/-0";
+        if (upper > 0 && lower > 0 && Math.Abs(upper - lower) < 1e-6)
+            return $"±{FormatVal(upper, fmt, removeLeadingZero)}";
 
-        if (upperZero && !lowerZero)
-            return $"+0/-{Format(lower)}";
-
-        if (!upperZero && !lowerZero)
-            return $"+{Format(upper)}/-{Format(lower)}";
+        if (upper > 0 && lower > 0)
+            return $"+{FormatVal(upper, fmt, removeLeadingZero)}/-{FormatVal(lower, fmt, removeLeadingZero)}";
 
         return "";
     }
 
+    private string FormatVal(double val, string fmt, bool removeLeadingZero)
+    {
+        string str = val.ToString(fmt);
+        return removeLeadingZero ? TrimLeadingZero(str) : str;
+    }
+
     private bool IsRef(double upper, double lower)
     {
-        return (double.IsNaN(upper) && double.IsNaN(lower)) ||
+        return (double.IsNaN(upper) || double.IsNaN(lower)) ||
                (Math.Abs(upper) < 1e-6 && Math.Abs(lower) < 1e-6);
     }
 
@@ -151,7 +153,6 @@ public class TableService : ITableService
     {
         return input.StartsWith("0.") ? input.Substring(1) : input;
     }
-
 
     public bool CreateLabelAsTable(DataStorage position, DrawingData drawingData)
     {
@@ -207,5 +208,4 @@ public class TableService : ITableService
 
         return true;
     }
-   
 }

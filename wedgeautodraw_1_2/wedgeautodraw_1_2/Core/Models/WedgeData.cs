@@ -10,6 +10,7 @@ public class WedgeData
     public string OverlayCalibration { get; set; } = string.Empty;
     public double OverlayScaling { get; set; } = 1.0;
     public string Coining { get; set; } = string.Empty;
+    public WedgeType Type { get; set; }
 
     public override string ToString()
     {
@@ -35,6 +36,7 @@ public class WedgeData
         result.AppendLine($"\nOverlay Calibration: {OverlayCalibration}");
         result.AppendLine($"\nOverlay Scaling: {OverlayScaling}");
         result.AppendLine($"\nCoining: {Coining}");
+        result.AppendLine($"\nWedge Type: {Type}");
         return result.ToString();
     }
 

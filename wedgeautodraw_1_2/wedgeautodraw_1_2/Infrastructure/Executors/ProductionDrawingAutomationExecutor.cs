@@ -1,10 +1,12 @@
 ﻿using SolidWorks.Interop.sldworks;
+using SolidWorks.Interop.swconst;
 using wedgeautodraw_1_2.Core.Enums;
 using wedgeautodraw_1_2.Core.Interfaces;
 using wedgeautodraw_1_2.Core.Models;
 using wedgeautodraw_1_2.Infrastructure.Factories;
 using wedgeautodraw_1_2.Infrastructure.Helpers;
 using wedgeautodraw_1_2.Infrastructure.Services;
+using wedgeautodraw_1_2.Infrastructure.Services.ViewServices;
 
 namespace wedgeautodraw_1_2.Infrastructure.Executors
 {
@@ -28,6 +30,75 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
             var drawingService = InitializeDrawing(swApp, partPath, drawingPath, modPartPath, modDrawingPath, drawingData);
             CreateAllStandardViews(drawingService, drawingData, wedgeData);
             string sectionViewName = CreateSectionView(drawingService, drawingData, wedgeData);
+
+            /*  ==== TEST: Insert Front View using ModelViewService ====
+            var modelDoc = drawingService.GetModel();
+            if (modelDoc != null)
+            {
+                var modelViewService = new ModelViewService(modelDoc);
+                var iscreated = modelViewService.InsertStandardView(partPath, "*Front");
+                // We explicitly target Drawing View2
+                string viewToBreak = "Drawing View2";
+
+                Logger.Info($"Targeting view '{viewToBreak}' for break operation.");
+
+                // Get SelectionMgr and View object to fetch outline for positions
+                if (!modelDoc.Extension.SelectByID2(viewToBreak, "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0))
+                {
+                    Logger.Warn($"Failed to select view '{viewToBreak}' for outline calculation.");
+                }
+                else
+                {
+                    var selectionMgr = (SelectionMgr)modelDoc.SelectionManager;
+                    var swView = (View)selectionMgr.GetSelectedObject6(1, -1);
+
+                    if (swView != null)
+                    {
+                        double[] outline = (double[])swView.GetOutline();
+                        if (outline != null && outline.Length >= 4)
+                        {
+                            // Calculate X positions for a vertical break
+                            double minX = outline[0];
+                            double maxX = outline[2];
+                            double width = maxX - minX;
+
+                            double breakStart = minX + width * 0.3; // 30%
+                            double breakEnd = minX + width * 0.7; // 70%
+
+                            // Call your CreateBrokenView method, which expects breakLine1Pos and breakLine2Pos
+                            bool breakResult = modelViewService.CreateBrokenView(
+                                viewToBreak,
+                                breakStart,
+                                breakEnd,
+                                0.01, // Gap size
+                                swBreakLineOrientation_e.swBreakLineVertical,
+                                swBreakLineStyle_e.swBreakLine_Jagged
+                            );
+
+                            if (breakResult)
+                                Logger.Success($"Broken view created successfully for '{viewToBreak}'.");
+                            else
+                                Logger.Error($"Failed to create broken view for '{viewToBreak}'.");
+                        }
+                        else
+                        {
+                            Logger.Warn("Could not get valid outline from the view.");
+                        }
+                    }
+                    else
+                    {
+                        Logger.Warn($"Could not get View object for '{viewToBreak}'.");
+                    }
+                }
+            }
+            else
+            {
+                Logger.Warn("No active ModelDoc2 found. Break view operation skipped.");
+            }
+            */
+            // ========================================================
+
+
             FinalizeDrawing(drawingService, sectionViewName, drawingData, wedgeData, partService, swApp, outputPdfPath);
 
             Logger.Success("Production drawing automation completed.");
@@ -237,6 +308,7 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
                 { "B", "SelectByName" },
                 { "W", "SelectByName" },
                 { "GD", "SelectByName" },
+                { "D1", "SelectByName" },
                 { "GR", "SelectByName" }
             }, drawData.DrawingType);
         }

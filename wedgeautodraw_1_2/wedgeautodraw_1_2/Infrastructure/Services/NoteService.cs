@@ -44,7 +44,7 @@ public class NoteService : INoteService
                     double upperTolInch = dataStorage.GetTolerance(Unit.Inch, "+");
                     double lowerTolInch = dataStorage.GetTolerance(Unit.Inch, "-");
 
-                    if (!double.IsNaN(valueInch))
+                    if (!double.IsNaN(valueInch) && Math.Abs(valueInch) > 1e-6) // <-- skip if value is 0
                     {
                         string inchStr = TrimLeadingZero(valueInch.ToString("F5"));
                         string tolStrInch = FormatTolerance(upperTolInch, lowerTolInch, 4, true);
