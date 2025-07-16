@@ -298,13 +298,6 @@ public class ViewService : IViewService
         }
     }
 
-    public void PositionSideViewHorizontally(double tlInMeters)
-        => _viewPositionManager.PositionSideViewHorizontally(tlInMeters);
-    public bool CreateCenterlineAtViewCenter(bool isVertical = true, double lengthMm = 100.0)
-        => _centerMarkLineManager.CreateCenterlineAtViewCenter(isVertical, lengthMm);
-    public void AlignTopViewNextToSideView(IView sideView, IView topView, double offsetMm = 30.0)
-        => _viewPositionManager.AlignTopViewNextToSideView(sideView, topView, offsetMm);
-
     public bool SetDetailViewDynamicBreakline(NamedDimensionValues wedgeDimensions)
         => _breaklineHandler.SetDetailViewDynamicBreakline(wedgeDimensions);
     public bool SetFrontSideViewBreakline(NamedDimensionValues wedgeDimensions)

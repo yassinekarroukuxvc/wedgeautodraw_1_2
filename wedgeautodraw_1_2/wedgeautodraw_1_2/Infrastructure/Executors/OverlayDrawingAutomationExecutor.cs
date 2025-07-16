@@ -84,14 +84,12 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
                 var viewFactory = new StandardViewFactory(model);
                 var view = viewFactory.CreateView(viewName);
 
+                var dimensionKeysForView = GetDimensionKeysForView(wedgeData.WedgeType, viewName);
+
                 if (viewName == Constants.OverlaySideView2)
                 {
                     view.DeleteOverlaySideView2(wedgeData.Dimensions);
-                    view.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, new()
-                    {
-                        { "VR", "SelectByName" },
-                        { "VW", "SelectByName" },
-                    }, drawData.DrawingType);
+                    view.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, dimensionKeysForView, drawData.DrawingType);
                 }
 
                 if (viewName == Constants.OverlayDetailView || viewName == Constants.OverlaySectionView)
@@ -103,15 +101,7 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
                 {
                     view.SetViewScale(topSideScale);
                     view.AlignViewHorizontally(false, tlInMeters: tl);
-                    view.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, new()
-                    {
-                        { "FX", "SelectByName" },
-                        { "D3", "SelectByName" },
-                        { "FA", "SelectByName" },
-                        { "BA", "SelectByName" },
-                        { "E", "SelectByName" },
-                        { "X", "SelectByName" },
-                    }, drawData.DrawingType);
+                    view.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, dimensionKeysForView, drawData.DrawingType);
 
                     view.SetSketchDimensionValue("D1@Sketch33", 0.19 / topSideScale);
                 }
@@ -120,10 +110,7 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
                 {
                     view.SetViewScale(drawData.ViewScales[Constants.TopView].GetValue(Unit.Millimeter));
                     view.SetViewPosition(drawData.ViewPositions[Constants.TopView]);
-                    view.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, new()
-                    {
-                        { "TDF", "SelectByName" },
-                    }, drawData.DrawingType);
+                    view.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, dimensionKeysForView, drawData.DrawingType);
 
                     view.SetSketchDimensionValue("D2@Sketch33", 0.006 / topSideScale);
                     view.SetSketchDimensionValue("D3@Sketch33", 0.015 / topSideScale);
@@ -145,6 +132,92 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
             }
+        }
+
+        private static Dictionary<string, string> GetDimensionKeysForView(WedgeType wedgeType, string viewName)
+        {
+            var keys = new Dictionary<string, string>();
+
+            if (wedgeType == WedgeType.CKVD)
+            {
+                if (viewName == Constants.OverlaySideView)
+                {
+                    keys = new()
+                    {
+                        { "FX", "SelectByName" },
+                        { "D3", "SelectByName" },
+                        { "FA", "SelectByName" },
+                        { "BA", "SelectByName" },
+                        { "E", "SelectByName" },
+                        { "X", "SelectByName" },
+                    };
+                }
+                else if (viewName == Constants.OverlayTopView)
+                {
+                    keys = new()
+                    {
+                        { "TDF", "SelectByName" },
+                    };
+                }
+                else if (viewName == Constants.OverlaySideView2)
+                {
+                    keys = new()
+                    {
+                        { "VR", "SelectByName" },
+                        { "VW", "SelectByName" },
+                    };
+                }
+                else if (viewName == Constants.OverlayDetailView)
+                {
+                    keys = new()
+                    {
+                        { "ISA", "SelectByName" },
+                        { "GA", "SelectByName" },
+                    };
+                }
+            }
+            else if (wedgeType == WedgeType.COB)
+            {
+                if (viewName == Constants.OverlaySideView)
+                {
+                    keys = new()
+                    {
+                        { "ISA", "SelectByName" },
+                        { "BA", "SelectByName" },
+                        { "RA", "SelectByName" },
+                        { "FD", "SelectByName" },
+                        { "E", "SelectByName" },
+                        { "X", "SelectByName" },
+                    };
+                }
+                else if (viewName == Constants.OverlayTopView)
+                {
+                    keys = new()
+                    {
+                        { "TDF", "SelectByName" },
+                        { "TD", "SelectByName" },
+                    };
+                }
+                else if (viewName == Constants.OverlayDetailView)
+                {
+                    keys = new()
+                    {
+                        { "ISA", "SelectByName" },
+                        { "GA", "SelectByName" },
+                        { "FRO", "SelectByName" },
+                    };
+                }
+                else if (viewName == Constants.OverlaySideView2)
+                {
+                    keys = new()
+                    {
+                        { "VR", "SelectByName" },
+                        { "VW", "SelectByName" },
+                    };
+                }
+            }
+
+            return keys;
         }
 
         private static void ApplyOverlaySectionViewSettings(IViewService view, WedgeData wedgeData, DrawingData drawData)
@@ -172,11 +245,9 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
             view.CenterViewVertically();
             view.SetBreakLineGap(0.000025);
             view.AlignViewHorizontally(true, tlInMeters: 0);
-            view.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, new()
-            {
-                { "ISA", "SelectByName" },
-                { "GA", "SelectByName" },
-            }, drawData.DrawingType);
+
+            var dimensionKeysForDetailView = GetDimensionKeysForView(wedgeData.WedgeType, Constants.OverlayDetailView);
+            view.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, dimensionKeysForDetailView, drawData.DrawingType);
 
             view.SetSketchDimensionValue("D1@Sketch447", W_upperTol);
             view.SetSketchDimensionValue("D2@Sketch447", W_lowerTol);

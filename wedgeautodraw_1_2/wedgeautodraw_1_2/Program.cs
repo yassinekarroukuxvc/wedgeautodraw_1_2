@@ -27,8 +27,11 @@ namespace wedgeautodraw_1_2
             Stopwatch stopwatch = Stopwatch.StartNew();
             ProcessHelper.KillAllSolidWorksProcesses();
 
-            var paths = PrepareTemplatePaths();
-            var excelLoader = new ExcelWedgeDataLoader(paths.ExcelPath);
+            // === Select wedge type ===
+            WedgeType selectedWedgeType = WedgeType.COB;
+            var paths = PrepareTemplatePaths(selectedWedgeType);
+
+            var excelLoader = new ExcelWedgeDataLoader(paths.ExcelPath, selectedWedgeType);
             var allEntries = excelLoader.LoadAllEntries();
 
             var filteredEntries = FilterEntries(allEntries, runAll: true);
@@ -39,7 +42,7 @@ namespace wedgeautodraw_1_2
             ISolidWorksService swService = new SolidWorksService();
             SldWorks swApp = swService.GetApplication();
 
-            ProcessEntries(entriesToProcess, swApp, paths);
+            ProcessEntries(entriesToProcess, swApp, paths, selectedWedgeType);
 
             stopwatch.Stop();
             swService.CloseApplication();
@@ -47,48 +50,47 @@ namespace wedgeautodraw_1_2
             Console.WriteLine($"=== DONE: Total Execution Time = {stopwatch.Elapsed.TotalSeconds:F2} seconds ===");
         }
 
-        private static (string ProdPartTemplate, string ProdDrawingTemplate, string OverlayPartTemplate, string OverlayDrawingTemplate, string ExcelPath, string EquationPath, string ConfigPath, string RulePath) PrepareTemplatePaths()
+        private static (string ProdPartTemplate, string ProdDrawingTemplate, string OverlayPartTemplate, string OverlayDrawingTemplate, string ExcelPath, string EquationPath, string ConfigPath, string RulePath) PrepareTemplatePaths(WedgeType wedgeType)
         {
             string projectRoot = Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).Parent.Parent.Parent.FullName;
             string resourcePath = Path.Combine(projectRoot, "Resources", "Templates");
 
-            // === Keep these commented paths for testing ===
-            //string prodPartTemplate = Path.Combine(resourcePath, "wedge.SLDPRT");
-            // string prodDrawingTemplate = Path.Combine(resourcePath, "wedge.SLDDRW");
-            // prodPartTemplate = @"C:\Users\mounir\source\repos\Wedge-Autodraw\LegacyCode\C# Code\Local\CKVD_SolidWorks_Prototyp\SwApiTest\SldPartData\wedge\wedge.SLDPRT";
-            // prodDrawingTemplate = @"C:\Users\mounir\source\repos\Wedge-Autodraw\LegacyCode\C# Code\Local\CKVD_SolidWorks_Prototyp\SwApiTest\SldPartData\wedge\wedge.SLDDRW";
-            /* =========== CKVD PATHS============
-             ProdPartTemplate: @"C:\Users\mounir\Desktop\TestTest\Final\wedge1.SLDPRT",
-                ProdDrawingTemplate: @"C:\Users\mounir\Desktop\TestTest\Final\wedge1.SLDDRW",
-                OverlayPartTemplate: @"C:\Users\mounir\Desktop\Oussama_test\overlay_wedgev2.SLDPRT",
-                OverlayDrawingTemplate: @"C:\Users\mounir\Desktop\overlay_wedgev4.SLDDRW",
-                ExcelPath: @"C:\Users\mounir\Desktop\wedgeautodraw_1_2\wedgeautodraw_1_2\wedgeautodraw_1_2\Resources\Templates\CKVD_DATA_10_Parts.xlsx",
-                EquationPath: Path.Combine(resourcePath, "equations.txt"),
-                ConfigPath: Path.Combine(resourcePath, "drawing_config.json"),
-                RulePath: Path.Combine(resourcePath, "drawing_rules.json")
-            */
+            switch (wedgeType)
+            {
+                case WedgeType.CKVD:
+                    return (
+                        ProdPartTemplate: @"C:\Users\mounir\Desktop\TestTest\Final\wedge1.SLDPRT",
+                        ProdDrawingTemplate: @"C:\Users\mounir\Desktop\TestTest\Final\wedge1.SLDDRW",
+                        OverlayPartTemplate: @"C:\Users\mounir\Desktop\Oussama_test\overlay_wedgev2.SLDPRT",
+                        OverlayDrawingTemplate: @"C:\Users\mounir\Desktop\overlay_wedgev4.SLDDRW",
+                        ExcelPath: @"C:\Users\mounir\Desktop\wedgeautodraw_1_2\wedgeautodraw_1_2\wedgeautodraw_1_2\Resources\Templates\CKVD_DATA_10_Parts.xlsx",
+                        EquationPath: Path.Combine(resourcePath, "equations.txt"),
+                        ConfigPath: Path.Combine(resourcePath, "drawing_config.json"),
+                        RulePath: Path.Combine(resourcePath, "drawing_rules.json")
+                    );
 
-            string ProdPartTemplate = Path.Combine(resourcePath, "COB", "wedge.SLDPRT");
-            string ProdDrawingTemplate = Path.Combine(resourcePath, "COB", "wedge.SLDDRW");
-            string EquationPath = Path.Combine(resourcePath, "COB", "equations.txt");
+                case WedgeType.COB:
+                    return (
+                        ProdPartTemplate: Path.Combine(resourcePath, "COB", "mod_wedge.SLDPRT"),
+                        ProdDrawingTemplate: Path.Combine(resourcePath, "COB", "mod_wedge.SLDDRW"),
+                        OverlayPartTemplate: Path.Combine(resourcePath, "COB", "overlay_wedgev2.SLDPRT"),
+                        OverlayDrawingTemplate: Path.Combine(resourcePath, "COB", "overlay_wedgev4.SLDDRW"),
+                        ExcelPath: Path.Combine(resourcePath, "COB", "UT-US-COB_Produced_19-23_SG.xlsx"),
+                        EquationPath: Path.Combine(resourcePath, "COB", "equations1.txt"),
+                        ConfigPath: Path.Combine(resourcePath, "drawing_config.json"),
+                        RulePath: Path.Combine(resourcePath, "drawing_rules.json")
+                    );
 
-            return (
-                ProdPartTemplate: ProdDrawingTemplate,
-                ProdDrawingTemplate: ProdDrawingTemplate,
-                OverlayPartTemplate: @"C:\Users\mounir\Desktop\Oussama_test\overlay_wedgev2.SLDPRT",
-                OverlayDrawingTemplate: @"C:\Users\mounir\Desktop\overlay_wedgev4.SLDDRW",
-                ExcelPath: @"C:\Users\mounir\Desktop\wedgeautodraw_1_2\wedgeautodraw_1_2\wedgeautodraw_1_2\Resources\Templates\COB\UT-US-COB_Produced_19-23_SG.xlsx",
-                EquationPath: EquationPath,
-                ConfigPath: Path.Combine(resourcePath, "drawing_config.json"),
-                RulePath: Path.Combine(resourcePath, "drawing_rules.json")
-            );
+                default:
+                    throw new NotSupportedException($"Paths for wedge type '{wedgeType}' not configured.");
+            }
         }
 
         private static List<(WedgeData Wedge, DrawingData Drawing)> FilterEntries(List<(WedgeData Wedge, DrawingData Drawing)> allEntries, bool runAll)
         {
             List<string> selectedIds = new()
             {
-                "22000175","2022599","2026582","2026989","2030604","2026989",
+                "14007448","14007090","14004692","14004692","14009907"
             };
 
             return runAll
@@ -123,7 +125,7 @@ namespace wedgeautodraw_1_2
             return selectedSection;
         }
 
-        private static void ProcessEntries(List<(WedgeData Wedge, DrawingData Drawing)> entries, SldWorks swApp, (string ProdPartTemplate, string ProdDrawingTemplate, string OverlayPartTemplate, string OverlayDrawingTemplate, string ExcelPath, string EquationPath, string ConfigPath, string RulePath) paths)
+        private static void ProcessEntries(List<(WedgeData Wedge, DrawingData Drawing)> entries, SldWorks swApp, (string ProdPartTemplate, string ProdDrawingTemplate, string OverlayPartTemplate, string OverlayDrawingTemplate, string ExcelPath, string EquationPath, string ConfigPath, string RulePath) paths, WedgeType wedgeType)
         {
             int counter = 0;
 
@@ -138,9 +140,7 @@ namespace wedgeautodraw_1_2
 
                 DrawingType selectedType = DrawingType.Production;
 
-                //string baseOutputDir = @"D:\Generated";
-                string baseOutputDir = @"D:\COB";
-                
+                string baseOutputDir = $@"D:\{wedgeType}";
                 string wedgeDir = Path.Combine(baseOutputDir, wedgeId);
                 string typeFolder = selectedType == DrawingType.Production ? "Production" : "Overlay";
                 string outputDir = Path.Combine(wedgeDir, typeFolder);

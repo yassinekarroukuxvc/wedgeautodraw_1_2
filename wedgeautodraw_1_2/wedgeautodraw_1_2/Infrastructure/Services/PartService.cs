@@ -202,5 +202,95 @@ public class PartService : IPartService
     {
         return _swModel;
     }
+    public void SuppressOrUnsuppressFeature(string searchStr, bool suppress)
+    {
+        try
+        {
+            if (_swModel == null)
+            {
+                Logger.Warn("No active model to operate on.");
+                return;
+            }
+
+            if (_swModel.GetType() != (int)swDocumentTypes_e.swDocPART)
+            {
+                Logger.Warn("Current document is not a part. Suppress/Unsuppress operation aborted.");
+                return;
+            }
+
+            var swPart = (PartDoc)_swModel;
+            Feature swFeature = (Feature)swPart.FirstFeature();
+
+            while (swFeature != null)
+            {
+                string featureName = swFeature.Name;
+
+                // Check if the feature name contains the search string (case-insensitive)
+                if (featureName.Contains(searchStr, StringComparison.OrdinalIgnoreCase))
+                {
+                    Logger.Info($"Found feature: {featureName}. Attempting to {(suppress ? "suppress" : "unsuppress")}.");
+
+                    bool selected = _swModelExt.SelectByID2(featureName, "BODYFEATURE", 0, 0, 0, false, 0, null, 0);
+
+                    if (!selected)
+                    {
+                        Logger.Warn($"Failed to select feature '{featureName}'.");
+                    }
+                    else
+                    {
+                        bool result = suppress ? _swModel.EditSuppress2() : _swModel.EditUnsuppress2();
+
+                        if (result)
+                            Logger.Success($"{(suppress ? "Suppressed" : "Unsuppressed")} feature '{featureName}' successfully.");
+                        else
+                            Logger.Warn($"Failed to {(suppress ? "suppress" : "unsuppress")} feature '{featureName}'.");
+                    }
+
+                    _swModel.ClearSelection2(true);
+                }
+
+                swFeature = (Feature)swFeature.GetNextFeature();
+            }
+
+            _swModel.EditRebuild3();
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Error during suppress/unsuppress operation: {ex.Message}");
+        }
+    }
+    public void SuppressOrUnsuppressSketch(string sketchName, bool suppress)
+    {
+        try
+        {
+            var swPart = (PartDoc)_swModel;
+            Feature swFeature = (Feature)swPart.FirstFeature();
+            while (swFeature != null)
+            {
+                // Check if this feature is a sketch
+                if (swFeature.GetTypeName2() == "ProfileFeature" && swFeature.Name.Equals(sketchName, StringComparison.OrdinalIgnoreCase))
+                {
+                    Logger.Info($"{(suppress ? "Suppressing" : "Unsuppressing")} sketch '{sketchName}'...");
+
+                    if (suppress)
+                        swFeature.SetSuppression2((int)swFeatureSuppressionAction_e.swSuppressFeature, 2, null);
+                    else
+                        swFeature.SetSuppression2((int)swFeatureSuppressionAction_e.swUnSuppressFeature, 2, null);
+
+                    Logger.Success($"Sketch '{sketchName}' has been {(suppress ? "suppressed" : "unsuppressed")}.");
+                    return;
+                }
+
+                swFeature = (Feature)swFeature.GetNextFeature();
+            }
+
+            Logger.Warn($"Sketch '{sketchName}' not found in part.");
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Error in SuppressOrUnsuppressSketch: {ex.Message}");
+        }
+    }
+
 
 }

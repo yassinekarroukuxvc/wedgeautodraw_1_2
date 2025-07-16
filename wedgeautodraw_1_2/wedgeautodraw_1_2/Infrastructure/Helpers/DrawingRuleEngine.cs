@@ -28,6 +28,9 @@ namespace wedgeautodraw_1_2.Infrastructure.Helpers
             [JsonPropertyName("drawing_type")]
             public string DrawingType { get; set; }
 
+            [JsonPropertyName("wedge_type")]
+            public string WedgeType { get; set; }
+
             [JsonPropertyName("if")]
             public ConditionBlock If { get; set; }
 
@@ -87,6 +90,9 @@ namespace wedgeautodraw_1_2.Infrastructure.Helpers
             foreach (var rule in _rules.Conditions)
             {
                 if (!string.Equals(rule.DrawingType, drawingType.ToString(), StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                if (!string.Equals(rule.WedgeType, wedgeData.WedgeType.ToString(), StringComparison.OrdinalIgnoreCase))
                     continue;
 
                 if (!wedgeData.Dimensions.TryGet(rule.If.Dimension, out var dim))

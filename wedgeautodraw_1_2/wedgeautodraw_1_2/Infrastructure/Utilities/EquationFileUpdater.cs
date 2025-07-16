@@ -25,7 +25,11 @@ public static class EquationFileUpdater
         var outputLines = new List<string>();
 
         var dimensionKeys = wedge.Dimensions.GetAll().Keys.ToHashSet();
-        var updatedKeys = new HashSet<string>();
+
+        var wedgeType = wedge.WedgeType;
+        var angleKeys = WedgeDimensionKeys.TypeToAngleKeys.ContainsKey(wedgeType)
+            ? WedgeDimensionKeys.TypeToAngleKeys[wedgeType]
+            : new HashSet<string>();
 
         var dimensionRegex = new Regex("^\"(?<key>[^\"]+)\"\\s*=.*$", RegexOptions.Compiled);
 
@@ -41,7 +45,6 @@ public static class EquationFileUpdater
                 if (key == "EngravingStart" && wedge.Dimensions.ContainsKey("TL"))
                 {
                     outputLines.Add("\"EngravingStart\" = \"TL\" * 0.45");
-                    updatedKeys.Add("EngravingStart");
                     continue;
                 }
 
@@ -57,34 +60,15 @@ public static class EquationFileUpdater
                 {
                     var data = wedge.Dimensions[key];
                     string valueStr = data.GetValue(Unit.Millimeter).ToString("0.#####", CultureInfo.InvariantCulture);
-                    string unitStr = IsAngle(key) ? "deg" : "mm";
+                    string unitStr = angleKeys.Contains(key) ? "deg" : "mm";
 
                     outputLines.Add($"\"{key}\"={valueStr}{unitStr}");
-                    updatedKeys.Add(key);
                     continue;
                 }
             }
 
-            outputLines.Add(line); // Preserve original line
-        }
-
-        var missingKeys = wedge.Dimensions.GetAll()
-            .Where(kvp => !updatedKeys.Contains(kvp.Key))
-            .Select(kvp => kvp.Key)
-            .ToList();
-
-        if (missingKeys.Count > 0)
-        {
-            outputLines.Add(""); // one empty line before
-            foreach (var key in missingKeys)
-            {
-                var data = wedge.Dimensions[key];
-                string valueStr = data.GetValue(Unit.Millimeter).ToString("0.#####", CultureInfo.InvariantCulture);
-                string unitStr = IsAngle(key) ? "deg" : "mm";
-
-                outputLines.Add($"\"{key}\"={valueStr}{unitStr}");
-                outputLines.Add(""); // one empty line after
-            }
+            // Keep original line if no update
+            outputLines.Add(line);
         }
 
         if (!overlayCalibrationUpdated)
@@ -102,11 +86,6 @@ public static class EquationFileUpdater
         {
             Logger.Error($"Failed to write equation file: {ex.Message}");
         }
-    }
-
-    private static bool IsAngle(string key)
-    {
-        return key is "ISA" or "FA" or "BA" or "GA" or "FL_groove_angle";
     }
 
     private static Encoding GetFileEncoding(string filePath)
@@ -135,6 +114,11 @@ public static class EquationFileUpdater
         model.ClearSelection2(true);
         model.EditRebuild3();
 
+        var wedgeType = wedge.WedgeType;
+        var angleKeys = WedgeDimensionKeys.TypeToAngleKeys.ContainsKey(wedgeType)
+            ? WedgeDimensionKeys.TypeToAngleKeys[wedgeType]
+            : new HashSet<string>();
+
         foreach (var kvp in wedge.Dimensions.GetAll())
         {
             string key = kvp.Key;
@@ -142,13 +126,9 @@ public static class EquationFileUpdater
 
             double value = kvp.Value.GetValue(Unit.Millimeter);
 
-            string equation = key switch
-            {
-                "ISA" or "FA" or "BA" or "GA" or "FL_groove_angle" =>
-                    $"\"{key}\" = {value.ToString("0.#####", CultureInfo.InvariantCulture)}deg",
-                _ =>
-                    $"\"{key}\" = {value.ToString("0.#####", CultureInfo.InvariantCulture)}"
-            };
+            string equation = angleKeys.Contains(key)
+                ? $"\"{key}\" = {value.ToString("0.#####", CultureInfo.InvariantCulture)}deg"
+                : $"\"{key}\" = {value.ToString("0.#####", CultureInfo.InvariantCulture)}";
 
             int idx = mgr.Add3(
                 -1,

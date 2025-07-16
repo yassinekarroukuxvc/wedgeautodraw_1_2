@@ -221,12 +221,11 @@ public class BreaklineHandler
             if (breakLine == null) return false;
 
             double tl = wedgeDimensions["TL"].GetValue(Unit.Meter);
-            double e = wedgeDimensions["E"].GetValue(Unit.Meter);
+            //double e = wedgeDimensions["E"].GetValue(Unit.Meter);
             double scale = _swView.ScaleDecimal;
-            double td = wedgeDimensions["TD"].GetValue(Unit.Meter);
-            double gd = wedgeDimensions["GD"].GetValue(Unit.Meter);
-            Logger.Warn($"E = {e}");
-            double start = tl - e;
+            //double td = wedgeDimensions["TD"].GetValue(Unit.Meter);
+            //double gd = wedgeDimensions["GD"].GetValue(Unit.Meter);
+            //double start = tl - e;
             double end = tl/2;
 
             double[] pos = new[]
@@ -237,14 +236,11 @@ public class BreaklineHandler
 
             bool result = breakLine.SetPosition(pos[0], pos[1]);
 
-            //_swView.BreakLineGap = 0.0;
-            Logger.Info("Breakline gap set to 0.");
-
-            Logger.Info($"Detail breakline using E set → Start: {pos[0]:F4}, End: {pos[1]:F4}");
-
+            Logger.Info($"Detail breakline set → Start: {pos[0]:F4}, End: {pos[1]:F4}");
+            /*==== UNCOMMENT THIS IF YOU ARE RUNNING CKVD
             _model.Extension.SelectByID2("TL@Detail_View", "DIMENSION", 0, 0, 0, false, 0, null, 0);
             _model.Extension.DeleteSelection2((int)swDeleteSelectionOptions_e.swDelete_Advanced);
-
+            */
             return result;
         }
         catch (Exception ex)

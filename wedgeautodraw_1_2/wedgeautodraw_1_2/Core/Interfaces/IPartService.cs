@@ -17,4 +17,5 @@ public interface IPartService
     void Reopen(string partPath);
     void Unlock();
     ModelDoc2 GetModel();
+    public void SuppressOrUnsuppressFeature(string searchStr, bool suppress);
 }

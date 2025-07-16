@@ -2,24 +2,25 @@
 using wedgeautodraw_1_2.Core.Models;
 using wedgeautodraw_1_2.Infrastructure.Helpers;
 
-namespace wedgeautodraw_1_2.Infrastructure.Services;
-
-public static class DynamicDimensionStyler
+namespace wedgeautodraw_1_2.Infrastructure.Services
 {
-    public static void ApplyDynamicStyles(DrawingData drawingData, WedgeData wedgeData)
+    public static class DynamicDimensionStyler
     {
-        var rules = DimensionRules.GetRules(drawingData.DrawingType);
-
-        foreach (var kvp in rules)
+        public static void ApplyDynamicStyles(DrawingData drawingData, WedgeData wedgeData)
         {
-            string dimName = kvp.Key;
-            var rule = kvp.Value;
+            var rules = DimensionRules.GetRules(wedgeData.WedgeType, drawingData.DrawingType);
 
-            double[] computedPosition = rule.CalculatePosition(wedgeData, drawingData);
-
-            if (computedPosition != null && computedPosition.Length == 2)
+            foreach (var kvp in rules)
             {
-                drawingData.DimensionStyles[dimName] = new DimensionAnnotation(new DataStorage(computedPosition));
+                string dimName = kvp.Key;
+                var rule = kvp.Value;
+
+                double[] computedPosition = rule.CalculatePosition(wedgeData, drawingData);
+
+                if (computedPosition != null && computedPosition.Length == 2)
+                {
+                    drawingData.DimensionStyles[dimName] = new DimensionAnnotation(new DataStorage(computedPosition));
+                }
             }
         }
     }

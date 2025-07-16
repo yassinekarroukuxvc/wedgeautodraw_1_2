@@ -9,10 +9,12 @@ namespace wedgeautodraw_1_2.Infrastructure.Utilities;
 public class ExcelWedgeDataLoader
 {
     private readonly string _excelFilePath;
+    private readonly WedgeType _wedgeType;
 
-    public ExcelWedgeDataLoader(string excelFilePath)
+    public ExcelWedgeDataLoader(string excelFilePath, WedgeType wedgeType)
     {
         _excelFilePath = excelFilePath;
+        _wedgeType = wedgeType;
     }
 
     public List<(WedgeData Wedge, DrawingData Drawing)> LoadAllEntries()
@@ -27,7 +29,7 @@ public class ExcelWedgeDataLoader
 
         using var workbook = new XLWorkbook(_excelFilePath);
         var worksheet = workbook.Worksheet(1);
-        var rows = worksheet.RangeUsed().RowsUsed().Skip(1).ToList(); // Skip header row
+        var rows = worksheet.RangeUsed().RowsUsed().Skip(1).ToList();
         var header = worksheet.Row(1);
 
         var columnMap = new Dictionary<string, int>();
@@ -37,14 +39,12 @@ public class ExcelWedgeDataLoader
             if (!string.IsNullOrEmpty(key)) columnMap[key] = c;
         }
 
-        // Detect available dimensions
         var dimensionKeys = columnMap.Keys
             .Where(k => k.EndsWith("_NOM"))
             .Select(k => k[..^4])
             .Distinct()
             .ToList();
 
-        // Parallel processing
         var parallelResult = rows.AsParallel().Select(row =>
         {
             var wedge = BuildWedge(row, columnMap, dimensionKeys);
@@ -59,16 +59,14 @@ public class ExcelWedgeDataLoader
     {
         var wedge = new WedgeData
         {
-            EngravedText = GetCell(row, map, "wedge_title")
+            EngravedText = GetCell(row, map, "wedge_title"),
+            WedgeType = _wedgeType // ✅ Set from constructor
         };
 
-        string engravedText = GetCell(row, map, "wedge_title");
-
         wedge.Metadata["drawing_number"] = GetCell(row, map, "drawing#");
-        wedge.Metadata["drawing_title"] = GetCell(row, map, "drawing#") + "-DW";
-        wedge.Metadata["wedge_title"] = engravedText.Replace("¶", " ");
+        wedge.Metadata["drawing_title"] = wedge.Metadata["drawing_number"] + "-DW";
+        wedge.Metadata["wedge_title"] = wedge.EngravedText.Replace("¶", " ");
 
-        // Overlay defaults
         wedge.OverlayCalibration = string.Empty;
         wedge.OverlayScaling = 1.0;
 
@@ -118,13 +116,9 @@ public class ExcelWedgeDataLoader
             string upper = GetCell(row, map, key + "_UTOL");
             string lower = GetCell(row, map, key + "_LTOL");
 
-            // Default to "0" if empty
-            if (string.IsNullOrWhiteSpace(nom))
-                nom = "0";
-            if (string.IsNullOrWhiteSpace(upper))
-                upper = "0";
-            if (string.IsNullOrWhiteSpace(lower))
-                lower = "0";
+            if (string.IsNullOrWhiteSpace(nom)) nom = "0";
+            if (string.IsNullOrWhiteSpace(upper)) upper = "0";
+            if (string.IsNullOrWhiteSpace(lower)) lower = "0";
 
             if (!IsAngle(key))
             {

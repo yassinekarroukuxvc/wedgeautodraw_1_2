@@ -31,74 +31,6 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
             CreateAllStandardViews(drawingService, drawingData, wedgeData);
             string sectionViewName = CreateSectionView(drawingService, drawingData, wedgeData);
 
-            /*  ==== TEST: Insert Front View using ModelViewService ====
-            var modelDoc = drawingService.GetModel();
-            if (modelDoc != null)
-            {
-                var modelViewService = new ModelViewService(modelDoc);
-                var iscreated = modelViewService.InsertStandardView(partPath, "*Front");
-                // We explicitly target Drawing View2
-                string viewToBreak = "Drawing View2";
-
-                Logger.Info($"Targeting view '{viewToBreak}' for break operation.");
-
-                // Get SelectionMgr and View object to fetch outline for positions
-                if (!modelDoc.Extension.SelectByID2(viewToBreak, "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0))
-                {
-                    Logger.Warn($"Failed to select view '{viewToBreak}' for outline calculation.");
-                }
-                else
-                {
-                    var selectionMgr = (SelectionMgr)modelDoc.SelectionManager;
-                    var swView = (View)selectionMgr.GetSelectedObject6(1, -1);
-
-                    if (swView != null)
-                    {
-                        double[] outline = (double[])swView.GetOutline();
-                        if (outline != null && outline.Length >= 4)
-                        {
-                            // Calculate X positions for a vertical break
-                            double minX = outline[0];
-                            double maxX = outline[2];
-                            double width = maxX - minX;
-
-                            double breakStart = minX + width * 0.3; // 30%
-                            double breakEnd = minX + width * 0.7; // 70%
-
-                            // Call your CreateBrokenView method, which expects breakLine1Pos and breakLine2Pos
-                            bool breakResult = modelViewService.CreateBrokenView(
-                                viewToBreak,
-                                breakStart,
-                                breakEnd,
-                                0.01, // Gap size
-                                swBreakLineOrientation_e.swBreakLineVertical,
-                                swBreakLineStyle_e.swBreakLine_Jagged
-                            );
-
-                            if (breakResult)
-                                Logger.Success($"Broken view created successfully for '{viewToBreak}'.");
-                            else
-                                Logger.Error($"Failed to create broken view for '{viewToBreak}'.");
-                        }
-                        else
-                        {
-                            Logger.Warn("Could not get valid outline from the view.");
-                        }
-                    }
-                    else
-                    {
-                        Logger.Warn($"Could not get View object for '{viewToBreak}'.");
-                    }
-                }
-            }
-            else
-            {
-                Logger.Warn("No active ModelDoc2 found. Break view operation skipped.");
-            }
-            */
-            // ========================================================
-
-
             FinalizeDrawing(drawingService, sectionViewName, drawingData, wedgeData, partService, swApp, outputPdfPath);
 
             Logger.Success("Production drawing automation completed.");
@@ -195,13 +127,8 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
 
             sectionView.InsertModelDimensioning(drawingData.DrawingType);
 
-            sectionView.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawingData.DimensionStyles, new()
-            {
-                { "F", "SelectByName" },
-                { "FL", "SelectByName" },
-                { "FR", "SelectByName" },
-                { "BR", "SelectByName" }
-            }, drawingData.DrawingType);
+            var sectionKeys = GetDimensionKeysForView(wedgeData.WedgeType, Constants.SectionView);
+            sectionView.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawingData.DimensionStyles, sectionKeys, drawingData.DrawingType);
 
             partService.ToggleSketchVisibility(Constants.SketchGrooveDimensions, false);
             partService.Save(close: true);
@@ -234,20 +161,18 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
             var front = viewFactory.CreateView(Constants.FrontView);
 
             front.SetViewPosition(drawData.ViewPositions[Constants.FrontView]);
+            
             front.SetFrontSideViewBreakline(wedgeData.Dimensions);
             front.CreateCenterline(wedgeData.Dimensions, drawData);
             front.SetBreakLineGap(drawData.BreaklineData["Front_viewBreaklineGap"].GetValue(Unit.Meter));
+            
             front.SetViewScale(scale);
-
-            front.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, new()
-            {
-                { "TL", "SelectByName" },
-                { "EngravingStart", "SelectByName" },
-                { "D2", "SelectByName" },
-                { "VW", "SelectByName" },
-            }, drawData.DrawingType);
+            
+            var keys = GetDimensionKeysForView(wedgeData.WedgeType, Constants.FrontView);
+            front.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, keys, drawData.DrawingType);
 
             front.DeleteAnnotationsByName(new[] { "GR" });
+            
         }
 
         private static void CreateSideView(ModelDoc2 model, DrawingData drawData, WedgeData wedgeData)
@@ -256,18 +181,14 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
             var side = viewFactory.CreateView(Constants.SideView);
 
             side.SetViewPosition(drawData.ViewPositions[Constants.SideView]);
+            
             side.SetFrontSideViewBreakline(wedgeData.Dimensions);
             side.SetBreakLineGap(drawData.BreaklineData["Side_viewBreaklineGap"].GetValue(Unit.Meter));
             side.CreateCenterline(wedgeData.Dimensions, drawData);
 
-            var dimensionKeys = new Dictionary<string, string>
-            {
-                { "FA", "SelectByName" },
-                { "BA", "SelectByName" },
-                { "FX", "SelectByName" }
-            };
-
-            side.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, dimensionKeys, drawData.DrawingType);
+            var keys = GetDimensionKeysForView(wedgeData.WedgeType, Constants.SideView);
+            side.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, keys, drawData.DrawingType);
+            
         }
 
         private static void CreateTopView(ModelDoc2 model, DrawingData drawData, WedgeData wedgeData)
@@ -277,15 +198,12 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
 
             top.SetViewPosition(drawData.ViewPositions[Constants.TopView]);
             top.CreateCentermark(wedgeData.Dimensions, drawData);
-
-            top.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, new()
-            {
-                { "TDF", "SelectByName" },
-                { "TD", "SelectByName" },
-                { "DatumFeature", "SelectByName" }
-            }, drawData.DrawingType);
+            
+            var keys = GetDimensionKeysForView(wedgeData.WedgeType, Constants.TopView);
+            top.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, keys, drawData.DrawingType);
 
             top.PlaceDatumFeatureLabel(wedgeData.Dimensions, drawData.DimensionStyles, Constants.DatumFeatureLabel);
+            
         }
 
         private static void CreateDetailView(ModelDoc2 model, DrawingData drawData, WedgeData wedgeData)
@@ -295,22 +213,126 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
 
             detail.SetViewScale(drawData.ViewScales[Constants.DetailView].GetValue(Unit.Millimeter));
             detail.SetViewPosition(drawData.ViewPositions[Constants.DetailView]);
+            
             detail.SetBreakLineGap(drawData.BreaklineData["Detail_viewBreaklineGap"].GetValue(Unit.Meter));
+            
             detail.SetDetailViewDynamicBreakline(wedgeData.Dimensions);
+            
             detail.CreateCenterline(wedgeData.Dimensions, drawData);
             detail.PlaceGeometricToleranceFrame(wedgeData.Dimensions, drawData.DimensionStyles, Constants.DatumFeatureLabel);
             detail.InsertModelDimensioning(drawData.DrawingType);
 
-            detail.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, new()
+            var keys = GetDimensionKeysForView(wedgeData.WedgeType, Constants.DetailView);
+            detail.ApplyDimensionPositionsAndNames(wedgeData.Dimensions, drawData.DimensionStyles, keys, drawData.DrawingType);
+            
+        }
+
+        private static Dictionary<string, string> GetDimensionKeysForView(WedgeType wedgeType, string viewName)
+        {
+            var keys = new Dictionary<string, string>();
+
+            if (wedgeType == WedgeType.CKVD)
             {
-                { "ISA", "SelectByName" },
-                { "GA", "SelectByName" },
-                { "B", "SelectByName" },
-                { "W", "SelectByName" },
-                { "GD", "SelectByName" },
-                { "D1", "SelectByName" },
-                { "GR", "SelectByName" }
-            }, drawData.DrawingType);
+                if (viewName == Constants.FrontView)
+                {
+                    keys = new()
+                    {
+                        { "TL", "SelectByName" },
+                        { "EngravingStart", "SelectByName" },
+                        { "D2", "SelectByName" },
+                        { "VW", "SelectByName" }
+                    };
+                }
+                else if (viewName == Constants.SideView)
+                {
+                    keys = new()
+                    {
+                        { "FA", "SelectByName" },
+                        { "BA", "SelectByName" },
+                        { "FX", "SelectByName" }
+                    };
+                }
+                else if (viewName == Constants.TopView)
+                {
+                    keys = new()
+                    {
+                        { "TDF", "SelectByName" },
+                        { "TD", "SelectByName" },
+                        { "DatumFeature", "SelectByName" }
+                    };
+                }
+                else if (viewName == Constants.DetailView)
+                {
+                    keys = new()
+                    {
+                        { "ISA", "SelectByName" },
+                        { "GA", "SelectByName" },
+                        { "B", "SelectByName" },
+                        { "W", "SelectByName" },
+                        { "GD", "SelectByName" },
+                        { "D1", "SelectByName" },
+                        { "GR", "SelectByName" }
+                    };
+                }
+                else if (viewName == Constants.SectionView)
+                {
+                    keys = new()
+                    {
+                        { "F", "SelectByName" },
+                        { "FL", "SelectByName" },
+                        { "FR", "SelectByName" },
+                        { "BR", "SelectByName" }
+                    };
+                }
+            }
+            else if (wedgeType == WedgeType.COB)
+            {
+                if (viewName == Constants.FrontView)
+                {
+                    keys = new()
+                    {
+                        { "TL", "SelectByName" },
+                        { "EngravingStart", "SelectByName" }
+                    };
+                }
+                else if (viewName == Constants.SideView)
+                {
+                    keys = new()
+                    {
+                        { "ISA", "SelectByName" },
+                        { "BA", "SelectByName" },
+                        { "RA", "SelectByName" },
+                        { "FD", "SelectByName" }
+                    };
+                }
+                else if (viewName == Constants.TopView)
+                {
+                    keys = new()
+                    {
+                        { "TDF", "SelectByName" },
+                        { "TD", "SelectByName" }
+                    };
+                }
+                else if (viewName == Constants.DetailView)
+                {
+                    keys = new()
+                    {
+                        { "ISA", "SelectByName" },
+                        { "GA", "SelectByName" },
+                        { "FRO", "SelectByName" }
+                    };
+                }
+                else if (viewName == Constants.SectionView)
+                {
+                    keys = new()
+                    {
+                        { "F", "SelectByName" },
+                        { "FL", "SelectByName" }
+                    };
+                }
+            }
+
+            return keys;
         }
     }
 }
