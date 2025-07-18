@@ -9,6 +9,8 @@ using SolidWorks.Interop.swconst;
 using System.IO;
 using System.Linq;
 using System.Collections.Generic;
+using ClosedXML.Excel;
+
 
 public static class EquationFileUpdater
 {

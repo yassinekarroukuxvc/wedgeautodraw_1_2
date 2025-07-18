@@ -462,6 +462,11 @@ namespace wedgeautodraw_1_2.Infrastructure.Services.ViewServices
                     return false;
                 }
 
+                ///
+                var outline = (double[])swView.GetOutline();
+                Logger.Warn($"xmin = {outline[0]}");
+                ///
+
                 // Step 2: Use InsertBreak to create the PAIR of lines for a true broken view.
                 var swBreakLine = (BreakLine)swView.InsertBreak((int)orientation, breakLine1Pos, breakLine2Pos, (int)style);
 

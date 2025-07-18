@@ -237,10 +237,10 @@ public class BreaklineHandler
             bool result = breakLine.SetPosition(pos[0], pos[1]);
 
             Logger.Info($"Detail breakline set → Start: {pos[0]:F4}, End: {pos[1]:F4}");
-            /*==== UNCOMMENT THIS IF YOU ARE RUNNING CKVD
+            /*==== UNCOMMENT THIS IF YOU ARE RUNNING CKVD*/
             _model.Extension.SelectByID2("TL@Detail_View", "DIMENSION", 0, 0, 0, false, 0, null, 0);
             _model.Extension.DeleteSelection2((int)swDeleteSelectionOptions_e.swDelete_Advanced);
-            */
+            
             return result;
         }
         catch (Exception ex)

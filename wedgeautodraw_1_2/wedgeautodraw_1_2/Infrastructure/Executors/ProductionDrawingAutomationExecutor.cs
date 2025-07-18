@@ -30,7 +30,7 @@ namespace wedgeautodraw_1_2.Infrastructure.Executors
             var drawingService = InitializeDrawing(swApp, partPath, drawingPath, modPartPath, modDrawingPath, drawingData);
             CreateAllStandardViews(drawingService, drawingData, wedgeData);
             string sectionViewName = CreateSectionView(drawingService, drawingData, wedgeData);
-
+            
             FinalizeDrawing(drawingService, sectionViewName, drawingData, wedgeData, partService, swApp, outputPdfPath);
 
             Logger.Success("Production drawing automation completed.");

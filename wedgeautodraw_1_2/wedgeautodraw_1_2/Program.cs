@@ -18,7 +18,7 @@ namespace wedgeautodraw_1_2
     class Program
     {
         private const bool UseSections = false;
-        private const int SectionToRun = 1;
+        private const int SectionToRun = 3;
 
         static void Main(string[] args)
         {
@@ -63,20 +63,31 @@ namespace wedgeautodraw_1_2
                         ProdDrawingTemplate: @"C:\Users\mounir\Desktop\TestTest\Final\wedge1.SLDDRW",
                         OverlayPartTemplate: @"C:\Users\mounir\Desktop\Oussama_test\overlay_wedgev2.SLDPRT",
                         OverlayDrawingTemplate: @"C:\Users\mounir\Desktop\overlay_wedgev4.SLDDRW",
-                        ExcelPath: @"C:\Users\mounir\Desktop\wedgeautodraw_1_2\wedgeautodraw_1_2\wedgeautodraw_1_2\Resources\Templates\CKVD_DATA_10_Parts.xlsx",
+                        ExcelPath: @"C:\Users\mounir\Desktop\wedgeautodraw_1_2\wedgeautodraw_1_2\wedgeautodraw_1_2\Resources\Templates\CKVD_DATA_SG.xlsx",
                         EquationPath: Path.Combine(resourcePath, "equations.txt"),
                         ConfigPath: Path.Combine(resourcePath, "drawing_config.json"),
                         RulePath: Path.Combine(resourcePath, "drawing_rules.json")
                     );
 
+                /* case WedgeType.COB:
+                     return (
+                         ProdPartTemplate: Path.Combine(resourcePath, "COB", "mod_wedge.SLDPRT"),
+                         ProdDrawingTemplate: Path.Combine(resourcePath, "COB", "mod_wedge.SLDDRW"),
+                         OverlayPartTemplate: Path.Combine(resourcePath, "COB", "overlay_wedgev2.SLDPRT"),
+                         OverlayDrawingTemplate: Path.Combine(resourcePath, "COB", "overlay_wedgev4.SLDDRW"),
+                         ExcelPath: Path.Combine(resourcePath, "COB", "UT-US-COB_Produced_19-23_SG.xlsx"),
+                         EquationPath: Path.Combine(resourcePath, "COB", "equations1.txt"),
+                         ConfigPath: Path.Combine(resourcePath, "drawing_config.json"),
+                         RulePath: Path.Combine(resourcePath, "drawing_rules.json")
+                     );*/
                 case WedgeType.COB:
                     return (
-                        ProdPartTemplate: Path.Combine(resourcePath, "COB", "mod_wedge.SLDPRT"),
+                        ProdPartTemplate: "C:\\Users\\mounir\\source\\repos\\Wedge-Autodraw\\LegacyCode\\C# Code\\Local\\SwApiTest\\SwApiTest\\SldPartData\\Wedge_Master\\NextGen\\mod_wedgeV2.SLDPRT",
                         ProdDrawingTemplate: Path.Combine(resourcePath, "COB", "mod_wedge.SLDDRW"),
                         OverlayPartTemplate: Path.Combine(resourcePath, "COB", "overlay_wedgev2.SLDPRT"),
                         OverlayDrawingTemplate: Path.Combine(resourcePath, "COB", "overlay_wedgev4.SLDDRW"),
                         ExcelPath: Path.Combine(resourcePath, "COB", "UT-US-COB_Produced_19-23_SG.xlsx"),
-                        EquationPath: Path.Combine(resourcePath, "COB", "equations1.txt"),
+                        EquationPath: "C:\\Users\\mounir\\source\\repos\\Wedge-Autodraw\\LegacyCode\\C# Code\\Local\\SwApiTest\\SwApiTest\\SldPartData\\Wedge_Master\\NextGen\\equations1.txt",
                         ConfigPath: Path.Combine(resourcePath, "drawing_config.json"),
                         RulePath: Path.Combine(resourcePath, "drawing_rules.json")
                     );
@@ -90,7 +101,7 @@ namespace wedgeautodraw_1_2
         {
             List<string> selectedIds = new()
             {
-                "14007448","14007090","14004692","14004692","14009907"
+                "2027632"
             };
 
             return runAll
